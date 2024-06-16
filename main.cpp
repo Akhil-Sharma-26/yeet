@@ -14,8 +14,7 @@ int main(int argc, char* argv[]) {
 
 
         if (argc == 3) {
-            // TODO 
-            // Add if-else conditions to distinguish different argument that the user is passing.
+            // TODO Add if-else conditions to distinguish different argument that the user is passing.
             
             // cout<<subArg<<endl;
             // cout<<arg<<endl;
@@ -43,7 +42,7 @@ int main(int argc, char* argv[]) {
     }
     catch(const std::exception& e){
         // TODO write the number of arguments and the argv required for each command in the Documentation.
-        std::cerr << e.what() << "Please give the enough arguments with the commands. \n";
+        std::cerr << e.what() << "\nPlease give the enough arguments with the commands. \n";
     }
     
     return EXIT_SUCCESS;
