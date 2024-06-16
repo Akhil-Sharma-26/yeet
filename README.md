@@ -23,3 +23,6 @@ export PATH=$PATH:/path/to/yeet/repo/
 ```bash
 yeet
 ```
+
+## CAREFUL
+- For now, You can only make git init in the pwd, You can not do git init /home/abc/some/folder. This will not work. It will be executed but will give to rise complications. If you want to init in a folder, you have to cd to that folder and then run the command.
