@@ -25,4 +25,8 @@ yeet
 ```
 
 ## CAREFUL
-- For now, You can only make git init in the pwd, You can not do git init /home/abc/some/folder. This will not work. It will be executed but will give to rise complications. If you want to init in a folder, you have to cd to that folder and then run the command.
+- For now, You can only make git init in the pwd, You can not do git init /home/abc/some/folder. This will not work. It will be executed but will give to rise complications. If you want to init in a folder, you have to cd to that folder and then run the command. 
+- You can only yeet init in a already made directory. You can not yeet init in a directory that does not exist.
+
+## FUTURE PLANS
+-  The repo_find() function

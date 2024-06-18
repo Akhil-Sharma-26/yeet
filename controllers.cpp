@@ -84,3 +84,7 @@ void YeetInit(std::string path="."){
 void YeetAdd(){
 
 }
+
+void YeetCommit(){
+    
+}
