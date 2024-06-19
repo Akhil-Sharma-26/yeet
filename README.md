@@ -9,7 +9,7 @@ using the filesystem library to work with different filesystems.
 2. Open the terminal and navigate to the directory where the repository is located.
 3. Run the following command:
 ```bash
- g++ main.cpp controllers.cpp -std=c++17 -o yeet
+ g++ main.cpp controllers.cpp -std=c++17 -o yeet -lcryptopp
 ```
 4. Set the permissions for the executable file:
 ```bash
@@ -30,3 +30,14 @@ yeet
 
 ## FUTURE PLANS
 -  The repo_find() function
+
+
+## USE COMMAND:
+`g++ main.cpp controllers.cpp -std=c++17 -lcryptopp -o yeet && ./yeet commit`
+
+## Make Sure:
+you have lcryptopp installed in your system. I am using fedora and I installed it using:
+```bash
+sudo dnf install cryptopp-devel
+```
+Search according to your OS.

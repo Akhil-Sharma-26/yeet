@@ -1,6 +1,9 @@
 #include"controllers.hpp"
 #include<bits/stdc++.h>
 #include<filesystem>
+#include <cryptopp/sha.h>
+#include <cryptopp/filters.h>
+#include <cryptopp/hex.h>
 #define fs std::filesystem
 void YeetStatus(){
 
@@ -85,12 +88,12 @@ void YeetInit(std::string path="."){
 void YeetAdd(){
 
 }
-
+// Commit Class:
 // TODO: Add a check that you can only list files if a .yeet dir is present/ initialized.
 void Commit::listFilesinDir(std::string path){
     for (const auto & entry : fs::directory_iterator(path)){
         // TODO: This is my .gitignore
-        const bool IGNORE = entry.path().generic_string().find(".git") != std::string::npos || entry.path().generic_string().find(".yeet") != std::string::npos || entry.path().generic_string().find(".vscode") != std::string::npos;
+        const bool IGNORE = entry.path().generic_string().find(".git") != std::string::npos || entry.path().generic_string().find(".yeet") != std::string::npos || entry.path().generic_string().find(".vscode") != std::string::npos || entry.path().generic_string().find(".xmake") != std::string::npos;
 
         if(IGNORE){
             continue;
@@ -104,7 +107,10 @@ void Commit::listFilesinDir(std::string path){
         std::cout << entry.path() << std::endl;
 
         std::string data = readFile(entry.path());
-        
+        Blob newBlobObject(data);
+        Database DbObj(entry.path());
+        DbObj.storeContentInDB(newBlobObject);
+
     }
 }
 Commit::Commit(std::string path){
@@ -114,14 +120,12 @@ Commit::Commit(std::string path){
 /**
 *  @param: `path` is of type fs::path. It needs the path to the file and then it reads all the content of it.
 */
-std::string Commit::readFile(fs::path path){{
+std::string Commit::readFile(fs::path path){
     // Open the stream to 'lock' the file.
     std::ifstream f(path, std::ios::in);
 
     // Obtain the size of the file.
     const auto sz = fs::file_size(path);
-
-    // Create a buffer.
     std::string result(sz, '\0');
 
     // Read the whole file into the buffer.
@@ -130,4 +134,32 @@ std::string Commit::readFile(fs::path path){{
     return result;
 }
 
+// Blob Class
+Blob::Blob(std::string newdata){
+    this->data = newdata;
+}
+std::string Blob::type(){
+    return "blob";
+}
+
+// Database Class
+Database::Database(std::filesystem::path path){
+    this->path = path;
+}
+
+// Creating Hash
+std::string calculateSHA1Hex(const std::string& content) {
+    CryptoPP::SHA1 sha1;
+    std::string hash;
+    // Create a filter that calculates the SHA1 hash and then encodes it as hexadecimal
+    CryptoPP::StringSource(content, true, new CryptoPP::HashFilter(sha1, new CryptoPP::HexEncoder(new CryptoPP::StringSink(hash),false)));
+
+    return hash;
+}
+
+void Database::storeContentInDB(Blob object){
+    std::string Data = object.data;
+    std::string content = object.type() + " " + std::to_string(Data.size()) + "\0" + Data; // The null character is included just to use when we itterate over it.
+    object.oid = calculateSHA1Hex(content);
+    std::cout<<object.oid<<std::endl; // Hashes are coming out.
 }

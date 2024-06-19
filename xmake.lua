@@ -1,6 +1,2 @@
-add_requires("")
-add_requires("conan::openssl/1.1.1g", {alias = "openssl", optional = true, debug = true})
-target("test")
-     set_kind("binary")
-     add_files("src/*.cpp")
-     add_packages()
+add_requires("cryptopp")
+

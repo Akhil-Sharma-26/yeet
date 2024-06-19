@@ -1,0 +1,22 @@
+{
+    cryptopp = {
+        __enabled = true,
+        libfiles = "/home/akhil/.xmake/packages/c/cryptopp/8.9.0/9c19a519fd66433683eed4f0bbb0df1a/lib/libcryptopp.a",
+        version = "8.9.0",
+        installdir = "/home/akhil/.xmake/packages/c/cryptopp/8.9.0/9c19a519fd66433683eed4f0bbb0df1a",
+        sysincludedirs = "/home/akhil/.xmake/packages/c/cryptopp/8.9.0/9c19a519fd66433683eed4f0bbb0df1a/include",
+        envs = {
+            LD_LIBRARY_PATH = {
+                "/home/akhil/.xmake/packages/c/cryptopp/8.9.0/9c19a519fd66433683eed4f0bbb0df1a/lib",
+                "/home/akhil/.xmake/packages/c/cmake/3.29.2/c093867d5a85460b8d0b71eca73aaba7/lib"
+            },
+            PATH = {
+                "/home/akhil/.xmake/packages/c/cmake/3.29.2/c093867d5a85460b8d0b71eca73aaba7/bin"
+            }
+        },
+        linkdirs = "/home/akhil/.xmake/packages/c/cryptopp/8.9.0/9c19a519fd66433683eed4f0bbb0df1a/lib",
+        static = true,
+        links = "cryptopp",
+        __requirestr = "cryptopp"
+    }
+}
