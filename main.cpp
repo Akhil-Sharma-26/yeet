@@ -1,7 +1,6 @@
 #include <iostream>
 #include "controllers.hpp"
 #include<filesystem>
-#include<zlib.h>
 #define fs std::filesystem
 #define ll long long
 using namespace std;
@@ -42,8 +41,7 @@ int main(int argc, char* argv[]) {
             }
             else if(arg=="commit"){
                 Commit myCommitObject(path);
-                myCommitObject.listFilesinDir(path);
-                // reading files:
+                myCommitObject.CommitMain(path);
                 
             }
         }

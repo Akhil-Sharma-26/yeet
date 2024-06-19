@@ -1,0 +1,15 @@
+blob 2907#include<string>
+#include<vector>
+#include<filesystem>
+#include<zlib.h> // for database class
+#include<cryptopp/sha.h> // for database class
+#include<iostream>
+#include<fstream>
+
+void YeetAdd();
+
+void YeetStatus();
+
+void YeetInit(std::string path);
+
+class Blob{

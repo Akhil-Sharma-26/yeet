@@ -9,11 +9,11 @@ using the filesystem library to work with different filesystems.
 2. Open the terminal and navigate to the directory where the repository is located.
 3. Run the following command:
 ```bash
- g++ main.cpp controllers.cpp -std=c++17 -o yeet -lcryptopp
+ g++ main.cpp controllers.cpp -std=c++17 -lcryptopp -lz -o yeet 
 ```
 4. Set the permissions for the executable file:
 ```bash
-chmod +x yeet
+chmod a+x yeet
 ```
 5. Set the environment variable:
 ```bash

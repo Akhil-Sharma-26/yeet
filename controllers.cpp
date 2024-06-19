@@ -90,7 +90,7 @@ void YeetAdd(){
 }
 // Commit Class:
 // TODO: Add a check that you can only list files if a .yeet dir is present/ initialized.
-void Commit::listFilesinDir(std::string path){
+void Commit::CommitMain(std::string path){
     for (const auto & entry : fs::directory_iterator(path)){
         // TODO: This is my .gitignore
         const bool IGNORE = entry.path().generic_string().find(".git") != std::string::npos || entry.path().generic_string().find(".yeet") != std::string::npos || entry.path().generic_string().find(".vscode") != std::string::npos || entry.path().generic_string().find(".xmake") != std::string::npos;
@@ -99,18 +99,17 @@ void Commit::listFilesinDir(std::string path){
             continue;
         }
         if(entry.is_directory()) {
-            listFilesinDir(entry.path());
+            CommitMain(entry.path());
         } 
         if(entry.is_directory()) {
             continue;;
         }
-        std::cout << entry.path() << std::endl;
+        // std::cout << entry.path() << std::endl;
 
         std::string data = readFile(entry.path());
         Blob newBlobObject(data);
-        Database DbObj(entry.path());
+        Database DbObj(Commit::path+"/.yeet/objects");
         DbObj.storeContentInDB(newBlobObject);
-
     }
 }
 Commit::Commit(std::string path){
@@ -148,7 +147,7 @@ Database::Database(std::filesystem::path path){
 }
 
 // Creating Hash
-std::string calculateSHA1Hex(const std::string& content) {
+std::string calculateSHA1Hex(const std::string& content) { // used some copilot
     CryptoPP::SHA1 sha1;
     std::string hash;
     // Create a filter that calculates the SHA1 hash and then encodes it as hexadecimal
@@ -161,5 +160,56 @@ void Database::storeContentInDB(Blob object){
     std::string Data = object.data;
     std::string content = object.type() + " " + std::to_string(Data.size()) + "\0" + Data; // The null character is included just to use when we itterate over it.
     object.oid = calculateSHA1Hex(content);
-    std::cout<<object.oid<<std::endl; // Hashes are coming out.
+    // std::cout<<object.oid<<std::endl; // Hashes are coming out.
+    write_object(object.oid,content); // Writing/ making directories of the commit object/blob
+}
+
+
+// Helper Functions:
+std::string Directory_name_Helper(std::string Objpath){
+    std::string ans="";
+    ans+=Objpath[Objpath.size()-36];
+    ans+=Objpath[Objpath.size()-37];
+    return ans;
+}
+
+std::string File_name_Helper(std::string Objpath){
+    std::string ans="";
+    for(int i=Objpath.size()-1;i>=0;i--){
+        if(Objpath[i]=='/'){
+            break;
+        }
+        ans+=Objpath[i];
+    }
+    std::string act_ans="";
+    for(int i=ans.size()-1;i>=0;i--){
+        act_ans+=ans[i];
+    }
+    return act_ans;
+}
+
+std::string Compressing_using_zlib(std::string content){
+    z_stream stream;
+    stream.zalloc = nullptr;
+    stream.zfree = nullptr;
+    stream.opaque = nullptr;
+    stream.avail_in = content.size(); // input size
+    stream.avail_out = content.size() * 1LL*3; //assuming the compressed can become 3 times of og
+    stream.next_in = reinterpret_cast<Bytef*>(const_cast<char*>(content.data())); // new for me, used copilot for this line; // input fil
+    unsigned long compressed_size = content.size()*3;
+    Bytef* compressed_data = new Bytef[compressed_size];
+    stream.next_out = reinterpret_cast<unsigned char*>(compressed_data); // The output file type
+
+    // intializing compression
+    deflateInit(&stream, Z_DEFAULT_COMPRESSION); //The compression level must be Z_DEFAULT_COMPRESSION, or between 0 and 9: 1 gives best speed, 9 gives best compression, 0 gives no compression at all (the input data is simply copied a block at a time). Z_DEFAULT_COMPRESSION requests a default compromise between speed and compression (currently equivalent to level 6).  // from zlib manual.
+
+    // compress:
+    deflate(&stream, Z_BEST_SPEED);
+
+    compressed_size = stream.total_out;
+
+    deflateEnd(&stream);
+    std::string compressed = reinterpret_cast<const char*>(compressed_data);
+    delete[] compressed_data; // releasing the memory of the buffer holding the compressed data
+    return compressed;
 }
