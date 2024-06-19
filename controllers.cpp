@@ -1,6 +1,7 @@
 #include"controllers.hpp"
 #include<bits/stdc++.h>
 #include<filesystem>
+#define fs std::filesystem
 void YeetStatus(){
 
 }
@@ -85,6 +86,48 @@ void YeetAdd(){
 
 }
 
-void YeetCommit(){
-    
+// TODO: Add a check that you can only list files if a .yeet dir is present/ initialized.
+void Commit::listFilesinDir(std::string path){
+    for (const auto & entry : fs::directory_iterator(path)){
+        // TODO: This is my .gitignore
+        const bool IGNORE = entry.path().generic_string().find(".git") != std::string::npos || entry.path().generic_string().find(".yeet") != std::string::npos || entry.path().generic_string().find(".vscode") != std::string::npos;
+
+        if(IGNORE){
+            continue;
+        }
+        if(entry.is_directory()) {
+            listFilesinDir(entry.path());
+        } 
+        if(entry.is_directory()) {
+            continue;;
+        }
+        std::cout << entry.path() << std::endl;
+
+        std::string data = readFile(entry.path());
+        
+    }
+}
+Commit::Commit(std::string path){
+    this->path = path;
+}
+
+/**
+*  @param: `path` is of type fs::path. It needs the path to the file and then it reads all the content of it.
+*/
+std::string Commit::readFile(fs::path path){{
+    // Open the stream to 'lock' the file.
+    std::ifstream f(path, std::ios::in);
+
+    // Obtain the size of the file.
+    const auto sz = fs::file_size(path);
+
+    // Create a buffer.
+    std::string result(sz, '\0');
+
+    // Read the whole file into the buffer.
+    f.read(result.data(), sz);
+
+    return result;
+}
+
 }
