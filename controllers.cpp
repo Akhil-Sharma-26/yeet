@@ -249,28 +249,61 @@ std::string File_name_Helper(std::string Objpath){
     return act_ans;
 }
 
-std::string Compressing_using_zlib(std::string content){
-    z_stream stream;
+// std::string Compressing_using_zlib(std::string content){
+//     z_stream stream;
+//     stream.zalloc = nullptr;
+//     stream.zfree = nullptr;
+//     stream.opaque = nullptr;
+//     stream.avail_in = content.size(); // input size
+//     uLongf compressed_size = compressBound(content.size());
+//     stream.avail_out = compressed_size; //assuming the compressed can become 3 times of og
+//     stream.next_in = reinterpret_cast<Bytef*>(const_cast<char*>(content.data())); // new for me, used copilot for this line; // input fil
+//     Bytef* compressed_data = new Bytef[compressed_size];
+//     stream.next_out = reinterpret_cast<unsigned char*>(compressed_data); // The output file type
+
+//     // intializing compression
+//     deflateInit(&stream, Z_DEFAULT_COMPRESSION); //The compression level must be Z_DEFAULT_COMPRESSION, or between 0 and 9: 1 gives best speed, 9 gives best compression, 0 gives no compression at all (the input data is simply copied a block at a time). Z_DEFAULT_COMPRESSION requests a default compromise between speed and compression (currently equivalent to level 6).  // from zlib manual.
+
+//     // compress:
+//     deflate(&stream, Z_BEST_COMPRESSION);
+
+//     compressed_size = stream.total_out;
+
+//     deflateEnd(&stream);
+//     std::string compressed = reinterpret_cast<const char*>(compressed_data);
+//     delete[] compressed_data; // releasing the memory of the buffer holding the compressed data
+//     return compressed;
+// }
+
+// refractored Compression Logic
+std::string Compressing_using_zlib(std::string& content) {
+    if (content.empty()) return "";
+
+    z_stream stream{};
     stream.zalloc = nullptr;
     stream.zfree = nullptr;
     stream.opaque = nullptr;
-    stream.avail_in = content.size(); // input size
-    unsigned long compressed_size = content.size()*5;
-    stream.avail_out = compressed_size; //assuming the compressed can become 3 times of og
-    stream.next_in = reinterpret_cast<Bytef*>(const_cast<char*>(content.data())); // new for me, used copilot for this line; // input fil
-    Bytef* compressed_data = new Bytef[compressed_size];
-    stream.next_out = reinterpret_cast<unsigned char*>(compressed_data); // The output file type
+    stream.avail_in = static_cast<uInt>(content.size());
+    stream.next_in = reinterpret_cast<Bytef*>(const_cast<char*>(content.data()));
 
-    // intializing compression
-    deflateInit(&stream, Z_DEFAULT_COMPRESSION); //The compression level must be Z_DEFAULT_COMPRESSION, or between 0 and 9: 1 gives best speed, 9 gives best compression, 0 gives no compression at all (the input data is simply copied a block at a time). Z_DEFAULT_COMPRESSION requests a default compromise between speed and compression (currently equivalent to level 6).  // from zlib manual.
+    if (deflateInit(&stream, Z_DEFAULT_COMPRESSION) != Z_OK) {
+        throw std::runtime_error("Failed to initialize zlib deflate.");
+    }
 
-    // compress:
-    deflate(&stream, Z_BEST_COMPRESSION);
+    std::vector<unsigned char> compressedData(compressBound(content.size()));
+    stream.avail_out = compressedData.size();
+    stream.next_out = compressedData.data();
 
-    compressed_size = stream.total_out;
+    if (deflate(&stream, Z_FINISH) != Z_STREAM_END) {
+        deflateEnd(&stream);
+        throw std::runtime_error("Failed to deflate data.");
+    }
 
-    deflateEnd(&stream);
-    std::string compressed = reinterpret_cast<const char*>(compressed_data);
-    delete[] compressed_data; // releasing the memory of the buffer holding the compressed data
-    return compressed;
+    compressedData.resize(stream.total_out);
+
+    if (deflateEnd(&stream) != Z_OK) {
+        throw std::runtime_error("Failed to finalize zlib deflate.");
+    }
+
+    return std::string(compressedData.begin(), compressedData.end());
 }

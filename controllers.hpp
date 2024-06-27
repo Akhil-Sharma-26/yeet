@@ -43,7 +43,7 @@ std::string File_name_Helper(std::string Objpath);
     @param the content of be compressed
     @return The compressed string
  */
-std::string Compressing_using_zlib(std::string content);
+std::string Compressing_using_zlib(std::string& content);
 class Database{
     private:
         /**
