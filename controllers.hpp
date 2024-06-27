@@ -5,6 +5,9 @@
 #include<cryptopp/sha.h> // for database class
 #include<iostream>
 #include<fstream>
+#include<sstream>
+#include<iomanip> // for input/output manipulators
+#include<algorithm>
 
 void YeetAdd();
 
@@ -26,8 +29,11 @@ class Commit{
         std::vector<std::string> IGNORE = {".","..",".git"};
         Commit(std::string path);
         void CommitMain(std::string path);
+        void ListFiles(std::string path,std::vector<std::filesystem::path>& FilePath);
         std::string readFile(std::filesystem::path path);
     };
+
+class Tree;
 
 std::string Directory_name_Helper(std::string Objpath);
 std::string File_name_Helper(std::string Objpath);
@@ -49,13 +55,13 @@ class Database{
             try
             {
                 std::string obj_path = this->path.generic_string() + "/" + oid.substr(0,2) + "/" + oid.substr(2,oid.size()-1);
-                // std::cout<<obj_path<<std::endl;
+                // std::cout<<"The obj path"<<obj_path<<std::endl;
                 std::string Dir_name = Directory_name_Helper(obj_path);
-                std::cout<<"Hello, I am the directory: "<<Dir_name<<std::endl;
+                // std::cout<<"Hello, I am the directory: "<<Dir_name<<std::endl;
                 std::filesystem::create_directory(this->path.generic_string()+"/"+Dir_name);
                 int res = std::system(("touch " + this->path.generic_string()+"/"+Dir_name+"/"+File_name_Helper(obj_path)).c_str());
                 if(res != 0) std::runtime_error("touch is not working \n");
-                std::cout<<"Hello, I am the File: "<<this->path.generic_string()+"/"+Dir_name+"/"+File_name_Helper(obj_path).c_str()<<std::endl;
+                // std::cout<<"Hello, I am the File: "<<this->path.generic_string()+"/"+Dir_name+"/"+File_name_Helper(obj_path).c_str()<<std::endl;
                 // Compressing the content
                 std::string compressed_data = Compressing_using_zlib(content);
                 std::ofstream f(this->path.generic_string()+"/"+Dir_name+"/"+File_name_Helper(obj_path),std::ios::out | std::ios::binary);
@@ -75,5 +81,52 @@ class Database{
     public:
         std::filesystem::path path;
         Database(std::filesystem::path path);
-        void storeContentInDB(Blob object);
+        void storeContentInDB(Blob& object);
+        void storeContentInDB(Tree& object);
 };
+
+/**
+ * An TreeEntry is a simple structure that exists to package up the information that Tree needs to
+know about its contents: the filename, and the object ID. Tree will also need to know the mode
+of each file, but for now all our source code is in non-executable regular files, so we will hard-
+code the 100644 mode string that appears in the tree file.
+ */
+class TreeEntry {
+public:
+    std::string name;
+    std::string oid;
+
+    // TreeEntry(const std::string& name, const std::string& oid) : name(name), oid(oid) {} // same as below
+    TreeEntry(const std::string& name, const std::string& oid) {
+    this->name = name;
+    this->oid = oid;
+    }
+
+};
+
+
+class Tree{
+    // const std::string ENTRY_FORMAT = "Z*H40"; no need
+    public:
+        const std::string MODE = "100644";
+        std::string oid;
+        std::vector<TreeEntry> entries;
+
+        Tree(const std::vector<TreeEntry>& entries){
+            this->entries = entries;
+        }
+
+        std::string Type(){ return "tree"; }
+        std::string ReturnS_tring();
+};
+
+
+
+
+
+
+
+
+
+
+        

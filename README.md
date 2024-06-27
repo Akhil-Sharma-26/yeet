@@ -33,7 +33,7 @@ yeet
 
 
 ## USE COMMAND:
-`g++ main.cpp controllers.cpp -std=c++17 -lcryptopp -o yeet && ./yeet commit`
+` g++ main.cpp controllers.cpp -std=c++17 -lcryptopp -lz -o yeet && ./yeet commit`
 
 ## Make Sure:
 you have lcryptopp installed in your system. I am using fedora and I installed it using:
@@ -41,3 +41,7 @@ you have lcryptopp installed in your system. I am using fedora and I installed i
 sudo dnf install cryptopp-devel
 ```
 Search according to your OS.
+
+## Testing The compression:
+Use the Testing_inflating.cpp file as follow:
+` g++ -lz Testing_Inflating.cpp -o Testing_inflate && ./Testing_inflate`

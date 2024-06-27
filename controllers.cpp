@@ -90,7 +90,10 @@ void YeetAdd(){
 }
 // Commit Class:
 // TODO: Add a check that you can only list files if a .yeet dir is present/ initialized.
-void Commit::CommitMain(std::string path){
+/**
+ * Lists all the files in the current yeet repo.
+ */
+void Commit::ListFiles(std::string path,std::vector<std::filesystem::path>&FilePath){
     for (const auto & entry : fs::directory_iterator(path)){
         // TODO: This is my .gitignore
         const bool IGNORE = entry.path().generic_string().find(".git") != std::string::npos || entry.path().generic_string().find(".yeet") != std::string::npos || entry.path().generic_string().find(".vscode") != std::string::npos || entry.path().generic_string().find(".xmake") != std::string::npos;
@@ -99,17 +102,30 @@ void Commit::CommitMain(std::string path){
             continue;
         }
         if(entry.is_directory()) {
-            CommitMain(entry.path());
+            ListFiles(entry.path(),FilePath);
         } 
         if(entry.is_directory()) {
             continue;;
         }
-        // std::cout << entry.path() << std::endl;
-
-        std::string data = readFile(entry.path());
+        FilePath.push_back(entry);
+    }
+}
+void Commit::CommitMain(std::string path){
+    std::vector<TreeEntry> TreeEntries;
+    Database DbObj(Commit::path+"/.yeet/objects");
+    std::vector<std::filesystem::path>FilePath;
+    ListFiles(path,FilePath);
+    for (const auto & entry : FilePath){
+        std::string data = readFile(entry);
         Blob newBlobObject(data);
-        Database DbObj(Commit::path+"/.yeet/objects");
         DbObj.storeContentInDB(newBlobObject);
+        TreeEntry TreeEntryObj(entry.generic_string(),newBlobObject.oid);
+        TreeEntries.push_back(TreeEntryObj);
+    }
+    if (!TreeEntries.empty()) {
+        Tree TreeObject(TreeEntries);
+        DbObj.storeContentInDB(TreeObject);
+        std::cout << "My Tree Id is wao: " << TreeObject.oid << std::endl;
     }
 }
 Commit::Commit(std::string path){
@@ -136,6 +152,7 @@ std::string Commit::readFile(fs::path path){
 // Blob Class
 Blob::Blob(std::string newdata){
     this->data = newdata;
+    // std::cout<<"The blob oid is: "<<this->oid<<std::endl;
 }
 std::string Blob::type(){
     return "blob";
@@ -156,7 +173,7 @@ std::string calculateSHA1Hex(const std::string& content) { // used some copilot
     return hash;
 }
 
-void Database::storeContentInDB(Blob object){
+void Database::storeContentInDB(Blob& object){
     std::string Data = object.data;
     std::string content = object.type() + " " + std::to_string(Data.size()) + "\0" + Data; // The null character is included just to use when we itterate over it.
     object.oid = calculateSHA1Hex(content);
@@ -164,12 +181,56 @@ void Database::storeContentInDB(Blob object){
     write_object(object.oid,content); // Writing/ making directories of the commit object/blob
 }
 
+void Database::storeContentInDB(Tree& object){
+    std::string Data = object.ReturnS_tring();
+    std::string content = object.Type() + " " + std::to_string(Data.size()) + "\0" + Data; // The null character is included just to use when we itterate over it.
+    // std::cout<<"the content: "<<content<<std::endl;
+    object.oid = calculateSHA1Hex(content);
+    // std::cout<<"The hash of the tree object is: "<<object.oid<<std::endl; // Hashes are coming out.
+    write_object(object.oid,content); // Writing/ making directories of the commit object/blob
+}
+
+
+// Tree Class
+
+/**
+ * This function converts the vector<TreeEntry> to string
+ * @return String, which will be used in storing the tree to Database.
+ * The entries contains all the files commit info.
+ */
+std::string Tree::ReturnS_tring(){
+    std::ostringstream result;
+
+    // std::ostringstream result; // The ostringstream stands for output string stream just like ofstream
+    // Using the 'result' stream to concatenate strings and numbers
+    // result << "The answer to life, the universe, and everything is " << 42 << ".";
+    // Sort entries by name
+
+    std::vector<TreeEntry> sortedEntries = entries;
+    // for(auto it:sortedEntries){
+    //     std::cout<<it.name<<" "<<it.oid<<std::endl;
+    // }
+    std::sort(sortedEntries.begin(), sortedEntries.end(), [](const TreeEntry& a, const TreeEntry& b) {
+        return a.name < b.name;
+    });
+
+    // for(auto it:sortedEntries){
+    //     std::cout<<it.name<<" "<<it.oid<<std::endl;
+    // }
+
+    // Format entries
+    for (const auto& entry : sortedEntries) {
+        result << Tree::MODE << entry.name << "\0" << entry.oid;
+    }
+
+    return result.str();
+}
 
 // Helper Functions:
 std::string Directory_name_Helper(std::string Objpath){
     std::string ans="";
-    ans+=Objpath[Objpath.size()-36];
-    ans+=Objpath[Objpath.size()-37];
+    ans+=Objpath[Objpath.size()-41];
+    ans+=Objpath[Objpath.size()-40];
     return ans;
 }
 
@@ -194,9 +255,9 @@ std::string Compressing_using_zlib(std::string content){
     stream.zfree = nullptr;
     stream.opaque = nullptr;
     stream.avail_in = content.size(); // input size
-    stream.avail_out = content.size() * 1LL*3; //assuming the compressed can become 3 times of og
+    unsigned long compressed_size = content.size()*5;
+    stream.avail_out = compressed_size; //assuming the compressed can become 3 times of og
     stream.next_in = reinterpret_cast<Bytef*>(const_cast<char*>(content.data())); // new for me, used copilot for this line; // input fil
-    unsigned long compressed_size = content.size()*3;
     Bytef* compressed_data = new Bytef[compressed_size];
     stream.next_out = reinterpret_cast<unsigned char*>(compressed_data); // The output file type
 
@@ -204,7 +265,7 @@ std::string Compressing_using_zlib(std::string content){
     deflateInit(&stream, Z_DEFAULT_COMPRESSION); //The compression level must be Z_DEFAULT_COMPRESSION, or between 0 and 9: 1 gives best speed, 9 gives best compression, 0 gives no compression at all (the input data is simply copied a block at a time). Z_DEFAULT_COMPRESSION requests a default compromise between speed and compression (currently equivalent to level 6).  // from zlib manual.
 
     // compress:
-    deflate(&stream, Z_BEST_SPEED);
+    deflate(&stream, Z_BEST_COMPRESSION);
 
     compressed_size = stream.total_out;
 

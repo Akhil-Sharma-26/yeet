@@ -42,7 +42,6 @@ int main(int argc, char* argv[]) {
             else if(arg=="commit"){
                 Commit myCommitObject(path);
                 myCommitObject.CommitMain(path);
-                
             }
         }
 
