@@ -1,12 +1,15 @@
-
-https://en.cppreference.com/w/cpp/filesystem
-
+### Notice: 
+This has not been fully tested on Windows yet, so if you are using Windows and have found some issues, please give me feedback. :)
 using the filesystem library to work with different filesystems.
 
+# Introduction:
+- This is a project to make my own git with some improvements.
+- Through this, I also want to learn the backend of version control and make my grasp stronger on C++.
+- I am trying to solve some of my personal problems and gain an understanding of the Computer filesystem and its management.
 
-## HOW TO USE IN LINUX/UNIX ENVIROMENT
+## HOW TO USE IN LINUX/UNIX ENVIRONMENT
 1. Clone/Download this repository.
-2. Open the terminal and navigate to the directory where the repository is located.
+2. Open the terminal and navigate to this directory.
 3. Run the following command:
 ```bash
  g++ main.cpp controllers.cpp -std=c++17 -lcryptopp -lz -o yeet 
@@ -19,9 +22,9 @@ chmod a+x yeet
 ```bash
 export PATH=$PATH:/path/to/yeet/repo/
 ```
-6. Run the executable file:
+6. Run the executable file and initialize an empty yeet repo:
 ```bash
-yeet
+yeet init .
 ```
 
 ## CAREFUL
@@ -33,6 +36,7 @@ yeet
 
 
 ## USE COMMAND:
+- For Commit:
 ` g++ main.cpp controllers.cpp -std=c++17 -lcryptopp -lz -o yeet && ./yeet commit`
 
 ## Make Sure:
@@ -43,7 +47,7 @@ sudo dnf install cryptopp-devel
 Search according to your OS.
 
 ## Testing The compression:
-Use the Testing_inflating.cpp file as follow:
+Use the Testing_inflating.cpp file as follow for decompressing your blob data: 
 ` g++ -lz Testing_Inflating.cpp -o Testing_inflate && ./Testing_inflate`
 
 You can also use the following command:
@@ -53,5 +57,5 @@ You can also use the following command:
 
 
 ## For Tester:
-`g++ main.cpp controllers.cpp -std=c++17 -lcryptopp -lz -o yeet && ./yeet init .`
-`g++ main.cpp controllers.cpp -std=c++17 -lcryptopp -lz -o yeet && ./yeet commit`
+- `g++ main.cpp controllers.cpp -std=c++17 -lcryptopp -lz -o yeet && ./yeet init .`
+- `g++ main.cpp controllers.cpp -std=c++17 -lcryptopp -lz -o yeet && ./yeet commit`
