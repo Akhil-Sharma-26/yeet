@@ -45,3 +45,13 @@ Search according to your OS.
 ## Testing The compression:
 Use the Testing_inflating.cpp file as follow:
 ` g++ -lz Testing_Inflating.cpp -o Testing_inflate && ./Testing_inflate`
+
+You can also use the following command:
+`zlib-flate -uncompress < .yeet/objects/5d/8d5a1314ec0f6a5b7f8ac27dfbf53ed82bf3fe > test-abc`
+
+
+
+
+## For Tester:
+`g++ main.cpp controllers.cpp -std=c++17 -lcryptopp -lz -o yeet && ./yeet init .`
+`g++ main.cpp controllers.cpp -std=c++17 -lcryptopp -lz -o yeet && ./yeet commit`

@@ -125,12 +125,42 @@ void Commit::CommitMain(std::string path){
     if (!TreeEntries.empty()) {
         Tree TreeObject(TreeEntries);
         DbObj.storeContentInDB(TreeObject);
-        std::cout << "My Tree Id is wao: " << TreeObject.oid << std::endl;
+        // std::cout << "My Tree Id is wao: " << TreeObject.oid << std::endl;
+    
+        std::string name = getenv("YEET_AUTHOR_NAME");
+        std::string email = getenv("YEET_AUTHOR_EMAIL");
+        // std::cout<<"Name: "<<name<<"\nmail: "<<email<<"\n"; // working
+        time_t currtime = time(nullptr);
+        Author NewAuthorObj(name,email,currtime);
+        std::string author = NewAuthorObj.to_stringg();
+        std::string message; std::cout<<"\nPlease enter your Commit Message: \n";
+        // std::cin>>message; // This doesn't takes any spaces
+        std::getline(std::cin >> std::ws, message); // ws means white spaces also.
+        Commit MainCommitObj(TreeObject.oid,author,message);
+        DbObj.storeContentInDB(MainCommitObj);
+
+        std::ofstream Head(Commit::path+"/.yeet/HEAD");
+        if(Head.is_open()){
+            Head<<MainCommitObj.oid;
+        }
+        else{
+            std::cout<<"Unable to oope the Head File!!"<<std::endl;
+        }
+        std::cout<<"Your Commit id is: "<<MainCommitObj.oid<<"\nCommit-Message: "<<MainCommitObj.CommitMessage<<"\n";
     }
 }
+
 Commit::Commit(std::string path){
     this->path = path;
 }
+
+Commit::Commit(std::string TreeOid, std::string AuthorData, std::string CommitMessage){
+    this->AuthorData=AuthorData;
+    this->TreeOID=TreeOid;
+    this->CommitMessage=CommitMessage;
+    this->Writtenlines =  "tree "+TreeOID+"\nauthor "+AuthorData+"\nCommitedBy "+AuthorData+"\n\nCommitMessage: "+CommitMessage;
+}
+
 
 /**
 *  @param: `path` is of type fs::path. It needs the path to the file and then it reads all the content of it.
@@ -190,6 +220,14 @@ void Database::storeContentInDB(Tree& object){
     write_object(object.oid,content); // Writing/ making directories of the commit object/blob
 }
 
+void Database::storeContentInDB(Commit& object){
+    std::string Data = object.Writtenlines;
+    std::string content = "Commit  " + std::to_string(Data.size()) + "\0" + Data; // The null character is included just to use when we itterate over it.
+    // std::cout<<"the content: "<<content<<std::endl;
+    object.oid = calculateSHA1Hex(content);
+    // std::cout<<"The hash of the Commit object is: "<<object.oid<<std::endl; // Hashes are coming out.
+    write_object(object.oid,content); // Writing/ making directories of the commit object/blob
+}
 
 // Tree Class
 
@@ -226,7 +264,16 @@ std::string Tree::ReturnS_tring(){
     return result.str();
 }
 
+
+
 // Helper Functions:
+std::string timeToString(time_t currtime) { 
+    std::stringstream ss; 
+    ss << std::put_time(localtime(&currtime), "%Y-%m-%d %H:%M:%S"); // this is new to me.
+    return ss.str();
+}
+
+
 std::string Directory_name_Helper(std::string Objpath){
     std::string ans="";
     ans+=Objpath[Objpath.size()-41];
@@ -307,3 +354,12 @@ std::string Compressing_using_zlib(std::string& content) {
 
     return std::string(compressedData.begin(), compressedData.end());
 }
+
+
+// Author Class:
+std::string Author::to_stringg(){
+    std::string thecurrTime=timeToString(time);
+    return name+" <"+email+"> "+ thecurrTime;
+}
+
+

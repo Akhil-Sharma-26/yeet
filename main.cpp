@@ -10,7 +10,7 @@ int main(int argc, char* argv[]) {
     // Flushing the cout and cerr.
     cout<<unitbuf; 
     cerr<<unitbuf;
-    cout<<__cplusplus<<endl; // To know my cpp version
+    cout<<"Using cpp version: "<<__cplusplus<<endl; // To know my cpp version
     string path = fs::current_path();
     try{
         if(argc==1){
@@ -50,7 +50,7 @@ int main(int argc, char* argv[]) {
     }
     catch(const std::exception& e){
         // TODO write the number of arguments and the argv required for each command in the Documentation.
-        std::cerr << e.what() << "\nPlease give the enough arguments with the commands. \n";
+        std::cerr << e.what() << "\nException Happened somewhere! Error:501 \n";
     }
     
     return EXIT_SUCCESS;

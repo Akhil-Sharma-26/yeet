@@ -15,6 +15,7 @@ void YeetStatus();
 
 void YeetInit(std::string path);
 
+class Tree;
 class Blob{
     public:
         std::string oid;
@@ -26,14 +27,18 @@ class Blob{
 class Commit{
     public:
         std::string path;
+        std::string TreeOID;
+        std::string AuthorData;
+        std::string CommitMessage;
+        std::string Writtenlines;
+        std::string oid;
         std::vector<std::string> IGNORE = {".","..",".git"};
         Commit(std::string path);
+        Commit(std::string TreeOid, std::string AuthorData, std::string CommitMessage);
         void CommitMain(std::string path);
         void ListFiles(std::string path,std::vector<std::filesystem::path>& FilePath);
         std::string readFile(std::filesystem::path path);
     };
-
-class Tree;
 
 std::string Directory_name_Helper(std::string Objpath);
 std::string File_name_Helper(std::string Objpath);
@@ -83,6 +88,7 @@ class Database{
         Database(std::filesystem::path path);
         void storeContentInDB(Blob& object);
         void storeContentInDB(Tree& object);
+        void storeContentInDB(Commit& object);
 };
 
 /**
@@ -121,7 +127,18 @@ class Tree{
 };
 
 
-
+class Author{
+    public:
+        std::string name;
+        std::string email;
+        time_t time;
+        Author(std::string name,std::string email,time_t& time){
+            this->email=email;
+            this->name=name;
+            this->time=time;
+        }
+        std::string to_stringg();
+};
 
 
 
