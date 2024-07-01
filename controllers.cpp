@@ -111,54 +111,65 @@ void Commit::ListFiles(std::string path,std::vector<std::filesystem::path>&FileP
     }
 }
 void Commit::CommitMain(std::string path){
-    std::vector<TreeEntry> TreeEntries;
-    Database DbObj(Commit::path+"/.yeet/objects");
-    std::vector<std::filesystem::path>FilePath;
-    ListFiles(path,FilePath);
-    for (const auto & entry : FilePath){
-        std::string data = readFile(entry);
-        Blob newBlobObject(data);
-        DbObj.storeContentInDB(newBlobObject);
-        TreeEntry TreeEntryObj(entry.generic_string(),newBlobObject.oid);
-        TreeEntries.push_back(TreeEntryObj);
-    }
-    if (!TreeEntries.empty()) {
-        Tree TreeObject(TreeEntries);
-        DbObj.storeContentInDB(TreeObject);
-        // std::cout << "My Tree Id is wao: " << TreeObject.oid << std::endl;
-    
-        std::string name = getenv("YEET_AUTHOR_NAME");
-        std::string email = getenv("YEET_AUTHOR_EMAIL");
-        // std::cout<<"Name: "<<name<<"\nmail: "<<email<<"\n"; // working
-        time_t currtime = time(nullptr);
-        Author NewAuthorObj(name,email,currtime);
-        std::string author = NewAuthorObj.to_stringg();
-        std::string message; std::cout<<"\nPlease enter your Commit Message: \n";
-        // std::cin>>message; // This doesn't takes any spaces
-        std::getline(std::cin >> std::ws, message); // ws means white spaces also.
-        Commit MainCommitObj(TreeObject.oid,author,message);
-        DbObj.storeContentInDB(MainCommitObj);
+    try
+    {
+        std::vector<TreeEntry> TreeEntries;
+        Database DbObj(Commit::path+"/.yeet/objects");
+        Refs RefObj(Commit::path);
+        std::vector<std::filesystem::path>FilePath;
+        ListFiles(path,FilePath);
+        for (const auto & entry : FilePath){
+            std::string data = readFile(entry);
+            Blob newBlobObject(data);
+            DbObj.storeContentInDB(newBlobObject);
+            TreeEntry TreeEntryObj(entry.generic_string(),newBlobObject.oid);
+            TreeEntries.push_back(TreeEntryObj);
+        }
+        if (!TreeEntries.empty()) {
+            Tree TreeObject(TreeEntries);
+            DbObj.storeContentInDB(TreeObject);
+            // std::cout << "My Tree Id is wao: " << TreeObject.oid << std::endl;
 
-        std::ofstream Head(Commit::path+"/.yeet/HEAD");
-        if(Head.is_open()){
-            Head<<MainCommitObj.oid;
+            std::string parent = RefObj.Read_HEAD(); // The oid of previous commit
+            std::string name = getenv("YEET_AUTHOR_NAME");
+            std::string email = getenv("YEET_AUTHOR_EMAIL");
+            // std::cout<<"Name: "<<name<<"\nmail: "<<email<<"\n"; // working
+            time_t currtime = time(nullptr);
+            Author NewAuthorObj(name,email,currtime);
+            std::string author = NewAuthorObj.to_stringg();
+            std::string message; std::cout<<"\nPlease enter your Commit Message: \n";
+            // std::cin>>message; // This doesn't takes any spaces " "
+            std::getline(std::cin >> std::ws, message); // ws means white spaces.
+            Commit MainCommitObj(TreeObject.oid,author,message,parent);
+            DbObj.storeContentInDB(MainCommitObj);
+            RefObj.update_HEAD(MainCommitObj.oid); // Updating the HEAD file to new commit
+
+            std::cout<<"the parent value: "<<parent<<std::endl;
+            bool is_RootCommit = false;
+            if(parent=="ref:") is_RootCommit=true;
+            
+            if(is_RootCommit)std::cout<<"This is a root commit\n"<<std::endl;
+            std::cout<<"Your Commit id is: "<<MainCommitObj.oid<<"\nCommit-Message: "<<MainCommitObj.CommitMessage<<"\n";
         }
-        else{
-            std::cout<<"Unable to oope the Head File!!"<<std::endl;
-        }
-        std::cout<<"Your Commit id is: "<<MainCommitObj.oid<<"\nCommit-Message: "<<MainCommitObj.CommitMessage<<"\n";
     }
+    catch(const std::exception& e)
+    {
+        std::cerr << '\n An error occured while commit your latest changes. \nError by e.what(): '  << e.what();
+    }
+    
+    
 }
 
 Commit::Commit(std::string path){
     this->path = path;
 }
 
-Commit::Commit(std::string TreeOid, std::string AuthorData, std::string CommitMessage){
+Commit::Commit(std::string TreeOid, std::string AuthorData, std::string CommitMessage,std::string parent){
     this->AuthorData=AuthorData;
     this->TreeOID=TreeOid;
     this->CommitMessage=CommitMessage;
-    this->Writtenlines =  "tree "+TreeOID+"\nauthor "+AuthorData+"\nCommitedBy "+AuthorData+"\n\nCommitMessage: "+CommitMessage;
+    this->parent=parent;
+    this->Writtenlines = "parent: " + parent +  "tree: "+TreeOID+"\nauthor: "+AuthorData+"\nCommitedBy: "+AuthorData+"\n\nCommitMessage: "+CommitMessage;
 }
 
 
@@ -363,3 +374,31 @@ std::string Author::to_stringg(){
 }
 
 
+// History
+// Refs Class:
+// Constructor of Ref Class
+Refs::Refs(std::string path){
+    this->path = path;
+}
+
+// @return the path to the HEAD file
+std::string Refs::HEAD_path(){
+    return path + "/.yeet/HEAD";
+}
+
+// Updates the HEAD file to the latest commit
+void Refs::update_HEAD(std::string oid){
+    std::fstream headFile(Refs::HEAD_path(),std::ios::binary);
+    if(headFile){
+        headFile<<oid;
+    }
+}
+
+std::string Refs::Read_HEAD(){
+    std::ifstream headFile(Refs::HEAD_path(),std::ios::binary);
+    std::string FileContent; // Becuase I am using string, It will not pick up anything after a space. I need to use getLine() function.
+    if(headFile){
+        headFile>>FileContent; // All content of the file into the string
+    }
+    return FileContent;
+}

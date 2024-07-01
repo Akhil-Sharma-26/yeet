@@ -32,9 +32,10 @@ class Commit{
         std::string CommitMessage;
         std::string Writtenlines;
         std::string oid;
+        std::string parent;
         std::vector<std::string> IGNORE = {".","..",".git"};
         Commit(std::string path);
-        Commit(std::string TreeOid, std::string AuthorData, std::string CommitMessage);
+        Commit(std::string TreeOid, std::string AuthorData, std::string CommitMessage, std::string parent);
         void CommitMain(std::string path);
         void ListFiles(std::string path,std::vector<std::filesystem::path>& FilePath);
         std::string readFile(std::filesystem::path path);
@@ -141,7 +142,16 @@ class Author{
 };
 
 
-
+// For History:
+class Refs{
+    public:
+        std::string path;
+        std::string oid;
+        Refs(std::string path);
+        void update_HEAD(std::string oid);
+        std::string HEAD_path();
+        std::string Read_HEAD();
+};
 
 
 
