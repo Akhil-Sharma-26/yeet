@@ -56,6 +56,12 @@ You can also use the following command:
 
 
 
-## For Tester:
-- `g++ main.cpp controllers.cpp -std=c++17 -lcryptopp -lz -o yeet && ./yeet init .`
-- `g++ main.cpp controllers.cpp -std=c++17 -lcryptopp -lz -o yeet && ./yeet commit`
+`g++ main.cpp controllers.cpp -std=c++17 -lcryptopp -lz -o yeet && ./yeet init .`
+`g++ main.cpp controllers.cpp -std=c++17 -lcryptopp -lz -o yeet && ./yeet commit`
+
+
+## COMMENTS/TODO:
+- For now, I am leaving the locks and concurrency of file system and other stuff that I learnt in OS. I will implement them later.
+- I am also leaving the error handling for now.
+- Temparary Path approach for storing objects will do it later.
+

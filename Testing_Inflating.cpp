@@ -66,7 +66,7 @@ int main() {
     std::cout<<"Help"<<std::endl; 
     auto start = std::chrono::high_resolution_clock::now();
     // This saved me a lot of time today. 
-    std::string inputFilename = "/home/akhil/dev/yeet/.yeet/objects/80/01cdc26aac0acc2f9f767eff0ba009e2fea3b5"; 
+    std::string inputFilename = "/home/akhil/dev/yeet/.yeet/objects/74/3364038781a3bb4172ec1d2d922b8bcd7ac4fe"; 
     std::string outputFilename = "/home/akhil/dev/yeet/test-abc";
 
     auto compressedData = readFile(inputFilename);
