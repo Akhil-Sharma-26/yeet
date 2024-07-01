@@ -233,7 +233,7 @@ void Database::storeContentInDB(Tree& object){
 
 void Database::storeContentInDB(Commit& object){
     std::string Data = object.Writtenlines;
-    std::string content = "Commit  \nData Size: " + std::to_string(Data.size()) + "\0\n" + Data; // The null character is included just to use when we itterate over it.
+    std::string content = "Commit  \nData Size: " + std::to_string(Data.size()) + "\0 \n" + Data; // The null character is included just to use when we itterate over it.
     // TODO: I have added Data size as extra here for readablitliy, but it may create problem later.
     // std::cout<<"the content: "<<content<<std::endl;
     object.oid = calculateSHA1Hex(content);

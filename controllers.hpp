@@ -63,8 +63,12 @@ class Database{
                 std::string obj_path = this->path.generic_string() + "/" + oid.substr(0,2) + "/" + oid.substr(2,oid.size()-1);
                 // std::cout<<"The obj path"<<obj_path<<std::endl;
                 std::string Dir_name = Directory_name_Helper(obj_path);
+                /** Actual File Path to the object created. */
+                std::string File_Path = (this->path.generic_string()+"/"+Dir_name+"/"+File_name_Helper(obj_path)).c_str();
+                if(std::filesystem::exists(File_Path)) return;
                 // std::cout<<"Hello, I am the directory: "<<Dir_name<<std::endl;
                 std::filesystem::create_directory(this->path.generic_string()+"/"+Dir_name);
+                /** res contains the return value of the `touch` command. */
                 int res = std::system(("touch " + this->path.generic_string()+"/"+Dir_name+"/"+File_name_Helper(obj_path)).c_str());
                 if(res != 0) std::runtime_error("touch is not working \n");
                 // std::cout<<"Hello, I am the File: "<<this->path.generic_string()+"/"+Dir_name+"/"+File_name_Helper(obj_path).c_str()<<std::endl;
