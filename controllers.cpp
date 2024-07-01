@@ -144,11 +144,11 @@ void Commit::CommitMain(std::string path){
             DbObj.storeContentInDB(MainCommitObj);
             RefObj.update_HEAD(MainCommitObj.oid); // Updating the HEAD file to new commit
 
-            std::cout<<"the parent value: "<<parent<<std::endl;
+            // std::cout<<"the parent value: "<<parent<<std::endl;
             bool is_RootCommit = false;
             if(parent=="ref:") is_RootCommit=true;
             
-            if(is_RootCommit)std::cout<<"This is a root commit\n"<<std::endl;
+            if(is_RootCommit)std::cout<<"\nThis is a root commit"<<std::endl;
             std::cout<<"Your Commit id is: "<<MainCommitObj.oid<<"\nCommit-Message: "<<MainCommitObj.CommitMessage<<"\n";
         }
     }
@@ -169,7 +169,7 @@ Commit::Commit(std::string TreeOid, std::string AuthorData, std::string CommitMe
     this->TreeOID=TreeOid;
     this->CommitMessage=CommitMessage;
     this->parent=parent;
-    this->Writtenlines = "parent: " + parent +  "tree: "+TreeOID+"\nauthor: "+AuthorData+"\nCommitedBy: "+AuthorData+"\n\nCommitMessage: "+CommitMessage;
+    this->Writtenlines = "parent: " + parent +  "\ntree: "+TreeOID+"\nauthor: "+AuthorData+"\nCommitedBy: "+AuthorData+"\n\nCommitMessage: "+CommitMessage;
 }
 
 
@@ -233,7 +233,8 @@ void Database::storeContentInDB(Tree& object){
 
 void Database::storeContentInDB(Commit& object){
     std::string Data = object.Writtenlines;
-    std::string content = "Commit  " + std::to_string(Data.size()) + "\0" + Data; // The null character is included just to use when we itterate over it.
+    std::string content = "Commit  \nData Size: " + std::to_string(Data.size()) + "\0\n" + Data; // The null character is included just to use when we itterate over it.
+    // TODO: I have added Data size as extra here for readablitliy, but it may create problem later.
     // std::cout<<"the content: "<<content<<std::endl;
     object.oid = calculateSHA1Hex(content);
     // std::cout<<"The hash of the Commit object is: "<<object.oid<<std::endl; // Hashes are coming out.
@@ -388,9 +389,13 @@ std::string Refs::HEAD_path(){
 
 // Updates the HEAD file to the latest commit
 void Refs::update_HEAD(std::string oid){
-    std::fstream headFile(Refs::HEAD_path(),std::ios::binary);
-    if(headFile){
-        headFile<<oid;
+    // std::cout<<path<<std::endl;
+    std::ofstream headFile( path+"/.yeet/HEAD");
+    if (headFile.is_open()) {
+        headFile << oid;
+        headFile.close();
+    } else {
+        throw std::runtime_error("Failed to open .yeet/HEAD file.\n");
     }
 }
 
