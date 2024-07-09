@@ -145,7 +145,7 @@ void Commit::CommitMain(std::string path){
             time_t currtime = time(nullptr);
             Author NewAuthorObj(name,email,currtime);
             std::string author = NewAuthorObj.to_stringg();
-            std::string message; std::cout<<"\nPlease enter your Commit Message: \n";
+            std::string message; std::cout<<"\nPlease enter your Commit Message:\n";
             // std::cin>>message; // This doesn't takes any spaces " "
             std::getline(std::cin >> std::ws, message); // ws means white spaces.
             Commit MainCommitObj(TreeObject.oid,author,message,parent);
@@ -155,9 +155,8 @@ void Commit::CommitMain(std::string path){
             // std::cout<<"the parent value: "<<parent<<std::endl;
             bool is_RootCommit = false;
             if(parent=="ref:") is_RootCommit=true;
-            std::cout<<TreeObject.ReturnS_tring()<<"Heeleel"<<std::endl;
             if(is_RootCommit)std::cout<<"\nThis is a root commit"<<std::endl;
-            std::cout<<"Your Commit id is sgsdgsdgsd "<<MainCommitObj.oid<<"\nCommit-Message: "<<MainCommitObj.CommitMessage<<"\n";
+            std::cout<<"Your Commit id is: "<<MainCommitObj.oid<<"\nCommit-Message: "<<MainCommitObj.CommitMessage<<"\n";
         }
     }
     catch(const std::exception& e)
@@ -270,7 +269,7 @@ std::string Tree::ReturnS_tring(){
 
     for (const auto& entry : entries) {
         std::string FileStat = (entry.stat == "Exe") ? entry.EXE_MODE : entry.REGULAR_MODE;
-        result << FileStat << " " << entry.name << " " << entry.oid;
+        result << FileStat << " " << entry.name << " " << entry.oid<< "\n";
     }
     std::cout<<result.str()<<std::endl;
     return result.str();
