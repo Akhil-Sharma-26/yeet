@@ -50,6 +50,7 @@ int main(int argc, char* argv[]) {
     }
     catch(const std::exception& e){
         // TODO write the number of arguments and the argv required for each command in the Documentation.
+        std::cout<<"Wtf";
         std::cerr << e.what() << "\nException Happened somewhere! Error:501 \n";
     }
     

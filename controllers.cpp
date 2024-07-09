@@ -95,7 +95,7 @@ void YeetAdd(){
  */
 void Commit::ListFiles(std::string path,std::vector<std::filesystem::path>&FilePath){
     for (const auto & entry : fs::directory_iterator(path)){
-        // TODO: This is my .gitignore
+        // This is my .gitignore
         const bool IGNORE = entry.path().generic_string().find(".git") != std::string::npos || entry.path().generic_string().find(".yeet") != std::string::npos || entry.path().generic_string().find(".vscode") != std::string::npos || entry.path().generic_string().find(".xmake") != std::string::npos;
 
         if(IGNORE){
@@ -119,11 +119,19 @@ void Commit::CommitMain(std::string path){
         std::vector<std::filesystem::path>FilePath;
         ListFiles(path,FilePath);
         for (const auto & entry : FilePath){
+            std::string _stat = "Non-Exe";
+            if (! access (entry.c_str(), X_OK)){ // Checks if a file is exe or not
+                _stat = "Exe";
+            }
+             // content of Current FiLe.
             std::string data = readFile(entry);
-            Blob newBlobObject(data);
-            DbObj.storeContentInDB(newBlobObject);
-            TreeEntry TreeEntryObj(entry.generic_string(),newBlobObject.oid);
-            TreeEntries.push_back(TreeEntryObj);
+            // Blob of that Data
+            Blob newBlobObject(data); 
+            // Storing that Blob
+            DbObj.storeContentInDB(newBlobObject); 
+            // Making a TreeEntry with path of that Blob
+            TreeEntry TreeEntryObj(entry.generic_string(),newBlobObject.oid,_stat); 
+            TreeEntries.push_back(TreeEntryObj); 
         }
         if (!TreeEntries.empty()) {
             Tree TreeObject(TreeEntries);
@@ -147,14 +155,14 @@ void Commit::CommitMain(std::string path){
             // std::cout<<"the parent value: "<<parent<<std::endl;
             bool is_RootCommit = false;
             if(parent=="ref:") is_RootCommit=true;
-            
+            std::cout<<TreeObject.ReturnS_tring()<<"Heeleel"<<std::endl;
             if(is_RootCommit)std::cout<<"\nThis is a root commit"<<std::endl;
-            std::cout<<"Your Commit id is: "<<MainCommitObj.oid<<"\nCommit-Message: "<<MainCommitObj.CommitMessage<<"\n";
+            std::cout<<"Your Commit id is sgsdgsdgsd "<<MainCommitObj.oid<<"\nCommit-Message: "<<MainCommitObj.CommitMessage<<"\n";
         }
     }
     catch(const std::exception& e)
     {
-        std::cerr << '\n An error occured while commit your latest changes. \nError by e.what(): '  << e.what();
+        std::cerr << "\n An error occured while commit your latest changes. \nError by e.what(): "<< e.what();
     }
     
     
@@ -256,23 +264,15 @@ std::string Tree::ReturnS_tring(){
     // result << "The answer to life, the universe, and everything is " << 42 << ".";
     // Sort entries by name
 
-    std::vector<TreeEntry> sortedEntries = entries;
-    // for(auto it:sortedEntries){
-    //     std::cout<<it.name<<" "<<it.oid<<std::endl;
-    // }
-    std::sort(sortedEntries.begin(), sortedEntries.end(), [](const TreeEntry& a, const TreeEntry& b) {
+    std::sort(entries.begin(), entries.end(), [](const TreeEntry& a, const TreeEntry& b) {
         return a.name < b.name;
     });
 
-    // for(auto it:sortedEntries){
-    //     std::cout<<it.name<<" "<<it.oid<<std::endl;
-    // }
-
-    // Format entries
-    for (const auto& entry : sortedEntries) {
-        result << Tree::MODE << entry.name << "\0" << entry.oid;
+    for (const auto& entry : entries) {
+        std::string FileStat = (entry.stat == "Exe") ? entry.EXE_MODE : entry.REGULAR_MODE;
+        result << FileStat << " " << entry.name << " " << entry.oid;
     }
-
+    std::cout<<result.str()<<std::endl;
     return result.str();
 }
 
@@ -407,3 +407,5 @@ std::string Refs::Read_HEAD(){
     }
     return FileContent;
 }
+
+
