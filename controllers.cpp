@@ -271,7 +271,7 @@ std::string Tree::ReturnS_tring(){
         std::string FileStat = (entry.stat == "Exe") ? entry.EXE_MODE : entry.REGULAR_MODE;
         result << FileStat << " " << entry.name << " " << entry.oid<< "\n";
     }
-    std::cout<<result.str()<<std::endl;
+    // std::cout<<result.str()<<std::endl;
     return result.str();
 }
 
