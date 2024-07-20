@@ -1,3 +1,0 @@
-/home/akhil/dev/yeet/build/CMakeFiles/yeet.dir
-/home/akhil/dev/yeet/build/CMakeFiles/edit_cache.dir
-/home/akhil/dev/yeet/build/CMakeFiles/rebuild_cache.dir

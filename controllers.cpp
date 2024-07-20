@@ -92,6 +92,7 @@ void YeetAdd(){
 // TODO: Add a check that you can only list files if a .yeet dir is present/ initialized.
 /**
  * Lists all the files in the current yeet repo.
+ * @author Akhil Sharma
  */
 void Commit::ListFiles(std::string path,std::vector<std::filesystem::path>&FilePath){
     for (const auto & entry : fs::directory_iterator(path)){

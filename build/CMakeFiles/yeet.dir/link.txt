@@ -1,1 +1,0 @@
-/usr/bin/g++ -g CMakeFiles/yeet.dir/main.cpp.o CMakeFiles/yeet.dir/controllers.cpp.o -o yeet  -lcryptopp -lz 
