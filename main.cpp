@@ -12,6 +12,7 @@ int main(int argc, char* argv[]) {
     cerr<<unitbuf;
     cout<<"Using cpp version: "<<__cplusplus<<endl; // To know my cpp version
     string path = fs::current_path();
+    cout<<path<<endl;
     try{
         if(argc==1){
             // TODO Add some useful string in this case. As is for user to know the different types of commands.
@@ -50,6 +51,7 @@ int main(int argc, char* argv[]) {
     }
     catch(const std::exception& e){
         // TODO write the number of arguments and the argv required for each command in the Documentation.
+        std::cout<<"Wtf";
         std::cerr << e.what() << "\nException Happened somewhere! Error:501 \n";
     }
     

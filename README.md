@@ -59,6 +59,8 @@ You can also use the following command:
 `g++ main.cpp controllers.cpp -std=c++17 -lcryptopp -lz -o yeet && ./yeet init .`
 `g++ main.cpp controllers.cpp -std=c++17 -lcryptopp -lz -o yeet && ./yeet commit`
 
+## FOR BETTER DEBUGGING:
+`g++ main.cpp controllers.cpp -std=c++17 -lcryptopp -lz -fdiagnostics-all-candidates`
 
 ## COMMENTS/TODO:
 - For now, I am leaving the locks and concurrency of file system and other stuff that I learnt in OS. I will implement them later.

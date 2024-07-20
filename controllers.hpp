@@ -104,26 +104,42 @@ code the 100644 mode string that appears in the tree file.
  */
 class TreeEntry {
 public:
+    // operator overloaded
+    TreeEntry& operator=(const TreeEntry& other) {
+        if (this != &other) { // Protect against self-assignment
+            this->name = other.name;
+            this->oid = other.oid;
+            this->stat = other.stat;
+        }
+        return *this;
+    }
+    // TreeEntry(const std::string& name, const std::string& oid) : name(name), oid(oid) {} // same as below
+    TreeEntry(std::string name, std::string oid,std::string stat) {
+        this->name = name;
+        this->oid = oid;
+        this->stat = stat;
+    }
+    
+    // copy constructor
+    TreeEntry(const TreeEntry& other) : name(other.name), oid(other.oid), stat(other.stat) {}
     std::string name;
     std::string oid;
+    // TODO: Customize these codes later for yeet.
+    const std::string REGULAR_MODE = "100644";
+    const std::string EXE_MODE = "100755";
 
-    // TreeEntry(const std::string& name, const std::string& oid) : name(name), oid(oid) {} // same as below
-    TreeEntry(const std::string& name, const std::string& oid) {
-    this->name = name;
-    this->oid = oid;
-    }
-
+    std::string stat;
+    
 };
 
 
 class Tree{
     // const std::string ENTRY_FORMAT = "Z*H40"; no need
     public:
-        const std::string MODE = "100644";
+
         std::string oid;
         std::vector<TreeEntry> entries;
-
-        Tree(const std::vector<TreeEntry>& entries){
+        Tree(std::vector<TreeEntry>& entries){
             this->entries = entries;
         }
 
