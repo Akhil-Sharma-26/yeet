@@ -119,7 +119,7 @@ public:
         this->oid = oid;
         this->stat = stat;
     }
-    
+
     // copy constructor
     TreeEntry(const TreeEntry& other) : name(other.name), oid(other.oid), stat(other.stat) {}
     std::string name;
@@ -129,7 +129,7 @@ public:
     const std::string EXE_MODE = "100755";
 
     std::string stat;
-    
+
 };
 
 
@@ -174,6 +174,8 @@ class Refs{
 };
 
 
+class Index{
+    public:
+        std::vector<std::filesystem::path> Entries;
 
-
-        
+};
