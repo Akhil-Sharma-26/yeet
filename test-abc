@@ -1,1 +1,59 @@
-tree 1163100644/home/akhil/dev/yeet/LICENCE.md05f9d2db10d6da8585381ce20c2ce2e0cfd6668b100644/home/akhil/dev/yeet/README.mdd5a9779385eb28e71e47be96324d51da6649c619100644/home/akhil/dev/yeet/Sample.cpp45d972f152ae78afc4015978d73e23ff443f494a100644/home/akhil/dev/yeet/Test33843d18bdb24929ebcbb1a14081bed87f555562100644/home/akhil/dev/yeet/Testing_Inflating.cppf3b835b3884e362448c51311a6cb65b7233ccdd0100644/home/akhil/dev/yeet/Testing_inflate38b648470f4d071347a3d691c0e06ef9e2aa7f2f100644/home/akhil/dev/yeet/a.outa305ff6797786aff289beb04926b613142d8f112100644/home/akhil/dev/yeet/constants.hpp05356697d15e72e771e961a1a30d5aa0bc49fdf4100644/home/akhil/dev/yeet/controllers.cpp5425298cc735acf9012dc3750bf28316d8a82ade100644/home/akhil/dev/yeet/controllers.hpp7db925d1935611ec946fccf4c1fe4cb91801e7ea100644/home/akhil/dev/yeet/main.cppc7bddb95fd03362f71d219481398bfb457f0a003100644/home/akhil/dev/yeet/test-abc24e7e5dcdae5b026ccf5a11494b2a72827b12bd2100644/home/akhil/dev/yeet/unit_tests.h113e43acd900c53d174d656efa4c77e54c3170a6100644/home/akhil/dev/yeet/xmake.luac28a730b053f554b3e1935bc665a5a8a4c8bc095100644/home/akhil/dev/yeet/yeet0fc2a506ae776b275d777baf6a844f0221c5808d
+#include <iostream>
+#include "controllers.hpp"
+#include<filesystem>
+#define fs std::filesystem
+#define ll long long
+using namespace std;
+
+
+int main(int argc, char* argv[]) {
+    // Flushing the cout and cerr.
+    cout<<unitbuf; 
+    cerr<<unitbuf;
+    cout<<"Using cpp version: "<<__cplusplus<<endl; // To know my cpp version
+    string path = fs::current_path();
+    cout<<path<<endl;
+    try{
+        if(argc==1){
+            // TODO Add some useful string in this case. As is for user to know the different types of commands.
+            cerr<<"No argument Provied \n Use Command: yeet init. or yeet commit etc.\n";
+            return EXIT_FAILURE;
+            }
+        string arg=argv[1];
+
+        if (argc==3) {
+            // TODO Add if-else conditions to distinguish different argument that the user is passing.
+            
+            // cout<<subArg<<endl;
+            // cout<<arg<<endl;
+            string subArg=argv[2];
+            if(arg=="init"){
+                YeetInit(subArg);
+            }
+
+            else if(arg=="add"){
+                YeetAdd();
+            } 
+        } 
+
+        if(argc==2){
+            if(arg=="status"){
+                YeetStatus();
+            }
+            else if(arg=="commit"){
+                Commit myCommitObject(path);
+                myCommitObject.CommitMain(path);
+            }
+        }
+
+        // else if(argc > 2) print("only one argiment is supported for now!");
+        
+    }
+    catch(const std::exception& e){
+        // TODO write the number of arguments and the argv required for each command in the Documentation.
+        std::cout<<"Wtf";
+        std::cerr << e.what() << "\nException Happened somewhere! Error:501 \n";
+    }
+    
+    return EXIT_SUCCESS;
+}

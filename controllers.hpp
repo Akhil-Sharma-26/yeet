@@ -8,6 +8,7 @@
 #include<sstream>
 #include<iomanip> // for input/output manipulators
 #include<algorithm>
+#include<unordered_set>
 
 void YeetAdd();
 
@@ -20,6 +21,9 @@ class Blob{
     public:
         std::string oid;
         std::string data;
+        // Will not work, As I have to make a custom hash function for this
+        // std::unordered_set<std::pair<std::string, std::string>> BlobStore; 
+        std::unordered_map<std::string, std::string> BlobStore;
         Blob(std::string data);
         std::string type();
 };
@@ -33,7 +37,7 @@ class Commit{
         std::string Writtenlines;
         std::string oid;
         std::string parent;
-        std::vector<std::string> IGNORE = {".","..",".git"};
+        std::vector<std::string> IGNORE = {".","..",".git",".yeet"};
         Commit(std::string path);
         Commit(std::string TreeOid, std::string AuthorData, std::string CommitMessage, std::string parent);
         void CommitMain(std::string path);
@@ -91,7 +95,8 @@ class Database{
     public:
         std::filesystem::path path;
         Database(std::filesystem::path path);
-        void storeContentInDB(Blob& object);
+        // Its storing the blob store also. ie the pair of file path and its oid.
+        void storeContentInDB(Blob& object,const std::string &path);
         void storeContentInDB(Tree& object);
         void storeContentInDB(Commit& object);
 };
@@ -177,5 +182,4 @@ class Refs{
 class Index{
     public:
         std::vector<std::filesystem::path> Entries;
-
 };

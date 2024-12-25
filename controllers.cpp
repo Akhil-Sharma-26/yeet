@@ -4,7 +4,9 @@
 #include <cryptopp/sha.h>
 #include <cryptopp/filters.h>
 #include <cryptopp/hex.h>
+
 #define fs std::filesystem
+
 void YeetStatus(){
 
 }
@@ -23,22 +25,26 @@ void YeetInit(std::string path="."){
     {
         // std::cout<<path;
         // TODO: Consider all cases the user can enter here
-        // He can enter . --> init in pwd ------> Will Workd
+        // He can enter . --> init in pwd ------> Will Work
         // He can enter ebc --> init in pwd/ebc --------> not work, you to mkdir ebc first
         // He can enter ebc/ --> init in pwd/ebc only not pwd/ebc/ -------> same as above
         // He can enter full path from root --> init at that path ---------> will not work
         std::string pwd = std::filesystem::current_path();
         std::string temp_pwd = pwd;
         std::string _actualPath=pwd+'/'+path+".yeet";
-        if(path.back()!='/'&& path.back()!='.'){ _actualPath=pwd+'/'+path+"/.yeet"; temp_pwd=pwd+'/'+path;}
-        if(path.back()=='.') _actualPath=pwd+"/.yeet"; 
-        std::cout<<"temp: "<<temp_pwd<<std::endl;
-        if(std::filesystem::exists(temp_pwd+"/.yeet")){
-            throw std::runtime_error("A yeet folder already exists in this directory. \n");
+        if(path.back()!='/' && path.back()!='.'){ 
+            _actualPath=pwd+'/'+path+"/.yeet";
+            temp_pwd=pwd+'/'+path;
         }
-        std::system("ls -a");
-        std::system("tree .");
-        std::cout<<"actual: "<<_actualPath<<std::endl;
+
+        if(path.back()=='.') 
+            _actualPath=pwd+"/.yeet"; 
+
+        if(std::filesystem::exists(temp_pwd+"/.yeet"))
+            throw std::runtime_error("A yeet folder already exists in this directory. \n");
+        
+        // std::system("tree .");
+
         std::filesystem::create_directory(_actualPath);
         std::filesystem::create_directory(_actualPath+"/objects");
         std::filesystem::create_directory(_actualPath+"/refs");
@@ -76,11 +82,8 @@ void YeetInit(std::string path="."){
             }
         std::cout << "Initialized yeet directory\n";
     }
-    catch(const std::exception& e)
-    {
-        
+    catch(const std::exception& e){
         std::cerr << e.what() << '\n';
-        // return EXIT_FAILURE;
     }
     
 }
@@ -88,6 +91,8 @@ void YeetInit(std::string path="."){
 void YeetAdd(){
 
 }
+
+
 // Commit Class:
 // TODO: Add a check that you can only list files if a .yeet dir is present/ initialized.
 /**
@@ -97,7 +102,7 @@ void YeetAdd(){
 void Commit::ListFiles(std::string path,std::vector<std::filesystem::path>&FilePath){
     for (const auto & entry : fs::directory_iterator(path)){
         // This is my .gitignore
-        const bool IGNORE = entry.path().generic_string().find(".git") != std::string::npos || entry.path().generic_string().find(".yeet") != std::string::npos || entry.path().generic_string().find(".vscode") != std::string::npos || entry.path().generic_string().find(".xmake") != std::string::npos;
+        const bool IGNORE = entry.path().generic_string().find(".git") != std::string::npos || entry.path().generic_string().find(".yeet") != std::string::npos || entry.path().generic_string().find(".vscode") != std::string::npos || entry.path().generic_string().find(".xmake") != std::string::npos || entry.path().generic_string().find(".cmake") != std::string::npos;
 
         if(IGNORE){
             continue;
@@ -106,7 +111,7 @@ void Commit::ListFiles(std::string path,std::vector<std::filesystem::path>&FileP
             ListFiles(entry.path(),FilePath);
         } 
         if(entry.is_directory()) {
-            continue;;
+            continue;
         }
         FilePath.push_back(entry);
     }
@@ -114,6 +119,7 @@ void Commit::ListFiles(std::string path,std::vector<std::filesystem::path>&FileP
 void Commit::CommitMain(std::string path){
     try
     {
+        
         std::vector<TreeEntry> TreeEntries;
         Database DbObj(Commit::path+"/.yeet/objects");
         Refs RefObj(Commit::path);
@@ -129,11 +135,15 @@ void Commit::CommitMain(std::string path){
             // Blob of that Data
             Blob newBlobObject(data); 
             // Storing that Blob
-            DbObj.storeContentInDB(newBlobObject); 
+            DbObj.storeContentInDB(newBlobObject, entry.generic_string()); 
             // Making a TreeEntry with path of that Blob
             TreeEntry TreeEntryObj(entry.generic_string(),newBlobObject.oid,_stat); 
             TreeEntries.push_back(TreeEntryObj); 
+            for(auto it:newBlobObject.BlobStore){
+                std::cout<<it.first<<" "<<it.second<<std::endl;
+            }
         }
+        
         if (!TreeEntries.empty()) {
             Tree TreeObject(TreeEntries);
             DbObj.storeContentInDB(TreeObject);
@@ -152,7 +162,6 @@ void Commit::CommitMain(std::string path){
             Commit MainCommitObj(TreeObject.oid,author,message,parent);
             DbObj.storeContentInDB(MainCommitObj);
             RefObj.update_HEAD(MainCommitObj.oid); // Updating the HEAD file to new commit
-
             // std::cout<<"the parent value: "<<parent<<std::endl;
             bool is_RootCommit = false;
             if(parent=="ref:") is_RootCommit=true;
@@ -222,10 +231,15 @@ std::string calculateSHA1Hex(const std::string& content) { // used some copilot
     return hash;
 }
 
-void Database::storeContentInDB(Blob& object){
+void Database::storeContentInDB(Blob& object, const std::string& path){
     std::string Data = object.data;
-    std::string content = object.type() + " " + std::to_string(Data.size()) + "\0" + Data; // The null character is included just to use when we itterate over it.
+
+    // ! I am putiing only the data in the content to simplify the process of diff
+    // std::string content = object.type() + " " + std::to_string(Data.size()) + "\0" + Data; // The null character is included just to use when we itterate over it.
+    
+    std::string content = Data;
     object.oid = calculateSHA1Hex(content);
+    object.BlobStore[path] = object.oid;
     // std::cout<<object.oid<<std::endl; // Hashes are coming out.
     write_object(object.oid,content); // Writing/ making directories of the commit object/blob
 }
