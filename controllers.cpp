@@ -7,7 +7,142 @@
 
 #define fs std::filesystem
 
-void YeetStatus(){
+void YeetStatus(std::string path){
+
+    std::vector<std::filesystem::path>FilePath;
+
+    // Getting list of all files
+    ListFiles(path,FilePath);
+
+    // Making a visited map for later
+    std::unordered_map<std::filesystem::path, bool> visited;
+    for(auto it:FilePath){
+        visited[it] = false;
+    }
+    
+    int Totaladditions,Totaldeletions;
+    Totaladditions = 0, Totaldeletions = 0;
+
+    std::string StoreData;
+    std::fstream Store(path+"/.yeet/Store");
+
+    // Putting content of the Store file in the string StoreData
+    if(Store.is_open()){
+        std::string line;
+        while (std::getline(Store, line)) {
+            StoreData += line + "\n";
+        }
+        Store.close();
+    }
+    else{
+        std::cout<<"Error in opening Store File"<<std::endl;
+    }
+
+    bool space = false;
+    std::string PathofFile, oid;
+    PathofFile = ""; oid = "";
+    std::vector<std::string> FilePaths;
+    std::vector<std::string> oids;
+    for(int i=0;i<StoreData.size();i++){ 
+        if(StoreData[i] == ' '){
+            FilePaths.push_back(PathofFile);
+            PathofFile = "";
+            space = !space; continue;
+        }       
+
+        if(StoreData[i] == '\n'){
+            oids.push_back(oid);
+            oid = "";
+            space = !space; continue;
+        }     
+        
+        if(!space){
+            PathofFile += StoreData[i];
+        }
+        else{
+            oid += StoreData[i];
+        }
+    }
+
+    // Main Loop
+    for(int i=0;i<oids.size();i++){
+        int additions,deletions;
+        additions = 0, deletions = 0;
+        std::string thePathOfOid = "";
+        std::string fileName = oids[i].substr(2, oids[i].size() - 2); 
+        thePathOfOid = oids[i].substr(0, 2) + "/" + fileName;
+
+        std::string FullPath = path + "/.yeet/objects/" + thePathOfOid;
+
+        std::string InflatedContent = Inflate(FullPath);
+        std::cout<<InflatedContent<<"\n";
+
+        if (std::filesystem::exists(FilePaths[i])) {
+            std::string NewFileContent="";
+            std::ifstream NowFile(FilePaths[i]);
+
+            if(NowFile.is_open()){
+                std::string line;
+                while(std::getline(NowFile,line)){
+                    NewFileContent+=line+"\n";
+                }
+                NowFile.close();
+            }
+
+            // Call Diffs algo here
+            std::vector<std::string> NewFileinLines = splitIntoLines(NewFileContent);
+            std::vector<std::string> OldFileinLines = splitIntoLines(InflatedContent);
+
+            std::vector<std::vector<int>> trace;
+            int ans = Shortest_Edit_Search(NewFileinLines, OldFileinLines, trace); 
+
+            std::cout<<ans<<std::endl;
+            if(ans==0) {
+                // TODO: Don't add in commit
+                std::cout<<"Files are identical."<<std::endl;
+                continue;
+            }
+            
+            std::vector<Edit> diff_result = diff(OldFileinLines, NewFileinLines, trace, ans);
+
+            Printer printer;
+            printer.print(diff_result);
+
+            for(auto it:diff_result){
+                if(it.type == Edit::DEL) {
+                    deletions++;
+                    Totaldeletions++;}
+                else if(it.type == Edit::INS) {
+                    additions++;
+                    Totaladditions++;
+                }
+            }
+
+            std::cout<<"This file additions: "<<additions<<"\n";
+            std::cout<<"This file deletions: "<<deletions<<std::endl;
+
+            visited[FilePaths[i]] = true;
+        } else {
+            deletions+=InflatedContent.size();
+        }
+        break;
+    }
+
+    for(int i=0;i<visited.size();i++){
+        if(!visited[FilePaths[i]]){
+            // TODO: Add additions, deletions here too
+            // additions+=
+        }
+    }
+    
+    if(Totaladditions == Totaldeletions == 0){
+        std::cout<<"No Change, Can't commit"<<std::endl;
+        // TODO: Add a check so that no commit can happen;
+    }
+    else{
+        std::cout<<"Total addtions: "<<Totaladditions<<"\nTotal deletions: "<<Totaldeletions<<std::endl;
+    }
+
 
 }
 
@@ -456,3 +591,220 @@ void writeStoreinDB(std::unordered_map<std::string, std::string> Store){
 }
 
 
+// Helper Function for Listing Files:
+void ListFiles(std::string path,std::vector<std::filesystem::path>&FilePath){
+    for (const auto & entry : fs::directory_iterator(path)){
+        // This is my .gitignore
+        const bool IGNORE = entry.path().generic_string().find(".git") != std::string::npos || entry.path().generic_string().find(".yeet") != std::string::npos || entry.path().generic_string().find(".vscode") != std::string::npos || entry.path().generic_string().find(".xmake") != std::string::npos || entry.path().generic_string().find(".cmake") != std::string::npos || entry.path().generic_string().find("/build") != std::string::npos;
+
+        if(IGNORE){
+            continue;
+        }
+        if(entry.is_directory()) {
+            ListFiles(entry.path(),FilePath);
+        } 
+        if(entry.is_directory()) {
+            continue;
+        }
+        FilePath.push_back(entry);
+    }
+}
+
+std::vector<unsigned char> readFile(const std::string& filename) {
+    std::ifstream file(filename, std::ios::binary);
+    if (!file) {
+        std::cerr << "Cannot open file: " << filename << std::endl;
+        return {};
+    }
+    return std::vector<unsigned char>((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+}
+
+std::vector<unsigned char> decompressData(const std::vector<unsigned char>& compressedData) {
+    z_stream strm = {};
+    strm.total_in = strm.avail_in = compressedData.size();
+    strm.next_in = (Bytef*)compressedData.data();
+
+    std::vector<unsigned char> decompressedData(compressedData.size() * 2); // Start with double the input size
+
+    if (inflateInit(&strm) != Z_OK) {
+        std::cerr << "inflateInit failed" << std::endl;
+        return {};
+    }
+
+    int ret;
+    do {
+        strm.avail_out = decompressedData.size() - strm.total_out;
+        strm.next_out = (Bytef*)(decompressedData.data() + strm.total_out);
+
+        ret = inflate(&strm, Z_NO_FLUSH);
+
+        switch (ret) {
+            case Z_NEED_DICT:
+            case Z_DATA_ERROR:
+            case Z_MEM_ERROR:
+                std::cerr << "inflate error: " << ret << std::endl;
+                inflateEnd(&strm);
+                return {};
+            case Z_BUF_ERROR:
+            case Z_OK:
+                if (strm.avail_out == 0) {
+                    // Output buffer is full, increase its size
+                    decompressedData.resize(decompressedData.size() * 2);
+                }
+                break;
+        }
+    } while (ret != Z_STREAM_END);
+
+    inflateEnd(&strm);
+    decompressedData.resize(strm.total_out); // Resize to actual decompressed size
+    return decompressedData;
+}
+
+std::string Inflate(std::string path){
+
+    std::string inputFilename = path; 
+    std::string response = "";
+
+    auto compressedData = readFile(inputFilename);
+    if (compressedData.empty()) return "Error in compressed data";
+
+    auto decompressedData = decompressData(compressedData);
+    if (decompressedData.empty()) return "Error in decompresssion";
+
+    for(auto it:decompressedData){
+        response+=it;
+    }
+
+    return response;
+}
+
+// Diffs Algo
+
+// A function to convert a string to differnt lines. like a vector of strings
+std::vector<std::string> splitIntoLines(const std::string& str) {
+    std::vector<std::string> lines;
+    std::string temp;
+    for (char c : str) {
+        if (c == '\n') {
+            lines.push_back(temp);
+            temp.clear();
+        } else {
+            temp += c;
+        }
+    }
+    if (!temp.empty()) {
+        lines.push_back(temp);
+    }
+    return lines;
+}
+
+int Shortest_Edit_Search(const std::vector<std::string>& a, const std::vector<std::string>& b, 
+                         std::vector<std::vector<int>>& trace) {
+    int n = a.size(), m = b.size();
+    if (n == 0) return m;  // All insertions if `a` is empty
+    if (m == 0) return n;  // All deletions if `b` is empty
+
+    int max_distance = n + m;
+    int diagonal_offset = max_distance;  // To shift diagonals into the array
+    std::vector<int> diagonals(2 * max_distance + 1, -1);  // Track edit points for each diagonal
+    trace.clear();
+
+    diagonals[diagonal_offset + 1] = 0;  // Initialize diagonal k=1
+
+    for (int d = 0; d <= max_distance; ++d) {
+        for (int k = -d; k <= d; k += 2) {
+            int x;
+            if (k == -d || (k != d && diagonals[diagonal_offset + k - 1] < diagonals[diagonal_offset + k + 1])) {
+                // Move down
+                x = diagonals[diagonal_offset + k + 1];
+            } else {
+                // Move right
+                x = diagonals[diagonal_offset + k - 1] + 1;
+            }
+
+            int y = x - k;  // Corresponding y-coordinate
+            while (x < n && y < m && a[x] == b[y]) {
+                ++x;
+                ++y;
+            }
+
+            diagonals[diagonal_offset + k] = x;
+
+            // If we've reached the end of both strings
+            if (x >= n && y >= m) {
+                trace.push_back(diagonals);  // Store the final state
+                return d;
+            }
+        }
+        trace.push_back(diagonals);  // Store the state for this edit distance
+    }
+
+    return -1;  // This should never happen
+}
+
+
+
+std::vector<Edit> diff(const std::vector<std::string>& a, 
+                      const std::vector<std::string>& b,
+                      const std::vector<std::vector<int>>& trace,
+                      int d) {
+    std::vector<Edit> result;
+    if (trace.empty() || d < 0) return result;
+    
+    int x = a.size(), y = b.size();
+    int offset = x + y;
+    
+    for (int i = d; i > 0; --i) {
+        const std::vector<int>& v = trace[i];
+        int k = x - y;
+        
+        bool down = (k == -i || (k != i && v[offset + k - 1] < v[offset + k + 1]));
+        int k_prev = down ? k + 1 : k - 1;
+
+        int x_prev = v[offset + k_prev];
+        int y_prev = x_prev - k_prev;
+
+        while (x > x_prev && y > y_prev) {
+            if (a[x - 1] == b[y - 1]) {
+                result.push_back(Edit(Edit::EQL, a[x - 1], b[y - 1]));
+            } else {
+                result.push_back(Edit(Edit::DEL, a[x - 1], ""));
+                result.push_back(Edit(Edit::INS, "", b[y - 1]));
+            }
+            --x;
+            --y;
+        }
+
+        while (x > x_prev) {
+            result.push_back(Edit(Edit::DEL, a[x - 1], ""));
+            --x;
+        }
+
+        while (y > y_prev) {
+            result.push_back(Edit(Edit::INS, "", b[y - 1]));
+            --y;
+        }
+    }
+
+    while (x > 0) {
+        result.push_back(Edit(Edit::DEL, a[x - 1], ""));
+        --x;
+    }
+
+    while (y > 0) {
+        result.push_back(Edit(Edit::INS, "", b[y - 1]));
+        --y;
+    }
+
+    std::reverse(result.begin(), result.end());
+
+    for (const auto& edit : result) {
+        std::cout << "Edit Type: " << (edit.type == Edit::EQL ? "EQL" : 
+                                    (edit.type == Edit::INS ? "INS" : "DEL"))
+                << ", Orig: " << edit.old_line
+                << ", Updated: " << edit.new_line
+                << std::endl;
+    }
+
+    return result;
+}

@@ -10,11 +10,38 @@
 #include<algorithm>
 #include<unordered_set>
 
+
+// Structures:
+
+struct Edit
+{
+    enum Type
+    {
+        EQL,
+        DEL,
+        INS
+    } type;
+    std::string old_line;
+    std::string new_line;
+
+    Edit(Type t, const std::string &oldLine, const std::string &newLine)
+        : type(t), old_line(oldLine), new_line(newLine) {}
+};
+
+
+// Helper Functions
 void writeStoreinDB(std::unordered_map<std::string, std::string> Store);
+void ListFiles(std::string path,std::vector<std::filesystem::path>&FilePath);
+std::string Inflate(std::string path);
+std::vector<std::string> splitIntoLines(const std::string& str);
+int Shortest_Edit_Search(const std::vector<std::string>& a, const std::vector<std::string>& b, 
+                         std::vector<std::vector<int>>& trace);
+void Backtrack(std::string a, std::string b, std::vector<std::vector<int>> trace);
+std::vector<Edit> diff(const std::vector<std::string> &a, const std::vector<std::string> &b, const std::vector<std::vector<int>> &trace, int d);
 
 void YeetAdd();
 
-void YeetStatus();
+void YeetStatus(std::string path);
 
 void YeetInit(std::string path);
 
@@ -53,7 +80,7 @@ std::string File_name_Helper(std::string Objpath);
     https://www.zlib.net/manual.html#Basic
     @param the content of be compressed
     @return The compressed string
- */
+*/
 std::string Compressing_using_zlib(std::string& content);
 class Database{
     private:
@@ -108,7 +135,7 @@ class Database{
 know about its contents: the filename, and the object ID. Tree will also need to know the mode
 of each file, but for now all our source code is in non-executable regular files, so we will hard-
 code the 100644 mode string that appears in the tree file.
- */
+*/
 class TreeEntry {
 public:
     // operator overloaded
@@ -191,4 +218,48 @@ class Diffs{
         std::string path;
         std::string diffs;
         
+};
+
+// For Diffs
+
+class Printer {
+public:
+    Printer(std::ostream& output = std::cout) : output(output) {}
+    void print(const std::vector<Edit> &diff)
+    {
+        for (const auto &edit : diff)
+        {
+            print_edit(edit);
+        }
+    }
+    
+
+private:
+    std::ostream& output;
+    void print_edit(const Edit &edit)
+    {
+        std::string col, reset = "\033[39m";
+        std::string tag;
+
+        switch (edit.type)
+        {
+        case Edit::EQL:
+            col = "";
+            tag = " ";
+            break;
+        case Edit::DEL:
+            col = "\033[31m";
+            tag = "-";
+            break;
+        case Edit::INS:
+            col = "\033[32m";
+            tag = "+";
+            break;
+        }
+
+        std::string old_line = edit.old_line.empty() ? "" : edit.old_line;
+        std::string new_line = edit.new_line.empty() ? "" : edit.new_line;
+
+        output << col << tag << " " << std::setw(4) << old_line << " " << std::setw(4) << new_line << "    " << (old_line.empty() ? new_line : old_line) << reset << std::endl;
+    }
 };
