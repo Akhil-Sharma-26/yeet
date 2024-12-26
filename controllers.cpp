@@ -9,6 +9,8 @@
 
 void YeetStatus(std::string path){
 
+    // TODO: Add edge case solution if the Store is empty
+    // TODO: Don't compare exe or binary files. only text files.
     std::vector<std::filesystem::path>FilePath;
 
     // Getting list of all files
