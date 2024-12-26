@@ -10,6 +10,8 @@
 #include<algorithm>
 #include<unordered_set>
 
+void writeStoreinDB(std::unordered_map<std::string, std::string> Store);
+
 void YeetAdd();
 
 void YeetStatus();
@@ -23,7 +25,6 @@ class Blob{
         std::string data;
         // Will not work, As I have to make a custom hash function for this
         // std::unordered_set<std::pair<std::string, std::string>> BlobStore; 
-        std::unordered_map<std::string, std::string> BlobStore;
         Blob(std::string data);
         std::string type();
 };
@@ -94,6 +95,7 @@ class Database{
         }
     public:
         std::filesystem::path path;
+        std::unordered_map<std::string, std::string> Store;
         Database(std::filesystem::path path);
         // Its storing the blob store also. ie the pair of file path and its oid.
         void storeContentInDB(Blob& object,const std::string &path);
@@ -182,4 +184,11 @@ class Refs{
 class Index{
     public:
         std::vector<std::filesystem::path> Entries;
+};
+
+class Diffs{
+    public:
+        std::string path;
+        std::string diffs;
+        
 };

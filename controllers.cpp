@@ -80,6 +80,16 @@ void YeetInit(std::string path="."){
             else {
                 throw std::runtime_error("Failed to create .yeet/config file.\n");
             }
+
+        // Making Store File
+        std::ofstream StoreFile(_actualPath+"/Store");
+        if(StoreFile.is_open()){
+            StoreFile<<"Empty Store\n";
+            StoreFile.close();
+        }
+        else {
+            throw std::runtime_error("Failed to create .yeet/Store file.\n");
+        }
         std::cout << "Initialized yeet directory\n";
     }
     catch(const std::exception& e){
@@ -102,7 +112,7 @@ void YeetAdd(){
 void Commit::ListFiles(std::string path,std::vector<std::filesystem::path>&FilePath){
     for (const auto & entry : fs::directory_iterator(path)){
         // This is my .gitignore
-        const bool IGNORE = entry.path().generic_string().find(".git") != std::string::npos || entry.path().generic_string().find(".yeet") != std::string::npos || entry.path().generic_string().find(".vscode") != std::string::npos || entry.path().generic_string().find(".xmake") != std::string::npos || entry.path().generic_string().find(".cmake") != std::string::npos;
+        const bool IGNORE = entry.path().generic_string().find(".git") != std::string::npos || entry.path().generic_string().find(".yeet") != std::string::npos || entry.path().generic_string().find(".vscode") != std::string::npos || entry.path().generic_string().find(".xmake") != std::string::npos || entry.path().generic_string().find(".cmake") != std::string::npos || entry.path().generic_string().find("/build") != std::string::npos;
 
         if(IGNORE){
             continue;
@@ -119,7 +129,6 @@ void Commit::ListFiles(std::string path,std::vector<std::filesystem::path>&FileP
 void Commit::CommitMain(std::string path){
     try
     {
-        
         std::vector<TreeEntry> TreeEntries;
         Database DbObj(Commit::path+"/.yeet/objects");
         Refs RefObj(Commit::path);
@@ -139,11 +148,13 @@ void Commit::CommitMain(std::string path){
             // Making a TreeEntry with path of that Blob
             TreeEntry TreeEntryObj(entry.generic_string(),newBlobObject.oid,_stat); 
             TreeEntries.push_back(TreeEntryObj); 
-            for(auto it:newBlobObject.BlobStore){
-                std::cout<<it.first<<" "<<it.second<<std::endl;
-            }
         }
-        
+        for(auto it:DbObj.Store){
+            std::cout<<it.first<<" "<<it.second<<std::endl;
+        }
+        // Save the store in /Store file
+        writeStoreinDB(DbObj.Store);
+
         if (!TreeEntries.empty()) {
             Tree TreeObject(TreeEntries);
             DbObj.storeContentInDB(TreeObject);
@@ -239,7 +250,8 @@ void Database::storeContentInDB(Blob& object, const std::string& path){
     
     std::string content = Data;
     object.oid = calculateSHA1Hex(content);
-    object.BlobStore[path] = object.oid;
+    Store[path] = object.oid;
+    
     // std::cout<<object.oid<<std::endl; // Hashes are coming out.
     write_object(object.oid,content); // Writing/ making directories of the commit object/blob
 }
@@ -420,6 +432,27 @@ std::string Refs::Read_HEAD(){
         headFile>>FileContent; // All content of the file into the string
     }
     return FileContent;
+}
+
+void writeStoreinDB(std::unordered_map<std::string, std::string> Store){
+    for(auto it:Store){
+        std::cout<<it.first<<" "<<it.second<<std::endl;
+    }
+    std::cout<<"Hello"<<std::endl;
+    std::string _actualPath = fs::current_path();
+    std::cout<<_actualPath<<std::endl;
+
+    std::ofstream StoreFile(_actualPath+"/.yeet/Store");
+    if(StoreFile.is_open()){
+        for(auto it:Store){
+            StoreFile<<it.first<<" "<<it.second<<"\n";
+        }
+        StoreFile.close();
+    }
+
+    else {
+        throw std::runtime_error("Failed to create .yeet/Store file.\n");
+    }
 }
 
 
