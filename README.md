@@ -39,6 +39,8 @@ yeet init .
 ## USE COMMAND:
 - For Commit:
 ` g++ main.cpp controllers.cpp -std=c++17 -lcryptopp -lz -o yeet && ./yeet commit`
+- For Stats:
+` g++ main.cpp controllers.cpp -std=c++17 -lcryptopp -lz -o yeet && ./yeet status`
 
 ## Make Sure:
 you have lcryptopp installed in your system. I am using fedora and I installed it using:
@@ -59,9 +61,13 @@ You can also use the following command:
 
 `g++ main.cpp controllers.cpp -std=c++17 -lcryptopp -lz -o yeet && ./yeet init .`
 `g++ main.cpp controllers.cpp -std=c++17 -lcryptopp -lz -o yeet && ./yeet commit`
+`g++ main.cpp controllers.cpp -std=c++17 -lcryptopp -lz -o yeet && ./yeet status`
 
 ## FOR BETTER DEBUGGING:
 `g++ main.cpp controllers.cpp -std=c++17 -lcryptopp -lz -fdiagnostics-all-candidates`
+or 
+use `gdb ./executable`
+them `(gdb) run` with argument
 
 ## COMMENTS/TODO:
 - For now, I am leaving the locks and concurrency of file system and other stuff that I learnt in OS. I will implement them later.
