@@ -32,7 +32,8 @@ yeet init .
 - You can only yeet init in a already made directory. You can not yeet init in a directory that does not exist.
 
 ## FUTURE PLANS
--  The repo_find() function
+- Implement diffs algo on the full repository.
+-  Check using diffs algo that whether there are any changes in the files before letting the user to commit it changes.
 
 
 ## USE COMMAND:

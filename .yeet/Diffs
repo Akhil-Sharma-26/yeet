@@ -1,0 +1,1900 @@
++      #include<iostream>    #include<iostream>
+- #include<iostream>         #include<iostream>
+-              
++      using namespace std;    using namespace std;
+- void test_init(); void test_init();    void test_init();
++      void test_commit();    void test_commit();
++      void abc();    void abc();
+-              
+- void test_commit();         void test_commit();
++      #include"controllers.hpp"    #include"controllers.hpp"
++      #include<bits/stdc++.h>    #include<bits/stdc++.h>
++      #include<filesystem>    #include<filesystem>
++      #include <cryptopp/sha.h>    #include <cryptopp/sha.h>
++      #include <cryptopp/filters.h>    #include <cryptopp/filters.h>
++      #include <cryptopp/hex.h>    #include <cryptopp/hex.h>
++              
++      #define fs std::filesystem    #define fs std::filesystem
++              
+- #include"controllers.hpp"         #include"controllers.hpp"
+- #include<bits/stdc++.h>         #include<bits/stdc++.h>
+- #include<filesystem>         #include<filesystem>
+- #include <cryptopp/sha.h>         #include <cryptopp/sha.h>
+- #include <cryptopp/filters.h>         #include <cryptopp/filters.h>
+- #include <cryptopp/hex.h>         #include <cryptopp/hex.h>
+-              
+- #define fs std::filesystem         #define fs std::filesystem
+-              
+- void YeetStatus(){         void YeetStatus(){
++      void YeetStatus(std::string path){    void YeetStatus(std::string path){
++              
++          // TODO: Add edge case solution if the Store is empty        // TODO: Add edge case solution if the Store is empty
++          // TODO: Don't compare exe or binary files. only text files.        // TODO: Don't compare exe or binary files. only text files.
+-     std::cout<<"Hello"<<std::endl;             std::cout<<"Hello"<<std::endl;
+-    }         }
++          std::vector<std::filesystem::path>FilePath;        std::vector<std::filesystem::path>FilePath;
++              
++          // Getting list of all files        // Getting list of all files
++          ListFiles(path,FilePath);        ListFiles(path,FilePath);
++              
++          // Making a visited map for later        // Making a visited map for later
++          std::unordered_map<std::filesystem::path, bool> visited;        std::unordered_map<std::filesystem::path, bool> visited;
++          for(auto it:FilePath){        for(auto it:FilePath){
++              visited[it] = false;            visited[it] = false;
++          }        }
++                  
++          int Totaladditions,Totaldeletions;        int Totaladditions,Totaldeletions;
++          Totaladditions = 0, Totaldeletions = 0;        Totaladditions = 0, Totaldeletions = 0;
++              
++          std::string StoreData;        std::string StoreData;
++          std::fstream Store(path+"/.yeet/Store");        std::fstream Store(path+"/.yeet/Store");
++              
++          // Putting content of the Store file in the string StoreData        // Putting content of the Store file in the string StoreData
++          if(Store.is_open()){        if(Store.is_open()){
++              std::string line;            std::string line;
++              while (std::getline(Store, line)) {            while (std::getline(Store, line)) {
++                  StoreData += line + "\n";                StoreData += line + "\n";
++              }            }
++              Store.close();            Store.close();
++          }        }
++          else{        else{
++              std::cout<<"Error in opening Store File"<<std::endl;            std::cout<<"Error in opening Store File"<<std::endl;
++          }        }
++              
++          bool space = false;        bool space = false;
++          std::string PathofFile, oid;        std::string PathofFile, oid;
++          PathofFile = ""; oid = "";        PathofFile = ""; oid = "";
++          std::vector<std::string> FilePaths;        std::vector<std::string> FilePaths;
++          std::vector<std::string> oids;        std::vector<std::string> oids;
++          for(int i=0;i<StoreData.size();i++){         for(int i=0;i<StoreData.size();i++){ 
++              if(StoreData[i] == ' '){            if(StoreData[i] == ' '){
++                  FilePaths.push_back(PathofFile);                FilePaths.push_back(PathofFile);
++                  PathofFile = "";                PathofFile = "";
++                  space = !space; continue;                space = !space; continue;
++              }                   }       
++              
++              if(StoreData[i] == '\n'){            if(StoreData[i] == '\n'){
++                  oids.push_back(oid);                oids.push_back(oid);
++                  oid = "";                oid = "";
++                  space = !space; continue;                space = !space; continue;
++              }                 }     
++                          
++              if(!space){            if(!space){
++                  PathofFile += StoreData[i];                PathofFile += StoreData[i];
++              }            }
++              else{            else{
++                  oid += StoreData[i];                oid += StoreData[i];
++              }            }
++          }        }
++              
++          // Main Loop        // Main Loop
++          for(int i=0;i<oids.size();i++){        for(int i=0;i<oids.size();i++){
++              
++              int additions,deletions;            int additions,deletions;
++              additions = 0, deletions = 0;            additions = 0, deletions = 0;
++              std::string thePathOfOid = "";            std::string thePathOfOid = "";
++              std::string fileName = oids[i].substr(2, oids[i].size() - 2);             std::string fileName = oids[i].substr(2, oids[i].size() - 2); 
++              thePathOfOid = oids[i].substr(0, 2) + "/" + fileName;            thePathOfOid = oids[i].substr(0, 2) + "/" + fileName;
++              
++              std::string FullPath = path + "/.yeet/objects/" + thePathOfOid;            std::string FullPath = path + "/.yeet/objects/" + thePathOfOid;
++              
++              std::string InflatedContent = Inflate(FullPath);            std::string InflatedContent = Inflate(FullPath);
++              
++              if (std::filesystem::exists(FilePaths[i])) {            if (std::filesystem::exists(FilePaths[i])) {
++                  std::string NewFileContent="";                std::string NewFileContent="";
++                  std::ifstream NowFile(FilePaths[i]);                std::ifstream NowFile(FilePaths[i]);
++              
++                  if(NowFile.is_open()){                if(NowFile.is_open()){
++                      std::string line;                    std::string line;
++                      while(std::getline(NowFile,line)){                    while(std::getline(NowFile,line)){
++                          NewFileContent+=line+"\n";                        NewFileContent+=line+"\n";
++                      }                    }
++                      NowFile.close();                    NowFile.close();
++                  }                }
++              
++                  // Call Diffs algo here                // Call Diffs algo here
++                  std::vector<std::string> NewFileinLines = splitIntoLines(NewFileContent);                std::vector<std::string> NewFileinLines = splitIntoLines(NewFileContent);
++                  std::vector<std::string> OldFileinLines = splitIntoLines(InflatedContent);                std::vector<std::string> OldFileinLines = splitIntoLines(InflatedContent);
++              
++                  std::vector<std::vector<int>> trace;                std::vector<std::vector<int>> trace;
++                  int ans = Shortest_Edit_Search(NewFileinLines, OldFileinLines, trace);                 int ans = Shortest_Edit_Search(NewFileinLines, OldFileinLines, trace); 
++              
++                  // std::cout<<ans<<std::endl;                // std::cout<<ans<<std::endl;
++                  if(ans==0) {                if(ans==0) {
++                      // TODO: Don't add in commit                    // TODO: Don't add in commit
++                      // std::cout<<"Files are identical."<<std::endl;                    // std::cout<<"Files are identical."<<std::endl;
++                      continue;                    continue;
++                  }                            }            
++                                  
++                  std::vector<Edit> diff_result = diff(OldFileinLines, NewFileinLines, trace, ans);                std::vector<Edit> diff_result = diff(OldFileinLines, NewFileinLines, trace, ans);
++              
++                  for(auto it:diff_result){                for(auto it:diff_result){
++                      if(it.type == Edit::DEL) {                    if(it.type == Edit::DEL) {
++                          deletions++;                        deletions++;
++                          Totaldeletions++;                        Totaldeletions++;
++                      }                    }
++                      else if(it.type == Edit::INS) {                    else if(it.type == Edit::INS) {
++                          additions++;                        additions++;
++                          Totaladditions++;                        Totaladditions++;
++                      }                    }
++                  }                }
++              
++                  // Don't print exec file diffs.                // Don't print exec file diffs.
++                  if(! access (FilePaths[i].c_str(), X_OK)){                if(! access (FilePaths[i].c_str(), X_OK)){
++                      continue;                    continue;
++                  }                }
++              
++                  // don't show file if nothing changed                // don't show file if nothing changed
++                  if(additions == 0 && deletions == 0){                if(additions == 0 && deletions == 0){
++                      continue;                    continue;
++                  }                }
++              
++                  // The file we are checking:                // The file we are checking:
++                  std::cout<<FilePaths[i]<<std::endl;                std::cout<<FilePaths[i]<<std::endl;
++                                  
++                  // Printing the diffs                // Printing the diffs
++                  Printer printer;                Printer printer;
++                  printer.print(diff_result);                printer.print(diff_result);
++              
++                  std::cout<<"This file additions: "<<additions<<"\n";                std::cout<<"This file additions: "<<additions<<"\n";
++                  std::cout<<"This file deletions: "<<deletions<<std::endl;                std::cout<<"This file deletions: "<<deletions<<std::endl;
++              
++                  visited[FilePaths[i]] = true;                visited[FilePaths[i]] = true;
++              } else {            } else {
++                  deletions+=InflatedContent.size();                deletions+=InflatedContent.size();
++              }            }
++          }        }
++              
++          for(int i=0;i<visited.size();i++){        for(int i=0;i<visited.size();i++){
++              if(!visited[FilePaths[i]]){            if(!visited[FilePaths[i]]){
++                  // TODO: Add additions, deletions here too                // TODO: Add additions, deletions here too
++                  // additions+=                // additions+=
++              }            }
++          }        }
++          if(Totaladditions == 0  && Totaldeletions == 0){        if(Totaladditions == 0  && Totaldeletions == 0){
++              std::cout<<"No Change, Can't commit"<<std::endl;            std::cout<<"No Change, Can't commit"<<std::endl;
++              // TODO: Add a check so that no commit can happen;            // TODO: Add a check so that no commit can happen;
++          }        }
++          else{        else{
++              std::cout<<"Total addtions: "<<Totaladditions<<"\nTotal deletions: "<<Totaldeletions<<std::endl;            std::cout<<"Total addtions: "<<Totaladditions<<"\nTotal deletions: "<<Totaldeletions<<std::endl;
++          }        }
++              
++              
++         }    }
++              
++              
++       /**    /**
++       * Initializes a .yeet directory with default configs     * Initializes a .yeet directory with default configs
++         *     *
++       * @param path write the name of the directory should be entered according to pwd, see README for more on it or `.` The default is `.`     * @param path write the name of the directory should be entered according to pwd, see README for more on it or `.` The default is `.`
++       * @attention For now, You can only init in the directory which has already been made.     * @attention For now, You can only init in the directory which has already been made.
++       * @return Nothing for now     * @return Nothing for now
++       * @author Akhil Sharma     * @author Akhil Sharma
++        */     */
++      void YeetInit(std::string path="."){    void YeetInit(std::string path="."){
++          try        try
++          {        {
++              // std::cout<<path;            // std::cout<<path;
++              // TODO: Consider all cases the user can enter here            // TODO: Consider all cases the user can enter here
++              // He can enter . --> init in pwd ------> Will Work            // He can enter . --> init in pwd ------> Will Work
++              // He can enter ebc --> init in pwd/ebc --------> not work, you to mkdir ebc first            // He can enter ebc --> init in pwd/ebc --------> not work, you to mkdir ebc first
++              // He can enter ebc/ --> init in pwd/ebc only not pwd/ebc/ -------> same as above            // He can enter ebc/ --> init in pwd/ebc only not pwd/ebc/ -------> same as above
++              // He can enter full path from root --> init at that path ---------> will not work            // He can enter full path from root --> init at that path ---------> will not work
++              std::string pwd = std::filesystem::current_path();            std::string pwd = std::filesystem::current_path();
++              std::string temp_pwd = pwd;            std::string temp_pwd = pwd;
++              std::string _actualPath=pwd+'/'+path+".yeet";            std::string _actualPath=pwd+'/'+path+".yeet";
++              if(path.back()!='/' && path.back()!='.'){             if(path.back()!='/' && path.back()!='.'){ 
++                  _actualPath=pwd+'/'+path+"/.yeet";                _actualPath=pwd+'/'+path+"/.yeet";
++                  temp_pwd=pwd+'/'+path;                temp_pwd=pwd+'/'+path;
++              }            }
++              
++              if(path.back()=='.')             if(path.back()=='.') 
++                  _actualPath=pwd+"/.yeet";                 _actualPath=pwd+"/.yeet"; 
++              
++              if(std::filesystem::exists(temp_pwd+"/.yeet"))            if(std::filesystem::exists(temp_pwd+"/.yeet"))
++                  throw std::runtime_error("A yeet folder already exists in this directory. \n");                throw std::runtime_error("A yeet folder already exists in this directory. \n");
++                          
++              // std::system("tree .");            // std::system("tree .");
++              
++              std::filesystem::create_directory(_actualPath);            std::filesystem::create_directory(_actualPath);
++              std::filesystem::create_directory(_actualPath+"/objects");            std::filesystem::create_directory(_actualPath+"/objects");
++              std::filesystem::create_directory(_actualPath+"/refs");            std::filesystem::create_directory(_actualPath+"/refs");
++              std::filesystem::create_directory(_actualPath+"/refs/heads");            std::filesystem::create_directory(_actualPath+"/refs/heads");
++              std::filesystem::create_directory(_actualPath+"/refs/tags");            std::filesystem::create_directory(_actualPath+"/refs/tags");
++              
++              // Make HEAD file.            // Make HEAD file.
++              std::ofstream headFile(_actualPath+"/HEAD");            std::ofstream headFile(_actualPath+"/HEAD");
++                  if (headFile.is_open()) {                if (headFile.is_open()) {
++                      headFile << "ref: refs/heads/main\n";                    headFile << "ref: refs/heads/main\n";
++                      headFile.close();                    headFile.close();
++                  } else {                } else {
++                      throw std::runtime_error("Failed to create .yeet/HEAD file.\n");                    throw std::runtime_error("Failed to create .yeet/HEAD file.\n");
++                  }                }
++              
++              // Making Description file.            // Making Description file.
++              std::ofstream descFile(_actualPath+"/description");            std::ofstream descFile(_actualPath+"/description");
++                  if(descFile.is_open()){                if(descFile.is_open()){
++                      descFile<<"Demo Description. This file contains the info and descriptio about the repository.\n";                    descFile<<"Demo Description. This file contains the info and descriptio about the repository.\n";
++                      descFile.close();                    descFile.close();
++                  }                }
++                  else {                else {
++                      throw std::runtime_error("Failed to create .yeet/description file.\n");                    throw std::runtime_error("Failed to create .yeet/description file.\n");
++                  }                }
++                          
++              // Making config file            // Making config file
++              std::ofstream configFile(_actualPath+"/config");            std::ofstream configFile(_actualPath+"/config");
++                  if(configFile.is_open()){                if(configFile.is_open()){
++                      // TODO: Find a configparser for C++. and replace the content of this configFile.                    // TODO: Find a configparser for C++. and replace the content of this configFile.
++                      configFile<<"Demo Config\n";                    configFile<<"Demo Config\n";
++                      configFile.close();                    configFile.close();
++                  }                }
++                  else {                else {
++                      throw std::runtime_error("Failed to create .yeet/config file.\n");                    throw std::runtime_error("Failed to create .yeet/config file.\n");
++                  }                }
++              
++              // Making Store File            // Making Store File
++              std::ofstream StoreFile(_actualPath+"/Store");            std::ofstream StoreFile(_actualPath+"/Store");
++              if(StoreFile.is_open()){            if(StoreFile.is_open()){
++                  StoreFile<<"Empty Store\n";                StoreFile<<"Empty Store\n";
++                  StoreFile.close();                StoreFile.close();
++              }            }
++              else {            else {
++                  throw std::runtime_error("Failed to create .yeet/Store file.\n");                throw std::runtime_error("Failed to create .yeet/Store file.\n");
++              }            }
++              
++              // Make Diff file.            // Make Diff file.
++              std::ofstream DiffFile(_actualPath+"/Diff");            std::ofstream DiffFile(_actualPath+"/Diff");
++              if (DiffFile.is_open()) {            if (DiffFile.is_open()) {
++                  DiffFile << "No Diffs Yet\n";                DiffFile << "No Diffs Yet\n";
++                  DiffFile.close();                DiffFile.close();
++              } else {            } else {
++                  throw std::runtime_error("Failed to create .yeet/Diff file.\n");                throw std::runtime_error("Failed to create .yeet/Diff file.\n");
++              }            }
++              
++              std::cout << "Initialized yeet directory\n";            std::cout << "Initialized yeet directory\n";
++          }        }
++          catch(const std::exception& e){        catch(const std::exception& e){
++              std::cerr << e.what() << '\n';            std::cerr << e.what() << '\n';
++          }        }
++                  
++         }    }
++              
++      void YeetAdd(){    void YeetAdd(){
++              
++         }    }
++              
++              
++      // Commit Class:    // Commit Class:
++      // TODO: Add a check that you can only list files if a .yeet dir is present/ initialized.    // TODO: Add a check that you can only list files if a .yeet dir is present/ initialized.
++       /**    /**
++       * Lists all the files in the current yeet repo.     * Lists all the files in the current yeet repo.
++       * @author Akhil Sharma     * @author Akhil Sharma
++        */     */
++      void Commit::ListFiles(std::string path,std::vector<std::filesystem::path>&FilePath){    void Commit::ListFiles(std::string path,std::vector<std::filesystem::path>&FilePath){
++          for (const auto & entry : fs::directory_iterator(path)){        for (const auto & entry : fs::directory_iterator(path)){
++              // This is my .gitignore            // This is my .gitignore
++              const bool IGNORE = entry.path().generic_string().find(".git") != std::string::npos || entry.path().generic_string().find(".yeet") != std::string::npos || entry.path().generic_string().find(".vscode") != std::string::npos || entry.path().generic_string().find(".xmake") != std::string::npos || entry.path().generic_string().find(".cmake") != std::string::npos || entry.path().generic_string().find("/build") != std::string::npos;            const bool IGNORE = entry.path().generic_string().find(".git") != std::string::npos || entry.path().generic_string().find(".yeet") != std::string::npos || entry.path().generic_string().find(".vscode") != std::string::npos || entry.path().generic_string().find(".xmake") != std::string::npos || entry.path().generic_string().find(".cmake") != std::string::npos || entry.path().generic_string().find("/build") != std::string::npos;
++              
++              if(IGNORE){            if(IGNORE){
++                  continue;                continue;
++              }            }
++              if(entry.is_directory()) {            if(entry.is_directory()) {
++                  ListFiles(entry.path(),FilePath);                ListFiles(entry.path(),FilePath);
++              }             } 
++              if(entry.is_directory()) {            if(entry.is_directory()) {
++                  continue;                continue;
++              }            }
++              FilePath.push_back(entry);            FilePath.push_back(entry);
++          }        }
++         }    }
++      void Commit::CommitMain(std::string path){    void Commit::CommitMain(std::string path){
++          try        try
++          {        {
++              std::vector<TreeEntry> TreeEntries;            std::vector<TreeEntry> TreeEntries;
++              Database DbObj(Commit::path+"/.yeet/objects");            Database DbObj(Commit::path+"/.yeet/objects");
++              Refs RefObj(Commit::path);            Refs RefObj(Commit::path);
++              std::vector<std::filesystem::path>FilePath;            std::vector<std::filesystem::path>FilePath;
++              ListFiles(path,FilePath);            ListFiles(path,FilePath);
++              for (const auto & entry : FilePath){            for (const auto & entry : FilePath){
++                  std::string _stat = "Non-Exe";                std::string _stat = "Non-Exe";
++                  if (! access (entry.c_str(), X_OK)){ // Checks if a file is exe or not                if (! access (entry.c_str(), X_OK)){ // Checks if a file is exe or not
++                      _stat = "Exe";                    _stat = "Exe";
++                  }                }
++                   // content of Current FiLe.                 // content of Current FiLe.
++                  std::string data = readFile(entry);                std::string data = readFile(entry);
++                  // Blob of that Data                // Blob of that Data
++                  Blob newBlobObject(data);                 Blob newBlobObject(data); 
++                  // Storing that Blob                // Storing that Blob
++                  DbObj.storeContentInDB(newBlobObject, entry.generic_string());                 DbObj.storeContentInDB(newBlobObject, entry.generic_string()); 
++                  // Making a TreeEntry with path of that Blob                // Making a TreeEntry with path of that Blob
++                  TreeEntry TreeEntryObj(entry.generic_string(),newBlobObject.oid,_stat);                 TreeEntry TreeEntryObj(entry.generic_string(),newBlobObject.oid,_stat); 
++                  TreeEntries.push_back(TreeEntryObj);                 TreeEntries.push_back(TreeEntryObj); 
++              }            }
++              for(auto it:DbObj.Store){            for(auto it:DbObj.Store){
++                  std::cout<<it.first<<" "<<it.second<<std::endl;                std::cout<<it.first<<" "<<it.second<<std::endl;
++              }            }
++              // Save the store in /Store file            // Save the store in /Store file
++              writeStoreinDB(DbObj.Store);            writeStoreinDB(DbObj.Store);
++              
++              if (!TreeEntries.empty()) {            if (!TreeEntries.empty()) {
++                  Tree TreeObject(TreeEntries);                Tree TreeObject(TreeEntries);
++                  DbObj.storeContentInDB(TreeObject);                DbObj.storeContentInDB(TreeObject);
++                  // std::cout << "My Tree Id is wao: " << TreeObject.oid << std::endl;                // std::cout << "My Tree Id is wao: " << TreeObject.oid << std::endl;
++              
++                  std::string parent = RefObj.Read_HEAD(); // The oid of previous commit                std::string parent = RefObj.Read_HEAD(); // The oid of previous commit
++                  std::string name = getenv("YEET_AUTHOR_NAME");                std::string name = getenv("YEET_AUTHOR_NAME");
++                  std::string email = getenv("YEET_AUTHOR_EMAIL");                std::string email = getenv("YEET_AUTHOR_EMAIL");
++                  // std::cout<<"Name: "<<name<<"\nmail: "<<email<<"\n"; // working                // std::cout<<"Name: "<<name<<"\nmail: "<<email<<"\n"; // working
++                  time_t currtime = time(nullptr);                time_t currtime = time(nullptr);
++                  Author NewAuthorObj(name,email,currtime);                Author NewAuthorObj(name,email,currtime);
++                  std::string author = NewAuthorObj.to_stringg();                std::string author = NewAuthorObj.to_stringg();
++                  std::string message; std::cout<<"\nPlease enter your Commit Message:\n";                std::string message; std::cout<<"\nPlease enter your Commit Message:\n";
++                  // std::cin>>message; // This doesn't takes any spaces " "                // std::cin>>message; // This doesn't takes any spaces " "
++                  std::getline(std::cin >> std::ws, message); // ws means white spaces.                std::getline(std::cin >> std::ws, message); // ws means white spaces.
++                  Commit MainCommitObj(TreeObject.oid,author,message,parent);                Commit MainCommitObj(TreeObject.oid,author,message,parent);
++                  DbObj.storeContentInDB(MainCommitObj);                DbObj.storeContentInDB(MainCommitObj);
++                  RefObj.update_HEAD(MainCommitObj.oid); // Updating the HEAD file to new commit                RefObj.update_HEAD(MainCommitObj.oid); // Updating the HEAD file to new commit
++                  // std::cout<<"the parent value: "<<parent<<std::endl;                // std::cout<<"the parent value: "<<parent<<std::endl;
++                  bool is_RootCommit = false;                bool is_RootCommit = false;
++                  if(parent=="ref:") is_RootCommit=true;                if(parent=="ref:") is_RootCommit=true;
++                  if(is_RootCommit)std::cout<<"\nThis is a root commit"<<std::endl;                if(is_RootCommit)std::cout<<"\nThis is a root commit"<<std::endl;
++                  std::cout<<"Your Commit id is: "<<MainCommitObj.oid<<"\nCommit-Message: "<<MainCommitObj.CommitMessage<<"\n";                std::cout<<"Your Commit id is: "<<MainCommitObj.oid<<"\nCommit-Message: "<<MainCommitObj.CommitMessage<<"\n";
++              }            }
++          }        }
++          catch(const std::exception& e)        catch(const std::exception& e)
++          {        {
++              std::cerr << "\n An error occured while commit your latest changes. \nError by e.what(): "<< e.what();            std::cerr << "\n An error occured while commit your latest changes. \nError by e.what(): "<< e.what();
++          }        }
++                  
++                  
++         }    }
++              
++      Commit::Commit(std::string path){    Commit::Commit(std::string path){
++          this->path = path;        this->path = path;
++         }    }
++              
++      Commit::Commit(std::string TreeOid, std::string AuthorData, std::string CommitMessage,std::string parent){    Commit::Commit(std::string TreeOid, std::string AuthorData, std::string CommitMessage,std::string parent){
++          this->AuthorData=AuthorData;        this->AuthorData=AuthorData;
++          this->TreeOID=TreeOid;        this->TreeOID=TreeOid;
++          this->CommitMessage=CommitMessage;        this->CommitMessage=CommitMessage;
++          this->parent=parent;        this->parent=parent;
++          this->Writtenlines = "parent: " + parent +  "\ntree: "+TreeOID+"\nauthor: "+AuthorData+"\nCommitedBy: "+AuthorData+"\n\nCommitMessage: "+CommitMessage;        this->Writtenlines = "parent: " + parent +  "\ntree: "+TreeOID+"\nauthor: "+AuthorData+"\nCommitedBy: "+AuthorData+"\n\nCommitMessage: "+CommitMessage;
++         }    }
++              
++              
++       /**    /**
++      *  @param: `path` is of type fs::path. It needs the path to the file and then it reads all the content of it.    *  @param: `path` is of type fs::path. It needs the path to the file and then it reads all the content of it.
++        */    */
++      std::string Commit::readFile(fs::path path){    std::string Commit::readFile(fs::path path){
++          // Open the stream to 'lock' the file.        // Open the stream to 'lock' the file.
++          std::ifstream f(path, std::ios::in);        std::ifstream f(path, std::ios::in);
++              
++          // Obtain the size of the file.        // Obtain the size of the file.
++          const auto sz = fs::file_size(path);        const auto sz = fs::file_size(path);
++          std::string result(sz, '\0');        std::string result(sz, '\0');
++              
++          // Read the whole file into the buffer.        // Read the whole file into the buffer.
++          f.read(result.data(), sz);        f.read(result.data(), sz);
++              
++          return result;        return result;
++         }    }
++              
++      // Blob Class    // Blob Class
++      Blob::Blob(std::string newdata){    Blob::Blob(std::string newdata){
++          this->data = newdata;        this->data = newdata;
++          // std::cout<<"The blob oid is: "<<this->oid<<std::endl;        // std::cout<<"The blob oid is: "<<this->oid<<std::endl;
++         }    }
++      std::string Blob::type(){    std::string Blob::type(){
++          return "blob";        return "blob";
++         }    }
++              
++      // Database Class    // Database Class
++      Database::Database(std::filesystem::path path){    Database::Database(std::filesystem::path path){
++          this->path = path;        this->path = path;
++         }    }
++              
++      // Creating Hash    // Creating Hash
++      std::string calculateSHA1Hex(const std::string& content) { // used some copilot    std::string calculateSHA1Hex(const std::string& content) { // used some copilot
++          CryptoPP::SHA1 sha1;        CryptoPP::SHA1 sha1;
++          std::string hash;        std::string hash;
++          // Create a filter that calculates the SHA1 hash and then encodes it as hexadecimal        // Create a filter that calculates the SHA1 hash and then encodes it as hexadecimal
++          CryptoPP::StringSource(content, true, new CryptoPP::HashFilter(sha1, new CryptoPP::HexEncoder(new CryptoPP::StringSink(hash),false)));        CryptoPP::StringSource(content, true, new CryptoPP::HashFilter(sha1, new CryptoPP::HexEncoder(new CryptoPP::StringSink(hash),false)));
++              
++          return hash;        return hash;
++         }    }
++              
++      void Database::storeContentInDB(Blob& object, const std::string& path){    void Database::storeContentInDB(Blob& object, const std::string& path){
++          std::string Data = object.data;        std::string Data = object.data;
++              
++          // ! I am putiing only the data in the content to simplify the process of diff        // ! I am putiing only the data in the content to simplify the process of diff
+-              
++          // std::string content = object.type() + " " + std::to_string(Data.size()) + "\0" + Data; // The null character is included just to use when we itterate over it.        // std::string content = object.type() + " " + std::to_string(Data.size()) + "\0" + Data; // The null character is included just to use when we itterate over it.
+-              
++                  
+-  /**         /**
++          std::string content = Data;        std::string content = Data;
+-  * Initializes a .yeet directory with default configs          * Initializes a .yeet directory with default configs
++          object.oid = calculateSHA1Hex(content);        object.oid = calculateSHA1Hex(content);
+-    *          *
++          Store[path] = object.oid;        Store[path] = object.oid;
+-  * @param path write the name of the directory should be entered according to pwd, see README for more on it or `.` The default is `.`          * @param path write the name of the directory should be entered according to pwd, see README for more on it or `.` The default is `.`
++                  
+-  * @attention For now, You can only init in the directory which has already been made.          * @attention For now, You can only init in the directory which has already been made.
++          // std::cout<<object.oid<<std::endl; // Hashes are coming out.        // std::cout<<object.oid<<std::endl; // Hashes are coming out.
+-  * @return Nothing for now          * @return Nothing for now
++          write_object(object.oid,content); // Writing/ making directories of the commit object/blob        write_object(object.oid,content); // Writing/ making directories of the commit object/blob
+-  * @author Akhil Sharma          * @author Akhil Sharma
++         }    }
+-   */          */
++              
+- void YeetInit(std::string path="."){         void YeetInit(std::string path="."){
++      void Database::storeContentInDB(Tree& object){    void Database::storeContentInDB(Tree& object){
+-     try             try
++          std::string Data = object.ReturnS_tring();        std::string Data = object.ReturnS_tring();
+-     {             {
++          std::string content = object.Type() + " " + std::to_string(Data.size()) + "\0" + Data; // The null character is included just to use when we itterate over it.        std::string content = object.Type() + " " + std::to_string(Data.size()) + "\0" + Data; // The null character is included just to use when we itterate over it.
+-         // std::cout<<path;                 // std::cout<<path;
++          // std::cout<<"the content: "<<content<<std::endl;        // std::cout<<"the content: "<<content<<std::endl;
+-         // TODO: Consider all cases the user can enter here                 // TODO: Consider all cases the user can enter here
++          object.oid = calculateSHA1Hex(content);        object.oid = calculateSHA1Hex(content);
+-         // He can enter . --> init in pwd ------> Will Work                 // He can enter . --> init in pwd ------> Will Work
++          // std::cout<<"The hash of the tree object is: "<<object.oid<<std::endl; // Hashes are coming out.        // std::cout<<"The hash of the tree object is: "<<object.oid<<std::endl; // Hashes are coming out.
+-         // He can enter ebc --> init in pwd/ebc --------> not work, you to mkdir ebc first                 // He can enter ebc --> init in pwd/ebc --------> not work, you to mkdir ebc first
++          write_object(object.oid,content); // Writing/ making directories of the commit object/blob        write_object(object.oid,content); // Writing/ making directories of the commit object/blob
+-         // He can enter ebc/ --> init in pwd/ebc only not pwd/ebc/ -------> same as above                 // He can enter ebc/ --> init in pwd/ebc only not pwd/ebc/ -------> same as above
++         }    }
+-         // He can enter full path from root --> init at that path ---------> will not work                 // He can enter full path from root --> init at that path ---------> will not work
++              
+-         std::string pwd = std::filesystem::current_path();                 std::string pwd = std::filesystem::current_path();
++      void Database::storeContentInDB(Commit& object){    void Database::storeContentInDB(Commit& object){
+-         std::string temp_pwd = pwd;                 std::string temp_pwd = pwd;
++          std::string Data = object.Writtenlines;        std::string Data = object.Writtenlines;
+-         std::string _actualPath=pwd+'/'+path+".yeet";                 std::string _actualPath=pwd+'/'+path+".yeet";
++          std::string content = "Commit  \nData Size: " + std::to_string(Data.size()) + "\0 \n" + Data; // The null character is included just to use when we itterate over it.        std::string content = "Commit  \nData Size: " + std::to_string(Data.size()) + "\0 \n" + Data; // The null character is included just to use when we itterate over it.
+-         if(path.back()!='/' && path.back()!='.'){                  if(path.back()!='/' && path.back()!='.'){ 
++          // TODO: I have added Data size as extra here for readablitliy, but it may create problem later.        // TODO: I have added Data size as extra here for readablitliy, but it may create problem later.
+-             _actualPath=pwd+'/'+path+"/.yeet";                     _actualPath=pwd+'/'+path+"/.yeet";
++          // std::cout<<"the content: "<<content<<std::endl;        // std::cout<<"the content: "<<content<<std::endl;
+-             temp_pwd=pwd+'/'+path;                     temp_pwd=pwd+'/'+path;
++          object.oid = calculateSHA1Hex(content);        object.oid = calculateSHA1Hex(content);
+-         }                 }
++          // std::cout<<"The hash of the Commit object is: "<<object.oid<<std::endl; // Hashes are coming out.        // std::cout<<"The hash of the Commit object is: "<<object.oid<<std::endl; // Hashes are coming out.
+-              
++          write_object(object.oid,content); // Writing/ making directories of the commit object/blob        write_object(object.oid,content); // Writing/ making directories of the commit object/blob
+-         if(path.back()=='.')                  if(path.back()=='.') 
++         }    }
+-             _actualPath=pwd+"/.yeet";                      _actualPath=pwd+"/.yeet"; 
+-              
++      // Tree Class    // Tree Class
+-         if(std::filesystem::exists(temp_pwd+"/.yeet"))                 if(std::filesystem::exists(temp_pwd+"/.yeet"))
++              
+-             throw std::runtime_error("A yeet folder already exists in this directory. \n");                     throw std::runtime_error("A yeet folder already exists in this directory. \n");
++       /**    /**
+-                          
++       * This function converts the vector<TreeEntry> to string     * This function converts the vector<TreeEntry> to string
+-         // std::system("tree .");                 // std::system("tree .");
++       * @return String, which will be used in storing the tree to Database.     * @return String, which will be used in storing the tree to Database.
+-              
++       * The entries contains all the files commit info.     * The entries contains all the files commit info.
+-         std::filesystem::create_directory(_actualPath);                 std::filesystem::create_directory(_actualPath);
++        */     */
+-         std::filesystem::create_directory(_actualPath+"/objects");                 std::filesystem::create_directory(_actualPath+"/objects");
++      std::string Tree::ReturnS_tring(){    std::string Tree::ReturnS_tring(){
+-         std::filesystem::create_directory(_actualPath+"/refs");                 std::filesystem::create_directory(_actualPath+"/refs");
++          std::ostringstream result;        std::ostringstream result;
+-         std::filesystem::create_directory(_actualPath+"/refs/heads");                 std::filesystem::create_directory(_actualPath+"/refs/heads");
++              
+-         std::filesystem::create_directory(_actualPath+"/refs/tags");                 std::filesystem::create_directory(_actualPath+"/refs/tags");
++          // std::ostringstream result; // The ostringstream stands for output string stream just like ofstream        // std::ostringstream result; // The ostringstream stands for output string stream just like ofstream
+-              
++          // Using the 'result' stream to concatenate strings and numbers        // Using the 'result' stream to concatenate strings and numbers
+-         // Make HEAD file.                 // Make HEAD file.
++          // result << "The answer to life, the universe, and everything is " << 42 << ".";        // result << "The answer to life, the universe, and everything is " << 42 << ".";
+-         std::ofstream headFile(_actualPath+"/HEAD");                 std::ofstream headFile(_actualPath+"/HEAD");
++          // Sort entries by name        // Sort entries by name
+-             if (headFile.is_open()) {                     if (headFile.is_open()) {
++              
+-                 headFile << "ref: refs/heads/main\n";                         headFile << "ref: refs/heads/main\n";
++          std::sort(entries.begin(), entries.end(), [](const TreeEntry& a, const TreeEntry& b) {        std::sort(entries.begin(), entries.end(), [](const TreeEntry& a, const TreeEntry& b) {
+-                 headFile.close();                         headFile.close();
++              return a.name < b.name;            return a.name < b.name;
+-             } else {                     } else {
++          });        });
+-                 throw std::runtime_error("Failed to create .yeet/HEAD file.\n");                         throw std::runtime_error("Failed to create .yeet/HEAD file.\n");
++              
+-             }                     }
++          for (const auto& entry : entries) {        for (const auto& entry : entries) {
+-              
++              std::string FileStat = (entry.stat == "Exe") ? entry.EXE_MODE : entry.REGULAR_MODE;            std::string FileStat = (entry.stat == "Exe") ? entry.EXE_MODE : entry.REGULAR_MODE;
+-         // Making Description file.                 // Making Description file.
++              result << FileStat << " " << entry.name << " " << entry.oid<< "\n";            result << FileStat << " " << entry.name << " " << entry.oid<< "\n";
+-         std::ofstream descFile(_actualPath+"/description");                 std::ofstream descFile(_actualPath+"/description");
++          }        }
+-             if(descFile.is_open()){                     if(descFile.is_open()){
++          // std::cout<<result.str()<<std::endl;        // std::cout<<result.str()<<std::endl;
+-                 descFile<<"Demo Description. This file contains the info and descriptio about the repository.\n";                         descFile<<"Demo Description. This file contains the info and descriptio about the repository.\n";
++          return result.str();        return result.str();
+-                 descFile.close();                         descFile.close();
++         }    }
+-             }                     }
++              
+-             else {                     else {
++              
+-                 throw std::runtime_error("Failed to create .yeet/description file.\n");                         throw std::runtime_error("Failed to create .yeet/description file.\n");
++              
+-             }                     }
++      // Helper Functions:    // Helper Functions:
+-                          
++      std::string timeToString(time_t currtime) {     std::string timeToString(time_t currtime) { 
+-         // Making config file                 // Making config file
++          std::stringstream ss;         std::stringstream ss; 
+-         std::ofstream configFile(_actualPath+"/config");                 std::ofstream configFile(_actualPath+"/config");
++          ss << std::put_time(localtime(&currtime), "%Y-%m-%d %H:%M:%S"); // this is new to me.        ss << std::put_time(localtime(&currtime), "%Y-%m-%d %H:%M:%S"); // this is new to me.
+-             if(configFile.is_open()){                     if(configFile.is_open()){
++          return ss.str();        return ss.str();
+-                 // TODO: Find a configparser for C++. and replace the content of this configFile.                         // TODO: Find a configparser for C++. and replace the content of this configFile.
++         }    }
+-                 configFile<<"Demo Config\n";                         configFile<<"Demo Config\n";
++              
+-                 configFile.close();                         configFile.close();
++              
+-             }                     }
++      std::string Directory_name_Helper(std::string Objpath){    std::string Directory_name_Helper(std::string Objpath){
+-             else {                     else {
++          std::string ans="";        std::string ans="";
+-                 throw std::runtime_error("Failed to create .yeet/config file.\n");                         throw std::runtime_error("Failed to create .yeet/config file.\n");
++          ans+=Objpath[Objpath.size()-41];        ans+=Objpath[Objpath.size()-41];
+-             }                     }
++          ans+=Objpath[Objpath.size()-40];        ans+=Objpath[Objpath.size()-40];
+-              
++          return ans;        return ans;
+-         // Making Store File                 // Making Store File
++         }    }
+-         std::ofstream StoreFile(_actualPath+"/Store");                 std::ofstream StoreFile(_actualPath+"/Store");
++              
+-         if(StoreFile.is_open()){                 if(StoreFile.is_open()){
++      std::string File_name_Helper(std::string Objpath){    std::string File_name_Helper(std::string Objpath){
+-             StoreFile<<"Empty Store\n";                     StoreFile<<"Empty Store\n";
++          std::string ans="";        std::string ans="";
+-             StoreFile.close();                     StoreFile.close();
++          for(int i=Objpath.size()-1;i>=0;i--){        for(int i=Objpath.size()-1;i>=0;i--){
+-         }                 }
++              if(Objpath[i]=='/'){            if(Objpath[i]=='/'){
+-         else {                 else {
++                  break;                break;
+-             throw std::runtime_error("Failed to create .yeet/Store file.\n");                     throw std::runtime_error("Failed to create .yeet/Store file.\n");
+-         }         }            }
++              ans+=Objpath[i];            ans+=Objpath[i];
+-         std::cout << "Initialized yeet directory\n";                 std::cout << "Initialized yeet directory\n";
+-     }     }        }
++          std::string act_ans="";        std::string act_ans="";
+-     catch(const std::exception& e){             catch(const std::exception& e){
++          for(int i=ans.size()-1;i>=0;i--){        for(int i=ans.size()-1;i>=0;i--){
+-         std::cerr << e.what() << '\n';                 std::cerr << e.what() << '\n';
++              act_ans+=ans[i];            act_ans+=ans[i];
+-     }             }
++          }        }
+-                  
++          return act_ans;        return act_ans;
+-    }         }
++         }    }
+-              
++              
+- void YeetAdd(){         void YeetAdd(){
++      // std::string Compressing_using_zlib(std::string content){    // std::string Compressing_using_zlib(std::string content){
+-              
++      //     z_stream stream;    //     z_stream stream;
+-    }         }
++      //     stream.zalloc = nullptr;    //     stream.zalloc = nullptr;
+-              
++      //     stream.zfree = nullptr;    //     stream.zfree = nullptr;
+-              
++      //     stream.opaque = nullptr;    //     stream.opaque = nullptr;
+- // Commit Class:         // Commit Class:
++      //     stream.avail_in = content.size(); // input size    //     stream.avail_in = content.size(); // input size
+- // TODO: Add a check that you can only list files if a .yeet dir is present/ initialized.         // TODO: Add a check that you can only list files if a .yeet dir is present/ initialized.
++      //     uLongf compressed_size = compressBound(content.size());    //     uLongf compressed_size = compressBound(content.size());
+-  /**         /**
++      //     stream.avail_out = compressed_size; //assuming the compressed can become 3 times of og    //     stream.avail_out = compressed_size; //assuming the compressed can become 3 times of og
+-  * Lists all the files in the current yeet repo.          * Lists all the files in the current yeet repo.
++      //     stream.next_in = reinterpret_cast<Bytef*>(const_cast<char*>(content.data())); // new for me, used copilot for this line; // input fil    //     stream.next_in = reinterpret_cast<Bytef*>(const_cast<char*>(content.data())); // new for me, used copilot for this line; // input fil
+-  * @author Akhil Sharma          * @author Akhil Sharma
++      //     Bytef* compressed_data = new Bytef[compressed_size];    //     Bytef* compressed_data = new Bytef[compressed_size];
+-   */          */
++      //     stream.next_out = reinterpret_cast<unsigned char*>(compressed_data); // The output file type    //     stream.next_out = reinterpret_cast<unsigned char*>(compressed_data); // The output file type
+- void Commit::ListFiles(std::string path,std::vector<std::filesystem::path>&FilePath){         void Commit::ListFiles(std::string path,std::vector<std::filesystem::path>&FilePath){
++              
+-     for (const auto & entry : fs::directory_iterator(path)){             for (const auto & entry : fs::directory_iterator(path)){
++      //     // intializing compression    //     // intializing compression
+-         // This is my .gitignore                 // This is my .gitignore
++      //     deflateInit(&stream, Z_DEFAULT_COMPRESSION); //The compression level must be Z_DEFAULT_COMPRESSION, or between 0 and 9: 1 gives best speed, 9 gives best compression, 0 gives no compression at all (the input data is simply copied a block at a time). Z_DEFAULT_COMPRESSION requests a default compromise between speed and compression (currently equivalent to level 6).  // from zlib manual.    //     deflateInit(&stream, Z_DEFAULT_COMPRESSION); //The compression level must be Z_DEFAULT_COMPRESSION, or between 0 and 9: 1 gives best speed, 9 gives best compression, 0 gives no compression at all (the input data is simply copied a block at a time). Z_DEFAULT_COMPRESSION requests a default compromise between speed and compression (currently equivalent to level 6).  // from zlib manual.
+-         const bool IGNORE = entry.path().generic_string().find(".git") != std::string::npos || entry.path().generic_string().find(".yeet") != std::string::npos || entry.path().generic_string().find(".vscode") != std::string::npos || entry.path().generic_string().find(".xmake") != std::string::npos || entry.path().generic_string().find(".cmake") != std::string::npos || entry.path().generic_string().find("/build") != std::string::npos;                 const bool IGNORE = entry.path().generic_string().find(".git") != std::string::npos || entry.path().generic_string().find(".yeet") != std::string::npos || entry.path().generic_string().find(".vscode") != std::string::npos || entry.path().generic_string().find(".xmake") != std::string::npos || entry.path().generic_string().find(".cmake") != std::string::npos || entry.path().generic_string().find("/build") != std::string::npos;
+-              
++      //     // compress:    //     // compress:
+-         if(IGNORE){                 if(IGNORE){
++      //     deflate(&stream, Z_BEST_COMPRESSION);    //     deflate(&stream, Z_BEST_COMPRESSION);
+-             continue;                     continue;
++              
+-         }                 }
++      //     compressed_size = stream.total_out;    //     compressed_size = stream.total_out;
+-         if(entry.is_directory()) {                 if(entry.is_directory()) {
++              
+-             ListFiles(entry.path(),FilePath);                     ListFiles(entry.path(),FilePath);
++      //     deflateEnd(&stream);    //     deflateEnd(&stream);
+-         }                  } 
++      //     std::string compressed = reinterpret_cast<const char*>(compressed_data);    //     std::string compressed = reinterpret_cast<const char*>(compressed_data);
+-         if(entry.is_directory()) {                 if(entry.is_directory()) {
++      //     delete[] compressed_data; // releasing the memory of the buffer holding the compressed data    //     delete[] compressed_data; // releasing the memory of the buffer holding the compressed data
+-             continue;                     continue;
++      //     return compressed;    //     return compressed;
+-         }                 }
++      // }    // }
+-         FilePath.push_back(entry);                 FilePath.push_back(entry);
++              
+-     }             }
++      // refractored Compression Logic    // refractored Compression Logic
+-    }         }
++      std::string Compressing_using_zlib(std::string& content) {    std::string Compressing_using_zlib(std::string& content) {
+- void Commit::CommitMain(std::string path){         void Commit::CommitMain(std::string path){
++          if (content.empty()) return "";        if (content.empty()) return "";
+-     try             try
++              
+-     {             {
++          z_stream stream{};        z_stream stream{};
+-         std::vector<TreeEntry> TreeEntries;                 std::vector<TreeEntry> TreeEntries;
++          stream.zalloc = nullptr;        stream.zalloc = nullptr;
+-         Database DbObj(Commit::path+"/.yeet/objects");                 Database DbObj(Commit::path+"/.yeet/objects");
++          stream.zfree = nullptr;        stream.zfree = nullptr;
+-         Refs RefObj(Commit::path);                 Refs RefObj(Commit::path);
++          stream.opaque = nullptr;        stream.opaque = nullptr;
+-         std::vector<std::filesystem::path>FilePath;                 std::vector<std::filesystem::path>FilePath;
++          stream.avail_in = static_cast<uInt>(content.size());        stream.avail_in = static_cast<uInt>(content.size());
+-         ListFiles(path,FilePath);                 ListFiles(path,FilePath);
++          stream.next_in = reinterpret_cast<Bytef*>(const_cast<char*>(content.data()));        stream.next_in = reinterpret_cast<Bytef*>(const_cast<char*>(content.data()));
+-         for (const auto & entry : FilePath){                 for (const auto & entry : FilePath){
++              
+-             std::string _stat = "Non-Exe";                     std::string _stat = "Non-Exe";
++          if (deflateInit(&stream, Z_DEFAULT_COMPRESSION) != Z_OK) {        if (deflateInit(&stream, Z_DEFAULT_COMPRESSION) != Z_OK) {
+-             if (! access (entry.c_str(), X_OK)){ // Checks if a file is exe or not                     if (! access (entry.c_str(), X_OK)){ // Checks if a file is exe or not
++              throw std::runtime_error("Failed to initialize zlib deflate.");            throw std::runtime_error("Failed to initialize zlib deflate.");
+-                 _stat = "Exe";                         _stat = "Exe";
++          }        }
+-             }                     }
++              
+-              // content of Current FiLe.                      // content of Current FiLe.
++          std::vector<unsigned char> compressedData(compressBound(content.size()));        std::vector<unsigned char> compressedData(compressBound(content.size()));
+-             std::string data = readFile(entry);                     std::string data = readFile(entry);
++          stream.avail_out = compressedData.size();        stream.avail_out = compressedData.size();
+-             // Blob of that Data                     // Blob of that Data
++          stream.next_out = compressedData.data();        stream.next_out = compressedData.data();
+-             Blob newBlobObject(data);                      Blob newBlobObject(data); 
++              
+-             // Storing that Blob                     // Storing that Blob
++          if (deflate(&stream, Z_FINISH) != Z_STREAM_END) {        if (deflate(&stream, Z_FINISH) != Z_STREAM_END) {
+-             DbObj.storeContentInDB(newBlobObject, entry.generic_string());                      DbObj.storeContentInDB(newBlobObject, entry.generic_string()); 
++              deflateEnd(&stream);            deflateEnd(&stream);
+-             // Making a TreeEntry with path of that Blob                     // Making a TreeEntry with path of that Blob
++              throw std::runtime_error("Failed to deflate data.");            throw std::runtime_error("Failed to deflate data.");
+-             TreeEntry TreeEntryObj(entry.generic_string(),newBlobObject.oid,_stat);                      TreeEntry TreeEntryObj(entry.generic_string(),newBlobObject.oid,_stat); 
++          }        }
+-             TreeEntries.push_back(TreeEntryObj);                      TreeEntries.push_back(TreeEntryObj); 
++              
+-         }                 }
++          compressedData.resize(stream.total_out);        compressedData.resize(stream.total_out);
+-         for(auto it:DbObj.Store){                 for(auto it:DbObj.Store){
++              
+-             std::cout<<it.first<<" "<<it.second<<std::endl;                     std::cout<<it.first<<" "<<it.second<<std::endl;
++          if (deflateEnd(&stream) != Z_OK) {        if (deflateEnd(&stream) != Z_OK) {
+-         }                 }
++              throw std::runtime_error("Failed to finalize zlib deflate.");            throw std::runtime_error("Failed to finalize zlib deflate.");
+-         // Save the store in /Store file                 // Save the store in /Store file
++          }        }
+-         writeStoreinDB(DbObj.Store);                 writeStoreinDB(DbObj.Store);
+-              
++          return std::string(compressedData.begin(), compressedData.end());        return std::string(compressedData.begin(), compressedData.end());
+-         if (!TreeEntries.empty()) {                 if (!TreeEntries.empty()) {
++         }    }
+-             Tree TreeObject(TreeEntries);                     Tree TreeObject(TreeEntries);
++              
+-             DbObj.storeContentInDB(TreeObject);                     DbObj.storeContentInDB(TreeObject);
++              
+-             // std::cout << "My Tree Id is wao: " << TreeObject.oid << std::endl;                     // std::cout << "My Tree Id is wao: " << TreeObject.oid << std::endl;
++      // Author Class:    // Author Class:
+-              
++      std::string Author::to_stringg(){    std::string Author::to_stringg(){
+-             std::string parent = RefObj.Read_HEAD(); // The oid of previous commit                     std::string parent = RefObj.Read_HEAD(); // The oid of previous commit
++          std::string thecurrTime=timeToString(time);        std::string thecurrTime=timeToString(time);
+-             std::string name = getenv("YEET_AUTHOR_NAME");                     std::string name = getenv("YEET_AUTHOR_NAME");
++          return name+" <"+email+"> "+ thecurrTime;        return name+" <"+email+"> "+ thecurrTime;
+-             std::string email = getenv("YEET_AUTHOR_EMAIL");                     std::string email = getenv("YEET_AUTHOR_EMAIL");
++         }    }
+-             // std::cout<<"Name: "<<name<<"\nmail: "<<email<<"\n"; // working                     // std::cout<<"Name: "<<name<<"\nmail: "<<email<<"\n"; // working
++              
+-             time_t currtime = time(nullptr);                     time_t currtime = time(nullptr);
++              
+-             Author NewAuthorObj(name,email,currtime);                     Author NewAuthorObj(name,email,currtime);
++      // History    // History
+-             std::string author = NewAuthorObj.to_stringg();                     std::string author = NewAuthorObj.to_stringg();
++      // Refs Class:    // Refs Class:
+-             std::string message; std::cout<<"\nPlease enter your Commit Message:\n";                     std::string message; std::cout<<"\nPlease enter your Commit Message:\n";
++      // Constructor of Ref Class    // Constructor of Ref Class
+-             // std::cin>>message; // This doesn't takes any spaces " "                     // std::cin>>message; // This doesn't takes any spaces " "
++      Refs::Refs(std::string path){    Refs::Refs(std::string path){
+-             std::getline(std::cin >> std::ws, message); // ws means white spaces.                     std::getline(std::cin >> std::ws, message); // ws means white spaces.
++          this->path = path;        this->path = path;
+-             Commit MainCommitObj(TreeObject.oid,author,message,parent);                     Commit MainCommitObj(TreeObject.oid,author,message,parent);
++         }    }
+-             DbObj.storeContentInDB(MainCommitObj);                     DbObj.storeContentInDB(MainCommitObj);
++              
+-             RefObj.update_HEAD(MainCommitObj.oid); // Updating the HEAD file to new commit                     RefObj.update_HEAD(MainCommitObj.oid); // Updating the HEAD file to new commit
++      // @return the path to the HEAD file    // @return the path to the HEAD file
+-             // std::cout<<"the parent value: "<<parent<<std::endl;                     // std::cout<<"the parent value: "<<parent<<std::endl;
++      std::string Refs::HEAD_path(){    std::string Refs::HEAD_path(){
+-             bool is_RootCommit = false;                     bool is_RootCommit = false;
++          return path + "/.yeet/HEAD";        return path + "/.yeet/HEAD";
+-             if(parent=="ref:") is_RootCommit=true;                     if(parent=="ref:") is_RootCommit=true;
++         }    }
+-             if(is_RootCommit)std::cout<<"\nThis is a root commit"<<std::endl;                     if(is_RootCommit)std::cout<<"\nThis is a root commit"<<std::endl;
++              
+-             std::cout<<"Your Commit id is: "<<MainCommitObj.oid<<"\nCommit-Message: "<<MainCommitObj.CommitMessage<<"\n";                     std::cout<<"Your Commit id is: "<<MainCommitObj.oid<<"\nCommit-Message: "<<MainCommitObj.CommitMessage<<"\n";
++      // Updates the HEAD file to the latest commit    // Updates the HEAD file to the latest commit
+-         }                 }
++      void Refs::update_HEAD(std::string oid){    void Refs::update_HEAD(std::string oid){
+-     }             }
++          // std::cout<<path<<std::endl;        // std::cout<<path<<std::endl;
+-     catch(const std::exception& e)             catch(const std::exception& e)
++          std::ofstream headFile( path+"/.yeet/HEAD");        std::ofstream headFile( path+"/.yeet/HEAD");
+-     {             {
++          if (headFile.is_open()) {        if (headFile.is_open()) {
+-         std::cerr << "\n An error occured while commit your latest changes. \nError by e.what(): "<< e.what();                 std::cerr << "\n An error occured while commit your latest changes. \nError by e.what(): "<< e.what();
++              headFile << oid;            headFile << oid;
+-     }             }
++              headFile.close();            headFile.close();
+-                  
++          } else {        } else {
+-                  
++              throw std::runtime_error("Failed to open .yeet/HEAD file.\n");            throw std::runtime_error("Failed to open .yeet/HEAD file.\n");
+-    }         }
++          }        }
+-              
++         }    }
+- Commit::Commit(std::string path){         Commit::Commit(std::string path){
++              
+-     this->path = path;             this->path = path;
++      std::string Refs::Read_HEAD(){    std::string Refs::Read_HEAD(){
+-    }         }
++          std::ifstream headFile(Refs::HEAD_path(),std::ios::binary);        std::ifstream headFile(Refs::HEAD_path(),std::ios::binary);
+-              
++          std::string FileContent; // Becuase I am using string, It will not pick up anything after a space. I need to use getLine() function.        std::string FileContent; // Becuase I am using string, It will not pick up anything after a space. I need to use getLine() function.
+- Commit::Commit(std::string TreeOid, std::string AuthorData, std::string CommitMessage,std::string parent){         Commit::Commit(std::string TreeOid, std::string AuthorData, std::string CommitMessage,std::string parent){
++          if(headFile){        if(headFile){
+-     this->AuthorData=AuthorData;             this->AuthorData=AuthorData;
++              headFile>>FileContent; // All content of the file into the string            headFile>>FileContent; // All content of the file into the string
+-     this->TreeOID=TreeOid;             this->TreeOID=TreeOid;
++          }        }
+-     this->CommitMessage=CommitMessage;             this->CommitMessage=CommitMessage;
++          return FileContent;        return FileContent;
+-     this->parent=parent;             this->parent=parent;
++         }    }
+-     this->Writtenlines = "parent: " + parent +  "\ntree: "+TreeOID+"\nauthor: "+AuthorData+"\nCommitedBy: "+AuthorData+"\n\nCommitMessage: "+CommitMessage;             this->Writtenlines = "parent: " + parent +  "\ntree: "+TreeOID+"\nauthor: "+AuthorData+"\nCommitedBy: "+AuthorData+"\n\nCommitMessage: "+CommitMessage;
++              
+-    }         }
++      void writeStoreinDB(std::unordered_map<std::string, std::string> Store){    void writeStoreinDB(std::unordered_map<std::string, std::string> Store){
+-              
++          for(auto it:Store){        for(auto it:Store){
+-              
++              std::cout<<it.first<<" "<<it.second<<std::endl;            std::cout<<it.first<<" "<<it.second<<std::endl;
+-  /**         /**
++          }        }
+- *  @param: `path` is of type fs::path. It needs the path to the file and then it reads all the content of it.         *  @param: `path` is of type fs::path. It needs the path to the file and then it reads all the content of it.
++          std::cout<<"Hello"<<std::endl;        std::cout<<"Hello"<<std::endl;
+-   */         */
++          std::string _actualPath = fs::current_path();        std::string _actualPath = fs::current_path();
+- std::string Commit::readFile(fs::path path){         std::string Commit::readFile(fs::path path){
++          std::cout<<_actualPath<<std::endl;        std::cout<<_actualPath<<std::endl;
+-     // Open the stream to 'lock' the file.             // Open the stream to 'lock' the file.
++              
+-     std::ifstream f(path, std::ios::in);             std::ifstream f(path, std::ios::in);
++          std::ofstream StoreFile(_actualPath+"/.yeet/Store");        std::ofstream StoreFile(_actualPath+"/.yeet/Store");
+-              
++          if(StoreFile.is_open()){        if(StoreFile.is_open()){
+-     // Obtain the size of the file.             // Obtain the size of the file.
++              for(auto it:Store){            for(auto it:Store){
+-     const auto sz = fs::file_size(path);             const auto sz = fs::file_size(path);
++                  StoreFile<<it.first<<" "<<it.second<<"\n";                StoreFile<<it.first<<" "<<it.second<<"\n";
+-     std::string result(sz, '\0');             std::string result(sz, '\0');
++              }            }
+-              
++              StoreFile.close();            StoreFile.close();
+-     // Read the whole file into the buffer.             // Read the whole file into the buffer.
++          }        }
+-     f.read(result.data(), sz);             f.read(result.data(), sz);
+-              
++          else {        else {
+-     return result;             return result;
++              throw std::runtime_error("Failed to create .yeet/Store file.\n");            throw std::runtime_error("Failed to create .yeet/Store file.\n");
+-    }         }
++          }        }
+-              
++         }    }
+- // Blob Class         // Blob Class
++              
+- Blob::Blob(std::string newdata){         Blob::Blob(std::string newdata){
++              
+-     this->data = newdata;             this->data = newdata;
++      // Helper Function for Listing Files:    // Helper Function for Listing Files:
+-     // std::cout<<"The blob oid is: "<<this->oid<<std::endl;             // std::cout<<"The blob oid is: "<<this->oid<<std::endl;
++      void ListFiles(std::string path,std::vector<std::filesystem::path>&FilePath){    void ListFiles(std::string path,std::vector<std::filesystem::path>&FilePath){
+-    }         }
++          for (const auto & entry : fs::directory_iterator(path)){        for (const auto & entry : fs::directory_iterator(path)){
+- std::string Blob::type(){         std::string Blob::type(){
++              // This is my .gitignore            // This is my .gitignore
+-     return "blob";             return "blob";
++              const bool IGNORE = entry.path().generic_string().find(".git") != std::string::npos || entry.path().generic_string().find(".yeet") != std::string::npos || entry.path().generic_string().find(".vscode") != std::string::npos || entry.path().generic_string().find(".xmake") != std::string::npos || entry.path().generic_string().find(".cmake") != std::string::npos || entry.path().generic_string().find("/build") != std::string::npos;            const bool IGNORE = entry.path().generic_string().find(".git") != std::string::npos || entry.path().generic_string().find(".yeet") != std::string::npos || entry.path().generic_string().find(".vscode") != std::string::npos || entry.path().generic_string().find(".xmake") != std::string::npos || entry.path().generic_string().find(".cmake") != std::string::npos || entry.path().generic_string().find("/build") != std::string::npos;
+-    }         }
+-              
++              if(IGNORE){            if(IGNORE){
+- // Database Class         // Database Class
++                  continue;                continue;
+- Database::Database(std::filesystem::path path){         Database::Database(std::filesystem::path path){
++              }            }
+-     this->path = path;             this->path = path;
++              if(entry.is_directory()) {            if(entry.is_directory()) {
+-    }         }
++                  ListFiles(entry.path(),FilePath);                ListFiles(entry.path(),FilePath);
+-              
++              }             } 
+- // Creating Hash         // Creating Hash
++              if(entry.is_directory()) {            if(entry.is_directory()) {
+- std::string calculateSHA1Hex(const std::string& content) { // used some copilot         std::string calculateSHA1Hex(const std::string& content) { // used some copilot
++                  continue;                continue;
+-     CryptoPP::SHA1 sha1;             CryptoPP::SHA1 sha1;
++              }            }
+-     std::string hash;             std::string hash;
++              FilePath.push_back(entry);            FilePath.push_back(entry);
+-     // Create a filter that calculates the SHA1 hash and then encodes it as hexadecimal             // Create a filter that calculates the SHA1 hash and then encodes it as hexadecimal
++          }        }
+-     CryptoPP::StringSource(content, true, new CryptoPP::HashFilter(sha1, new CryptoPP::HexEncoder(new CryptoPP::StringSink(hash),false)));             CryptoPP::StringSource(content, true, new CryptoPP::HashFilter(sha1, new CryptoPP::HexEncoder(new CryptoPP::StringSink(hash),false)));
++         }    }
+-              
++              
+-     return hash;             return hash;
++      std::vector<unsigned char> readFile(const std::string& filename) {    std::vector<unsigned char> readFile(const std::string& filename) {
+-    }         }
++          std::ifstream file(filename, std::ios::binary);        std::ifstream file(filename, std::ios::binary);
+-              
++          if (!file) {        if (!file) {
+- void Database::storeContentInDB(Blob& object, const std::string& path){         void Database::storeContentInDB(Blob& object, const std::string& path){
++              std::cerr << "Cannot open file: " << filename << std::endl;            std::cerr << "Cannot open file: " << filename << std::endl;
+-     std::string Data = object.data;             std::string Data = object.data;
++              return {};            return {};
+-              
++          }        }
+-     // ! I am putiing only the data in the content to simplify the process of diff             // ! I am putiing only the data in the content to simplify the process of diff
++          return std::vector<unsigned char>((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());        return std::vector<unsigned char>((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+-     // std::string content = object.type() + " " + std::to_string(Data.size()) + "\0" + Data; // The null character is included just to use when we itterate over it.             // std::string content = object.type() + " " + std::to_string(Data.size()) + "\0" + Data; // The null character is included just to use when we itterate over it.
++         }    }
+-                  
++              
+-     std::string content = Data;             std::string content = Data;
++      std::vector<unsigned char> decompressData(const std::vector<unsigned char>& compressedData) {    std::vector<unsigned char> decompressData(const std::vector<unsigned char>& compressedData) {
+-     object.oid = calculateSHA1Hex(content);             object.oid = calculateSHA1Hex(content);
++          z_stream strm = {};        z_stream strm = {};
+-     Store[path] = object.oid;             Store[path] = object.oid;
++          strm.total_in = strm.avail_in = compressedData.size();        strm.total_in = strm.avail_in = compressedData.size();
+-                  
++          strm.next_in = (Bytef*)compressedData.data();        strm.next_in = (Bytef*)compressedData.data();
+-     // std::cout<<object.oid<<std::endl; // Hashes are coming out.             // std::cout<<object.oid<<std::endl; // Hashes are coming out.
++              
+-     write_object(object.oid,content); // Writing/ making directories of the commit object/blob             write_object(object.oid,content); // Writing/ making directories of the commit object/blob
++          std::vector<unsigned char> decompressedData(compressedData.size() * 2); // Start with double the input size        std::vector<unsigned char> decompressedData(compressedData.size() * 2); // Start with double the input size
+-    }         }
+-              
++          if (inflateInit(&strm) != Z_OK) {        if (inflateInit(&strm) != Z_OK) {
+- void Database::storeContentInDB(Tree& object){         void Database::storeContentInDB(Tree& object){
++              std::cerr << "inflateInit failed" << std::endl;            std::cerr << "inflateInit failed" << std::endl;
+-     std::string Data = object.ReturnS_tring();             std::string Data = object.ReturnS_tring();
++              return {};            return {};
+-     std::string content = object.Type() + " " + std::to_string(Data.size()) + "\0" + Data; // The null character is included just to use when we itterate over it.             std::string content = object.Type() + " " + std::to_string(Data.size()) + "\0" + Data; // The null character is included just to use when we itterate over it.
++          }        }
+-     // std::cout<<"the content: "<<content<<std::endl;             // std::cout<<"the content: "<<content<<std::endl;
++              
+-     object.oid = calculateSHA1Hex(content);             object.oid = calculateSHA1Hex(content);
++          int ret;        int ret;
+-     // std::cout<<"The hash of the tree object is: "<<object.oid<<std::endl; // Hashes are coming out.             // std::cout<<"The hash of the tree object is: "<<object.oid<<std::endl; // Hashes are coming out.
++          do {        do {
+-     write_object(object.oid,content); // Writing/ making directories of the commit object/blob             write_object(object.oid,content); // Writing/ making directories of the commit object/blob
++              strm.avail_out = decompressedData.size() - strm.total_out;            strm.avail_out = decompressedData.size() - strm.total_out;
+-    }         }
++              strm.next_out = (Bytef*)(decompressedData.data() + strm.total_out);            strm.next_out = (Bytef*)(decompressedData.data() + strm.total_out);
+-              
++              
+- void Database::storeContentInDB(Commit& object){         void Database::storeContentInDB(Commit& object){
++              ret = inflate(&strm, Z_NO_FLUSH);            ret = inflate(&strm, Z_NO_FLUSH);
+-     std::string Data = object.Writtenlines;             std::string Data = object.Writtenlines;
++              
+-     std::string content = "Commit  \nData Size: " + std::to_string(Data.size()) + "\0 \n" + Data; // The null character is included just to use when we itterate over it.             std::string content = "Commit  \nData Size: " + std::to_string(Data.size()) + "\0 \n" + Data; // The null character is included just to use when we itterate over it.
++              switch (ret) {            switch (ret) {
+-     // TODO: I have added Data size as extra here for readablitliy, but it may create problem later.             // TODO: I have added Data size as extra here for readablitliy, but it may create problem later.
++                  case Z_NEED_DICT:                case Z_NEED_DICT:
+-     // std::cout<<"the content: "<<content<<std::endl;             // std::cout<<"the content: "<<content<<std::endl;
++                  case Z_DATA_ERROR:                case Z_DATA_ERROR:
+-     object.oid = calculateSHA1Hex(content);             object.oid = calculateSHA1Hex(content);
++                  case Z_MEM_ERROR:                case Z_MEM_ERROR:
+-     // std::cout<<"The hash of the Commit object is: "<<object.oid<<std::endl; // Hashes are coming out.             // std::cout<<"The hash of the Commit object is: "<<object.oid<<std::endl; // Hashes are coming out.
++                      std::cerr << "inflate error: " << ret << std::endl;                    std::cerr << "inflate error: " << ret << std::endl;
+-     write_object(object.oid,content); // Writing/ making directories of the commit object/blob             write_object(object.oid,content); // Writing/ making directories of the commit object/blob
++                      inflateEnd(&strm);                    inflateEnd(&strm);
+-    }         }
++                      return {};                    return {};
+-              
++                  case Z_BUF_ERROR:                case Z_BUF_ERROR:
+- // Tree Class         // Tree Class
++                  case Z_OK:                case Z_OK:
+-              
++                      if (strm.avail_out == 0) {                    if (strm.avail_out == 0) {
+-  /**         /**
++                          // Output buffer is full, increase its size                        // Output buffer is full, increase its size
+-  * This function converts the vector<TreeEntry> to string          * This function converts the vector<TreeEntry> to string
++                          decompressedData.resize(decompressedData.size() * 2);                        decompressedData.resize(decompressedData.size() * 2);
+-  * @return String, which will be used in storing the tree to Database.          * @return String, which will be used in storing the tree to Database.
++                      }                    }
+-  * The entries contains all the files commit info.          * The entries contains all the files commit info.
++                      break;                    break;
+-   */          */
++              }            }
+- std::string Tree::ReturnS_tring(){         std::string Tree::ReturnS_tring(){
++          } while (ret != Z_STREAM_END);        } while (ret != Z_STREAM_END);
+-     std::ostringstream result;             std::ostringstream result;
+-              
++          inflateEnd(&strm);        inflateEnd(&strm);
+-     // std::ostringstream result; // The ostringstream stands for output string stream just like ofstream             // std::ostringstream result; // The ostringstream stands for output string stream just like ofstream
++          decompressedData.resize(strm.total_out); // Resize to actual decompressed size        decompressedData.resize(strm.total_out); // Resize to actual decompressed size
+-     // Using the 'result' stream to concatenate strings and numbers             // Using the 'result' stream to concatenate strings and numbers
++          return decompressedData;        return decompressedData;
+-     // result << "The answer to life, the universe, and everything is " << 42 << ".";             // result << "The answer to life, the universe, and everything is " << 42 << ".";
++         }    }
+-     // Sort entries by name             // Sort entries by name
+-              
++      std::string Inflate(std::string path){    std::string Inflate(std::string path){
+-     std::sort(entries.begin(), entries.end(), [](const TreeEntry& a, const TreeEntry& b) {             std::sort(entries.begin(), entries.end(), [](const TreeEntry& a, const TreeEntry& b) {
++              
+-         return a.name < b.name;                 return a.name < b.name;
++          std::string inputFilename = path;         std::string inputFilename = path; 
+-     });             });
++          std::string response = "";        std::string response = "";
+-              
++              
+-     for (const auto& entry : entries) {             for (const auto& entry : entries) {
++          auto compressedData = readFile(inputFilename);        auto compressedData = readFile(inputFilename);
+-         std::string FileStat = (entry.stat == "Exe") ? entry.EXE_MODE : entry.REGULAR_MODE;                 std::string FileStat = (entry.stat == "Exe") ? entry.EXE_MODE : entry.REGULAR_MODE;
++          if (compressedData.empty()) return "Error in compressed data";        if (compressedData.empty()) return "Error in compressed data";
+-         result << FileStat << " " << entry.name << " " << entry.oid<< "\n";                 result << FileStat << " " << entry.name << " " << entry.oid<< "\n";
++              
+-     }             }
++          auto decompressedData = decompressData(compressedData);        auto decompressedData = decompressData(compressedData);
+-     // std::cout<<result.str()<<std::endl;             // std::cout<<result.str()<<std::endl;
++          if (decompressedData.empty()) return "Error in decompresssion";        if (decompressedData.empty()) return "Error in decompresssion";
+-     return result.str();             return result.str();
++              
+-    }         }
++          for(auto it:decompressedData){        for(auto it:decompressedData){
+-              
++              response+=it;            response+=it;
+-              
++          }        }
+-              
++              
+- // Helper Functions:         // Helper Functions:
++          return response;        return response;
+- std::string timeToString(time_t currtime) {          std::string timeToString(time_t currtime) { 
++         }    }
+-     std::stringstream ss;              std::stringstream ss; 
++              
+-     ss << std::put_time(localtime(&currtime), "%Y-%m-%d %H:%M:%S"); // this is new to me.             ss << std::put_time(localtime(&currtime), "%Y-%m-%d %H:%M:%S"); // this is new to me.
++      // Diffs Algo    // Diffs Algo
+-     return ss.str();             return ss.str();
++              
+-    }         }
++      // A function to convert a string to differnt lines. like a vector of strings    // A function to convert a string to differnt lines. like a vector of strings
+-              
++      std::vector<std::string> splitIntoLines(const std::string& str) {    std::vector<std::string> splitIntoLines(const std::string& str) {
+-              
++          std::vector<std::string> lines;        std::vector<std::string> lines;
+- std::string Directory_name_Helper(std::string Objpath){         std::string Directory_name_Helper(std::string Objpath){
++          std::string temp;        std::string temp;
+-     std::string ans="";             std::string ans="";
++          for (char c : str) {        for (char c : str) {
+-     ans+=Objpath[Objpath.size()-41];             ans+=Objpath[Objpath.size()-41];
++              if (c == '\n') {            if (c == '\n') {
+-     ans+=Objpath[Objpath.size()-40];             ans+=Objpath[Objpath.size()-40];
++                  lines.push_back(temp);                lines.push_back(temp);
+-     return ans;             return ans;
++                  temp.clear();                temp.clear();
+-    }         }
++              } else {            } else {
+-              
++                  temp += c;                temp += c;
+- std::string File_name_Helper(std::string Objpath){         std::string File_name_Helper(std::string Objpath){
++              }            }
+-     std::string ans="";             std::string ans="";
++          }        }
+-     for(int i=Objpath.size()-1;i>=0;i--){             for(int i=Objpath.size()-1;i>=0;i--){
++          if (!temp.empty()) {        if (!temp.empty()) {
+-         if(Objpath[i]=='/'){                 if(Objpath[i]=='/'){
++              lines.push_back(temp);            lines.push_back(temp);
+-             break;                     break;
++          }        }
+-         }                 }
++          return lines;        return lines;
+-         ans+=Objpath[i];                 ans+=Objpath[i];
++         }    }
+-     }             }
++              
+-     std::string act_ans="";             std::string act_ans="";
++      int Shortest_Edit_Search(const std::vector<std::string>& a, const std::vector<std::string>& b,     int Shortest_Edit_Search(const std::vector<std::string>& a, const std::vector<std::string>& b, 
+-     for(int i=ans.size()-1;i>=0;i--){             for(int i=ans.size()-1;i>=0;i--){
++                               std::vector<std::vector<int>>& trace) {                             std::vector<std::vector<int>>& trace) {
+-         act_ans+=ans[i];                 act_ans+=ans[i];
++          int n = a.size(), m = b.size();        int n = a.size(), m = b.size();
+-     }             }
++          if (n == 0) return m;  // All insertions if `a` is empty        if (n == 0) return m;  // All insertions if `a` is empty
+-     return act_ans;             return act_ans;
++          if (m == 0) return n;  // All deletions if `b` is empty        if (m == 0) return n;  // All deletions if `b` is empty
+-    }         }
+-              
++          int max_distance = n + m;        int max_distance = n + m;
+- // std::string Compressing_using_zlib(std::string content){         // std::string Compressing_using_zlib(std::string content){
++          int diagonal_offset = max_distance;  // To shift diagonals into the array        int diagonal_offset = max_distance;  // To shift diagonals into the array
+- //     z_stream stream;         //     z_stream stream;
++          std::vector<int> diagonals(2 * max_distance + 1, -1);  // Track edit points for each diagonal        std::vector<int> diagonals(2 * max_distance + 1, -1);  // Track edit points for each diagonal
+- //     stream.zalloc = nullptr;         //     stream.zalloc = nullptr;
++          trace.clear();        trace.clear();
+- //     stream.zfree = nullptr;         //     stream.zfree = nullptr;
++              
+- //     stream.opaque = nullptr;         //     stream.opaque = nullptr;
++          diagonals[diagonal_offset + 1] = 0;  // Initialize diagonal k=1        diagonals[diagonal_offset + 1] = 0;  // Initialize diagonal k=1
+- //     stream.avail_in = content.size(); // input size         //     stream.avail_in = content.size(); // input size
++              
+- //     uLongf compressed_size = compressBound(content.size());         //     uLongf compressed_size = compressBound(content.size());
++          for (int d = 0; d <= max_distance; ++d) {        for (int d = 0; d <= max_distance; ++d) {
+- //     stream.avail_out = compressed_size; //assuming the compressed can become 3 times of og         //     stream.avail_out = compressed_size; //assuming the compressed can become 3 times of og
++              for (int k = -d; k <= d; k += 2) {            for (int k = -d; k <= d; k += 2) {
+- //     stream.next_in = reinterpret_cast<Bytef*>(const_cast<char*>(content.data())); // new for me, used copilot for this line; // input fil         //     stream.next_in = reinterpret_cast<Bytef*>(const_cast<char*>(content.data())); // new for me, used copilot for this line; // input fil
++                  int x;                int x;
+- //     Bytef* compressed_data = new Bytef[compressed_size];         //     Bytef* compressed_data = new Bytef[compressed_size];
++                  if (k == -d || (k != d && diagonals[diagonal_offset + k - 1] < diagonals[diagonal_offset + k + 1])) {                if (k == -d || (k != d && diagonals[diagonal_offset + k - 1] < diagonals[diagonal_offset + k + 1])) {
+- //     stream.next_out = reinterpret_cast<unsigned char*>(compressed_data); // The output file type         //     stream.next_out = reinterpret_cast<unsigned char*>(compressed_data); // The output file type
++                      // Move down                    // Move down
+-              
++                      x = diagonals[diagonal_offset + k + 1];                    x = diagonals[diagonal_offset + k + 1];
+- //     // intializing compression         //     // intializing compression
++                  } else {                } else {
+- //     deflateInit(&stream, Z_DEFAULT_COMPRESSION); //The compression level must be Z_DEFAULT_COMPRESSION, or between 0 and 9: 1 gives best speed, 9 gives best compression, 0 gives no compression at all (the input data is simply copied a block at a time). Z_DEFAULT_COMPRESSION requests a default compromise between speed and compression (currently equivalent to level 6).  // from zlib manual.         //     deflateInit(&stream, Z_DEFAULT_COMPRESSION); //The compression level must be Z_DEFAULT_COMPRESSION, or between 0 and 9: 1 gives best speed, 9 gives best compression, 0 gives no compression at all (the input data is simply copied a block at a time). Z_DEFAULT_COMPRESSION requests a default compromise between speed and compression (currently equivalent to level 6).  // from zlib manual.
++                      // Move right                    // Move right
+-              
++                      x = diagonals[diagonal_offset + k - 1] + 1;                    x = diagonals[diagonal_offset + k - 1] + 1;
+- //     // compress:         //     // compress:
++                  }                }
+- //     deflate(&stream, Z_BEST_COMPRESSION);         //     deflate(&stream, Z_BEST_COMPRESSION);
+-              
++                  int y = x - k;  // Corresponding y-coordinate                int y = x - k;  // Corresponding y-coordinate
+- //     compressed_size = stream.total_out;         //     compressed_size = stream.total_out;
++                  while (x < n && y < m && a[x] == b[y]) {                while (x < n && y < m && a[x] == b[y]) {
+-              
++                      ++x;                    ++x;
+- //     deflateEnd(&stream);         //     deflateEnd(&stream);
++                      ++y;                    ++y;
+- //     std::string compressed = reinterpret_cast<const char*>(compressed_data);         //     std::string compressed = reinterpret_cast<const char*>(compressed_data);
++                  }                }
+- //     delete[] compressed_data; // releasing the memory of the buffer holding the compressed data         //     delete[] compressed_data; // releasing the memory of the buffer holding the compressed data
++              
+- //     return compressed;         //     return compressed;
++                  diagonals[diagonal_offset + k] = x;                diagonals[diagonal_offset + k] = x;
+- // }         // }
+-              
++                  // If we've reached the end of both strings                // If we've reached the end of both strings
+- // refractored Compression Logic         // refractored Compression Logic
++                  if (x >= n && y >= m) {                if (x >= n && y >= m) {
+- std::string Compressing_using_zlib(std::string& content) {         std::string Compressing_using_zlib(std::string& content) {
++                      trace.push_back(diagonals);  // Store the final state                    trace.push_back(diagonals);  // Store the final state
+-     if (content.empty()) return "";             if (content.empty()) return "";
++                      return d;                    return d;
+-              
++                  }                }
+-     z_stream stream{};             z_stream stream{};
++              }            }
+-     stream.zalloc = nullptr;             stream.zalloc = nullptr;
++              trace.push_back(diagonals);  // Store the state for this edit distance            trace.push_back(diagonals);  // Store the state for this edit distance
+-     stream.zfree = nullptr;             stream.zfree = nullptr;
++          }        }
+-     stream.opaque = nullptr;             stream.opaque = nullptr;
++              
+-     stream.avail_in = static_cast<uInt>(content.size());             stream.avail_in = static_cast<uInt>(content.size());
++          return -1;  // This should never happen        return -1;  // This should never happen
+-     stream.next_in = reinterpret_cast<Bytef*>(const_cast<char*>(content.data()));             stream.next_in = reinterpret_cast<Bytef*>(const_cast<char*>(content.data()));
++         }    }
+-              
++              
+-     if (deflateInit(&stream, Z_DEFAULT_COMPRESSION) != Z_OK) {             if (deflateInit(&stream, Z_DEFAULT_COMPRESSION) != Z_OK) {
++              
+-         throw std::runtime_error("Failed to initialize zlib deflate.");                 throw std::runtime_error("Failed to initialize zlib deflate.");
++              
+-     }             }
++      std::vector<Edit> diff(const std::vector<std::string>& a,     std::vector<Edit> diff(const std::vector<std::string>& a, 
+-              
++                            const std::vector<std::string>& b,                          const std::vector<std::string>& b,
+-     std::vector<unsigned char> compressedData(compressBound(content.size()));             std::vector<unsigned char> compressedData(compressBound(content.size()));
++                            const std::vector<std::vector<int>>& trace,                          const std::vector<std::vector<int>>& trace,
+-     stream.avail_out = compressedData.size();             stream.avail_out = compressedData.size();
++                            int d) {                          int d) {
+-     stream.next_out = compressedData.data();             stream.next_out = compressedData.data();
++          std::vector<Edit> result;        std::vector<Edit> result;
+-              
++          if (trace.empty() || d < 0) return result;        if (trace.empty() || d < 0) return result;
+-     if (deflate(&stream, Z_FINISH) != Z_STREAM_END) {             if (deflate(&stream, Z_FINISH) != Z_STREAM_END) {
++                  
+-         deflateEnd(&stream);                 deflateEnd(&stream);
++          int x = a.size(), y = b.size();        int x = a.size(), y = b.size();
+-         throw std::runtime_error("Failed to deflate data.");                 throw std::runtime_error("Failed to deflate data.");
++          int offset = x + y;        int offset = x + y;
+-     }             }
++                  
+-              
++          for (int i = d; i > 0; --i) {        for (int i = d; i > 0; --i) {
+-     compressedData.resize(stream.total_out);             compressedData.resize(stream.total_out);
++              const std::vector<int>& v = trace[i];            const std::vector<int>& v = trace[i];
+-              
++              int k = x - y;            int k = x - y;
+-     if (deflateEnd(&stream) != Z_OK) {             if (deflateEnd(&stream) != Z_OK) {
++                          
+-         throw std::runtime_error("Failed to finalize zlib deflate.");                 throw std::runtime_error("Failed to finalize zlib deflate.");
++              bool down = (k == -i || (k != i && v[offset + k - 1] < v[offset + k + 1]));            bool down = (k == -i || (k != i && v[offset + k - 1] < v[offset + k + 1]));
+-     }             }
++              int k_prev = down ? k + 1 : k - 1;            int k_prev = down ? k + 1 : k - 1;
+-              
++              
+-     return std::string(compressedData.begin(), compressedData.end());             return std::string(compressedData.begin(), compressedData.end());
++              int x_prev = v[offset + k_prev];            int x_prev = v[offset + k_prev];
+-    }         }
++              int y_prev = x_prev - k_prev;            int y_prev = x_prev - k_prev;
+-              
+-              
++              while (x > x_prev && y > y_prev) {            while (x > x_prev && y > y_prev) {
+- // Author Class:         // Author Class:
++                  if (a[x - 1] == b[y - 1]) {                if (a[x - 1] == b[y - 1]) {
+- std::string Author::to_stringg(){         std::string Author::to_stringg(){
++                      result.push_back(Edit(Edit::EQL, a[x - 1], b[y - 1]));                    result.push_back(Edit(Edit::EQL, a[x - 1], b[y - 1]));
+-     std::string thecurrTime=timeToString(time);             std::string thecurrTime=timeToString(time);
++                  } else {                } else {
+-     return name+" <"+email+"> "+ thecurrTime;             return name+" <"+email+"> "+ thecurrTime;
++                      result.push_back(Edit(Edit::DEL, a[x - 1], ""));                    result.push_back(Edit(Edit::DEL, a[x - 1], ""));
+-    }         }
++                      result.push_back(Edit(Edit::INS, "", b[y - 1]));                    result.push_back(Edit(Edit::INS, "", b[y - 1]));
+-              
++                  }                }
+-              
++                  --x;                --x;
+- // History         // History
++                  --y;                --y;
+- // Refs Class:         // Refs Class:
++              }            }
+- // Constructor of Ref Class         // Constructor of Ref Class
++              
+- Refs::Refs(std::string path){         Refs::Refs(std::string path){
++              while (x > x_prev) {            while (x > x_prev) {
+-     this->path = path;             this->path = path;
++                  result.push_back(Edit(Edit::DEL, a[x - 1], ""));                result.push_back(Edit(Edit::DEL, a[x - 1], ""));
+-    }         }
++                  --x;                --x;
+-              
++              }            }
+- // @return the path to the HEAD file         // @return the path to the HEAD file
++              
+- std::string Refs::HEAD_path(){         std::string Refs::HEAD_path(){
++              while (y > y_prev) {            while (y > y_prev) {
+-     return path + "/.yeet/HEAD";             return path + "/.yeet/HEAD";
++                  result.push_back(Edit(Edit::INS, "", b[y - 1]));                result.push_back(Edit(Edit::INS, "", b[y - 1]));
+-    }         }
++                  --y;                --y;
+-              
++              }            }
+- // Updates the HEAD file to the latest commit         // Updates the HEAD file to the latest commit
++          }        }
+- void Refs::update_HEAD(std::string oid){         void Refs::update_HEAD(std::string oid){
++              
+-     // std::cout<<path<<std::endl;             // std::cout<<path<<std::endl;
++          while (x > 0) {        while (x > 0) {
+-     std::ofstream headFile( path+"/.yeet/HEAD");             std::ofstream headFile( path+"/.yeet/HEAD");
++              result.push_back(Edit(Edit::DEL, a[x - 1], ""));            result.push_back(Edit(Edit::DEL, a[x - 1], ""));
+-     if (headFile.is_open()) {             if (headFile.is_open()) {
++              --x;            --x;
+-         headFile << oid;                 headFile << oid;
++          }        }
+-         headFile.close();                 headFile.close();
++              
+-     } else {             } else {
++          while (y > 0) {        while (y > 0) {
+-         throw std::runtime_error("Failed to open .yeet/HEAD file.\n");                 throw std::runtime_error("Failed to open .yeet/HEAD file.\n");
++              result.push_back(Edit(Edit::INS, "", b[y - 1]));            result.push_back(Edit(Edit::INS, "", b[y - 1]));
+-     }             }
++              --y;            --y;
+-    }         }
++          }        }
+-              
++              
+- std::string Refs::Read_HEAD(){         std::string Refs::Read_HEAD(){
++          std::reverse(result.begin(), result.end());        std::reverse(result.begin(), result.end());
+-     std::ifstream headFile(Refs::HEAD_path(),std::ios::binary);             std::ifstream headFile(Refs::HEAD_path(),std::ios::binary);
++              
+-     std::string FileContent; // Becuase I am using string, It will not pick up anything after a space. I need to use getLine() function.             std::string FileContent; // Becuase I am using string, It will not pick up anything after a space. I need to use getLine() function.
++          // for (const auto& edit : result) {        // for (const auto& edit : result) {
+-     if(headFile){             if(headFile){
++          //     std::cout << "Edit Type: " << (edit.type == Edit::EQL ? "EQL" :         //     std::cout << "Edit Type: " << (edit.type == Edit::EQL ? "EQL" : 
+-         headFile>>FileContent; // All content of the file into the string                 headFile>>FileContent; // All content of the file into the string
++          //                                 (edit.type == Edit::INS ? "INS" : "DEL"))        //                                 (edit.type == Edit::INS ? "INS" : "DEL"))
+-     }             }
++          //             << ", Orig: " << edit.old_line        //             << ", Orig: " << edit.old_line
+-     return FileContent;             return FileContent;
++          //             << ", Updated: " << edit.new_line        //             << ", Updated: " << edit.new_line
+-    }         }
++          //             << std::endl;        //             << std::endl;
+-              
++          // }        // }
+- void writeStoreinDB(std::unordered_map<std::string, std::string> Store){         void writeStoreinDB(std::unordered_map<std::string, std::string> Store){
++              
+-     for(auto it:Store){             for(auto it:Store){
++          return result;        return result;
+-         std::cout<<it.first<<" "<<it.second<<std::endl;                 std::cout<<it.first<<" "<<it.second<<std::endl;
++         }    }
+-     }             }
++              
+-     std::cout<<"Hello"<<std::endl;             std::cout<<"Hello"<<std::endl;
++              
+-     std::string _actualPath = fs::current_path();             std::string _actualPath = fs::current_path();
++      // Storing diffs in file    // Storing diffs in file
+-     std::cout<<_actualPath<<std::endl;             std::cout<<_actualPath<<std::endl;
++      void storeDiff(const std::vector<Edit>& edits) {    void storeDiff(const std::vector<Edit>& edits) {
+-              
++          std::ofstream diff_file(".yeet/Diffs", std::ios::app);        std::ofstream diff_file(".yeet/Diffs", std::ios::app);
+-     std::ofstream StoreFile(_actualPath+"/.yeet/Store");             std::ofstream StoreFile(_actualPath+"/.yeet/Store");
++          if (diff_file.is_open()) {        if (diff_file.is_open()) {
+-     if(StoreFile.is_open()){             if(StoreFile.is_open()){
++              for (const auto& edit : edits) {            for (const auto& edit : edits) {
+-         for(auto it:Store){                 for(auto it:Store){
++                  std::string tag = (edit.type == Edit::INS) ? "+" : "-";                std::string tag = (edit.type == Edit::INS) ? "+" : "-";
+-             StoreFile<<it.first<<" "<<it.second<<"\n";                     StoreFile<<it.first<<" "<<it.second<<"\n";
++                  std::string old_line = edit.old_line.empty() ? "" : edit.old_line;                std::string old_line = edit.old_line.empty() ? "" : edit.old_line;
+-         }                 }
++                  std::string new_line = edit.new_line.empty() ? "" : edit.new_line;                std::string new_line = edit.new_line.empty() ? "" : edit.new_line;
+-         StoreFile.close();                 StoreFile.close();
++              
+-     }             }
++                  diff_file << tag << " " << std::setw(4) << old_line << " " << std::setw(4) << new_line << "    " << (old_line.empty() ? new_line : old_line) << std::endl;                diff_file << tag << " " << std::setw(4) << old_line << " " << std::setw(4) << new_line << "    " << (old_line.empty() ? new_line : old_line) << std::endl;
+-              
++              }            }
+-     else {             else {
++              diff_file.close();            diff_file.close();
+-         throw std::runtime_error("Failed to create .yeet/Store file.\n");                 throw std::runtime_error("Failed to create .yeet/Store file.\n");
++          } else {        } else {
+-     }             }
++              std::cerr << "Unable to open file for writing diffs" << std::endl;            std::cerr << "Unable to open file for writing diffs" << std::endl;
+-    }         }
++          }        }
+-              
++         }    }
+-              
++      #include<string>    #include<string>
++      #include<vector>    #include<vector>
++      #include<filesystem>    #include<filesystem>
++      #include<zlib.h> // for database class    #include<zlib.h> // for database class
++      #include<cryptopp/sha.h> // for database class    #include<cryptopp/sha.h> // for database class
++      #include<iostream>    #include<iostream>
++      #include<fstream>    #include<fstream>
++      #include<sstream>    #include<sstream>
++      #include<iomanip> // for input/output manipulators    #include<iomanip> // for input/output manipulators
++      #include<algorithm>    #include<algorithm>
++      #include<unordered_set>    #include<unordered_set>
+- #include<string>         #include<string>
+- #include<vector>         #include<vector>
+- #include<filesystem>         #include<filesystem>
+- #include<zlib.h> // for database class         #include<zlib.h> // for database class
+- #include<cryptopp/sha.h> // for database class         #include<cryptopp/sha.h> // for database class
+- #include<iostream>         #include<iostream>
+- #include<fstream>         #include<fstream>
+- #include<sstream>         #include<sstream>
+- #include<iomanip> // for input/output manipulators         #include<iomanip> // for input/output manipulators
+- #include<algorithm>         #include<algorithm>
+- #include<unordered_set>         #include<unordered_set>
+-              
++      #include <iomanip>    #include <iomanip>
+- void writeStoreinDB(std::unordered_map<std::string, std::string> Store);         void writeStoreinDB(std::unordered_map<std::string, std::string> Store);
+-              
++              
++      // Structures:    // Structures:
+- void YeetAdd();         void YeetAdd();
+-              
++              
++      struct Edit    struct Edit
++         {    {
++          enum Type        enum Type
++          {        {
++              EQL,            EQL,
++              DEL,            DEL,
++              INS            INS
++          } type;        } type;
++          std::string old_line;        std::string old_line;
++          std::string new_line;        std::string new_line;
++              
++          Edit(Type t, const std::string &oldLine, const std::string &newLine)        Edit(Type t, const std::string &oldLine, const std::string &newLine)
++              : type(t), old_line(oldLine), new_line(newLine) {}            : type(t), old_line(oldLine), new_line(newLine) {}
++        };    };
++              
++              
++      // Helper Functions    // Helper Functions
++      void writeStoreinDB(std::unordered_map<std::string, std::string> Store);    void writeStoreinDB(std::unordered_map<std::string, std::string> Store);
++      void ListFiles(std::string path,std::vector<std::filesystem::path>&FilePath);    void ListFiles(std::string path,std::vector<std::filesystem::path>&FilePath);
++      std::string Inflate(std::string path);    std::string Inflate(std::string path);
++      std::vector<std::string> splitIntoLines(const std::string& str);    std::vector<std::string> splitIntoLines(const std::string& str);
++      int Shortest_Edit_Search(const std::vector<std::string>& a, const std::vector<std::string>& b,     int Shortest_Edit_Search(const std::vector<std::string>& a, const std::vector<std::string>& b, 
++                               std::vector<std::vector<int>>& trace);                             std::vector<std::vector<int>>& trace);
++      void Backtrack(std::string a, std::string b, std::vector<std::vector<int>> trace);    void Backtrack(std::string a, std::string b, std::vector<std::vector<int>> trace);
++      std::vector<Edit> diff(const std::vector<std::string> &a, const std::vector<std::string> &b, const std::vector<std::vector<int>> &trace, int d);    std::vector<Edit> diff(const std::vector<std::string> &a, const std::vector<std::string> &b, const std::vector<std::vector<int>> &trace, int d);
++      void storeDiff(const std::vector<Edit>& edits);    void storeDiff(const std::vector<Edit>& edits);
++              
++      void YeetAdd();    void YeetAdd();
++              
++      void YeetStatus(std::string path);    void YeetStatus(std::string path);
++              
++      void YeetInit(std::string path);    void YeetInit(std::string path);
++              
++      class Tree;    class Tree;
++      class Blob{    class Blob{
++          public:        public:
++              std::string oid;            std::string oid;
++              std::string data;            std::string data;
++              // Will not work, As I have to make a custom hash function for this            // Will not work, As I have to make a custom hash function for this
++              // std::unordered_set<std::pair<std::string, std::string>> BlobStore;             // std::unordered_set<std::pair<std::string, std::string>> BlobStore; 
++              Blob(std::string data);            Blob(std::string data);
++              std::string type();            std::string type();
++        };    };
++              
++      class Commit{    class Commit{
++          public:        public:
++              std::string path;            std::string path;
++              std::string TreeOID;            std::string TreeOID;
++              std::string AuthorData;            std::string AuthorData;
++              std::string CommitMessage;            std::string CommitMessage;
++              std::string Writtenlines;            std::string Writtenlines;
++              std::string oid;            std::string oid;
++              std::string parent;            std::string parent;
++              std::vector<std::string> IGNORE = {".","..",".git",".yeet"};            std::vector<std::string> IGNORE = {".","..",".git",".yeet"};
++              Commit(std::string path);            Commit(std::string path);
++              Commit(std::string TreeOid, std::string AuthorData, std::string CommitMessage, std::string parent);            Commit(std::string TreeOid, std::string AuthorData, std::string CommitMessage, std::string parent);
++              void CommitMain(std::string path);            void CommitMain(std::string path);
++              void ListFiles(std::string path,std::vector<std::filesystem::path>& FilePath);            void ListFiles(std::string path,std::vector<std::filesystem::path>& FilePath);
++              std::string readFile(std::filesystem::path path);            std::string readFile(std::filesystem::path path);
++          };        };
++              
++      std::string Directory_name_Helper(std::string Objpath);    std::string Directory_name_Helper(std::string Objpath);
++      std::string File_name_Helper(std::string Objpath);    std::string File_name_Helper(std::string Objpath);
++       /**    /**
++       * The below code is setup of zlib compression     * The below code is setup of zlib compression
++          https://www.zlib.net/manual.html#Basic        https://www.zlib.net/manual.html#Basic
++          @param the content of be compressed        @param the content of be compressed
++          @return The compressed string        @return The compressed string
++        */    */
++      std::string Compressing_using_zlib(std::string& content);    std::string Compressing_using_zlib(std::string& content);
++      class Database{    class Database{
++          private:        private:
++              /**            /**
++               *  writing the object to disk             *  writing the object to disk
++               *  @param `oid`: The object id that is the hexadecimal hash of file content.             *  @param `oid`: The object id that is the hexadecimal hash of file content.
++               *  @param `content`: The content of the file             *  @param `content`: The content of the file
++               */             */
++              void write_object(std::string oid,std::string content){            void write_object(std::string oid,std::string content){
++                  try                try
++                  {                {
++                      std::string obj_path = this->path.generic_string() + "/" + oid.substr(0,2) + "/" + oid.substr(2,oid.size()-1);                    std::string obj_path = this->path.generic_string() + "/" + oid.substr(0,2) + "/" + oid.substr(2,oid.size()-1);
++                      // std::cout<<"The obj path"<<obj_path<<std::endl;                    // std::cout<<"The obj path"<<obj_path<<std::endl;
++                      std::string Dir_name = Directory_name_Helper(obj_path);                    std::string Dir_name = Directory_name_Helper(obj_path);
+- void YeetStatus();         void YeetStatus();
++                      /** Actual File Path to the object created. */                    /** Actual File Path to the object created. */
+-              
++                      std::string File_Path = (this->path.generic_string()+"/"+Dir_name+"/"+File_name_Helper(obj_path)).c_str();                    std::string File_Path = (this->path.generic_string()+"/"+Dir_name+"/"+File_name_Helper(obj_path)).c_str();
+- void YeetInit(std::string path);         void YeetInit(std::string path);
++                      if(std::filesystem::exists(File_Path)) return;                    if(std::filesystem::exists(File_Path)) return;
+-              
++                      // std::cout<<"Hello, I am the directory: "<<Dir_name<<std::endl;                    // std::cout<<"Hello, I am the directory: "<<Dir_name<<std::endl;
+- class Tree;         class Tree;
++                      std::filesystem::create_directory(this->path.generic_string()+"/"+Dir_name);                    std::filesystem::create_directory(this->path.generic_string()+"/"+Dir_name);
+- class Blob{         class Blob{
++                      /** res contains the return value of the `touch` command. */                    /** res contains the return value of the `touch` command. */
+-     public:             public:
++                      int res = std::system(("touch " + this->path.generic_string()+"/"+Dir_name+"/"+File_name_Helper(obj_path)).c_str());                    int res = std::system(("touch " + this->path.generic_string()+"/"+Dir_name+"/"+File_name_Helper(obj_path)).c_str());
+-         std::string oid;                 std::string oid;
++                      if(res != 0) std::runtime_error("touch is not working \n");                    if(res != 0) std::runtime_error("touch is not working \n");
+-         std::string data;                 std::string data;
++                      // std::cout<<"Hello, I am the File: "<<this->path.generic_string()+"/"+Dir_name+"/"+File_name_Helper(obj_path).c_str()<<std::endl;                    // std::cout<<"Hello, I am the File: "<<this->path.generic_string()+"/"+Dir_name+"/"+File_name_Helper(obj_path).c_str()<<std::endl;
+-         // Will not work, As I have to make a custom hash function for this                 // Will not work, As I have to make a custom hash function for this
++                      // Compressing the content                    // Compressing the content
+-         // std::unordered_set<std::pair<std::string, std::string>> BlobStore;                  // std::unordered_set<std::pair<std::string, std::string>> BlobStore; 
++                      std::string compressed_data = Compressing_using_zlib(content);                    std::string compressed_data = Compressing_using_zlib(content);
+-         Blob(std::string data);                 Blob(std::string data);
++                      std::ofstream f(this->path.generic_string()+"/"+Dir_name+"/"+File_name_Helper(obj_path),std::ios::out | std::ios::binary);                    std::ofstream f(this->path.generic_string()+"/"+Dir_name+"/"+File_name_Helper(obj_path),std::ios::out | std::ios::binary);
+-         std::string type();                 std::string type();
++                      if(f.is_open()){                    if(f.is_open()){
+-   };         };
++                          f.write(compressed_data.c_str(),compressed_data.size());                        f.write(compressed_data.c_str(),compressed_data.size());
+-              
++                          f.close();                        f.close();
+- class Commit{         class Commit{
++                      }                    }
+-     public:             public:
++                      else{                    else{
+-         std::string path;                 std::string path;
++                          std::runtime_error("Unable to write in Commit Blob Files!!");                        std::runtime_error("Unable to write in Commit Blob Files!!");
+-         std::string TreeOID;                 std::string TreeOID;
++                      }                    }
+-         std::string AuthorData;                 std::string AuthorData;
++                  }                }
+-         std::string CommitMessage;                 std::string CommitMessage;
++                  catch(const std::exception& e)                catch(const std::exception& e)
+-         std::string Writtenlines;                 std::string Writtenlines;
++                  {                {
+-         std::string oid;                 std::string oid;
++                      std::cerr << e.what() << '\n';                    std::cerr << e.what() << '\n';
+-         std::string parent;                 std::string parent;
++                  }                }
+-         std::vector<std::string> IGNORE = {".","..",".git",".yeet"};                 std::vector<std::string> IGNORE = {".","..",".git",".yeet"};
++              }            }
+-         Commit(std::string path);                 Commit(std::string path);
++          public:        public:
+-         Commit(std::string TreeOid, std::string AuthorData, std::string CommitMessage, std::string parent);                 Commit(std::string TreeOid, std::string AuthorData, std::string CommitMessage, std::string parent);
++              std::filesystem::path path;            std::filesystem::path path;
+-         void CommitMain(std::string path);                 void CommitMain(std::string path);
++              std::unordered_map<std::string, std::string> Store;            std::unordered_map<std::string, std::string> Store;
+-         void ListFiles(std::string path,std::vector<std::filesystem::path>& FilePath);                 void ListFiles(std::string path,std::vector<std::filesystem::path>& FilePath);
++              Database(std::filesystem::path path);            Database(std::filesystem::path path);
+-         std::string readFile(std::filesystem::path path);                 std::string readFile(std::filesystem::path path);
++              // Its storing the blob store also. ie the pair of file path and its oid.            // Its storing the blob store also. ie the pair of file path and its oid.
+-     };             };
++              void storeContentInDB(Blob& object,const std::string &path);            void storeContentInDB(Blob& object,const std::string &path);
+-              
++              void storeContentInDB(Tree& object);            void storeContentInDB(Tree& object);
+- std::string Directory_name_Helper(std::string Objpath);         std::string Directory_name_Helper(std::string Objpath);
++              void storeContentInDB(Commit& object);            void storeContentInDB(Commit& object);
+- std::string File_name_Helper(std::string Objpath);         std::string File_name_Helper(std::string Objpath);
++        };    };
+-  /**         /**
++              
+-  * The below code is setup of zlib compression          * The below code is setup of zlib compression
++       /**    /**
+-     https://www.zlib.net/manual.html#Basic             https://www.zlib.net/manual.html#Basic
++       * An TreeEntry is a simple structure that exists to package up the information that Tree needs to     * An TreeEntry is a simple structure that exists to package up the information that Tree needs to
+-     @param the content of be compressed             @param the content of be compressed
++      know about its contents: the filename, and the object ID. Tree will also need to know the mode    know about its contents: the filename, and the object ID. Tree will also need to know the mode
+-     @return The compressed string             @return The compressed string
++      of each file, but for now all our source code is in non-executable regular files, so we will hard-    of each file, but for now all our source code is in non-executable regular files, so we will hard-
+-   */          */
++      code the 100644 mode string that appears in the tree file.    code the 100644 mode string that appears in the tree file.
+- std::string Compressing_using_zlib(std::string& content);         std::string Compressing_using_zlib(std::string& content);
++        */    */
+- class Database{         class Database{
++      class TreeEntry {    class TreeEntry {
+-     private:             private:
++      public:    public:
+-         /**                 /**
++          // operator overloaded        // operator overloaded
+-          *  writing the object to disk                  *  writing the object to disk
++          TreeEntry& operator=(const TreeEntry& other) {        TreeEntry& operator=(const TreeEntry& other) {
+-          *  @param `oid`: The object id that is the hexadecimal hash of file content.                  *  @param `oid`: The object id that is the hexadecimal hash of file content.
++              if (this != &other) { // Protect against self-assignment            if (this != &other) { // Protect against self-assignment
+-          *  @param `content`: The content of the file                  *  @param `content`: The content of the file
++                  this->name = other.name;                this->name = other.name;
+-          */                  */
++                  this->oid = other.oid;                this->oid = other.oid;
+-         void write_object(std::string oid,std::string content){                 void write_object(std::string oid,std::string content){
++                  this->stat = other.stat;                this->stat = other.stat;
+-             try                     try
++              }            }
+-             {                     {
++              return *this;            return *this;
+-                 std::string obj_path = this->path.generic_string() + "/" + oid.substr(0,2) + "/" + oid.substr(2,oid.size()-1);                         std::string obj_path = this->path.generic_string() + "/" + oid.substr(0,2) + "/" + oid.substr(2,oid.size()-1);
++          }        }
+-                 // std::cout<<"The obj path"<<obj_path<<std::endl;                         // std::cout<<"The obj path"<<obj_path<<std::endl;
++          // TreeEntry(const std::string& name, const std::string& oid) : name(name), oid(oid) {} // same as below        // TreeEntry(const std::string& name, const std::string& oid) : name(name), oid(oid) {} // same as below
+-                 std::string Dir_name = Directory_name_Helper(obj_path);                         std::string Dir_name = Directory_name_Helper(obj_path);
++          TreeEntry(std::string name, std::string oid,std::string stat) {        TreeEntry(std::string name, std::string oid,std::string stat) {
+-                 /** Actual File Path to the object created. */                         /** Actual File Path to the object created. */
++              this->name = name;            this->name = name;
+-                 std::string File_Path = (this->path.generic_string()+"/"+Dir_name+"/"+File_name_Helper(obj_path)).c_str();                         std::string File_Path = (this->path.generic_string()+"/"+Dir_name+"/"+File_name_Helper(obj_path)).c_str();
++              this->oid = oid;            this->oid = oid;
+-                 if(std::filesystem::exists(File_Path)) return;                         if(std::filesystem::exists(File_Path)) return;
++              this->stat = stat;            this->stat = stat;
+-                 // std::cout<<"Hello, I am the directory: "<<Dir_name<<std::endl;                         // std::cout<<"Hello, I am the directory: "<<Dir_name<<std::endl;
++          }        }
+-                 std::filesystem::create_directory(this->path.generic_string()+"/"+Dir_name);                         std::filesystem::create_directory(this->path.generic_string()+"/"+Dir_name);
++              
+-                 /** res contains the return value of the `touch` command. */                         /** res contains the return value of the `touch` command. */
++          // copy constructor        // copy constructor
+-                 int res = std::system(("touch " + this->path.generic_string()+"/"+Dir_name+"/"+File_name_Helper(obj_path)).c_str());                         int res = std::system(("touch " + this->path.generic_string()+"/"+Dir_name+"/"+File_name_Helper(obj_path)).c_str());
++          TreeEntry(const TreeEntry& other) : name(other.name), oid(other.oid), stat(other.stat) {}        TreeEntry(const TreeEntry& other) : name(other.name), oid(other.oid), stat(other.stat) {}
+-                 if(res != 0) std::runtime_error("touch is not working \n");                         if(res != 0) std::runtime_error("touch is not working \n");
++          std::string name;        std::string name;
+-                 // std::cout<<"Hello, I am the File: "<<this->path.generic_string()+"/"+Dir_name+"/"+File_name_Helper(obj_path).c_str()<<std::endl;                         // std::cout<<"Hello, I am the File: "<<this->path.generic_string()+"/"+Dir_name+"/"+File_name_Helper(obj_path).c_str()<<std::endl;
++          std::string oid;        std::string oid;
+-                 // Compressing the content                         // Compressing the content
++          // TODO: Customize these codes later for yeet.        // TODO: Customize these codes later for yeet.
+-                 std::string compressed_data = Compressing_using_zlib(content);                         std::string compressed_data = Compressing_using_zlib(content);
++          const std::string REGULAR_MODE = "100644";        const std::string REGULAR_MODE = "100644";
+-                 std::ofstream f(this->path.generic_string()+"/"+Dir_name+"/"+File_name_Helper(obj_path),std::ios::out | std::ios::binary);                         std::ofstream f(this->path.generic_string()+"/"+Dir_name+"/"+File_name_Helper(obj_path),std::ios::out | std::ios::binary);
++          const std::string EXE_MODE = "100755";        const std::string EXE_MODE = "100755";
+-                 if(f.is_open()){                         if(f.is_open()){
++              
+-                     f.write(compressed_data.c_str(),compressed_data.size());                             f.write(compressed_data.c_str(),compressed_data.size());
++          std::string stat;        std::string stat;
+-                     f.close();                             f.close();
++              
+-                 }                         }
++        };    };
+-                 else{                         else{
++              
+-                     std::runtime_error("Unable to write in Commit Blob Files!!");                             std::runtime_error("Unable to write in Commit Blob Files!!");
++              
+-                 }                         }
++      class Tree{    class Tree{
+-             }                     }
++          // const std::string ENTRY_FORMAT = "Z*H40"; no need        // const std::string ENTRY_FORMAT = "Z*H40"; no need
+-             catch(const std::exception& e)                     catch(const std::exception& e)
++          public:        public:
+-             {                     {
++              
+-                 std::cerr << e.what() << '\n';                         std::cerr << e.what() << '\n';
++              std::string oid;            std::string oid;
+-             }                     }
++              std::vector<TreeEntry> entries;            std::vector<TreeEntry> entries;
+-         }                 }
++              Tree(std::vector<TreeEntry>& entries){            Tree(std::vector<TreeEntry>& entries){
+-     public:             public:
++                  this->entries = entries;                this->entries = entries;
+-         std::filesystem::path path;                 std::filesystem::path path;
++              }            }
+-         std::unordered_map<std::string, std::string> Store;                 std::unordered_map<std::string, std::string> Store;
++              
+-         Database(std::filesystem::path path);                 Database(std::filesystem::path path);
++              std::string Type(){ return "tree"; }            std::string Type(){ return "tree"; }
+-         // Its storing the blob store also. ie the pair of file path and its oid.                 // Its storing the blob store also. ie the pair of file path and its oid.
++              std::string ReturnS_tring();            std::string ReturnS_tring();
+-         void storeContentInDB(Blob& object,const std::string &path);                 void storeContentInDB(Blob& object,const std::string &path);
++        };    };
+-         void storeContentInDB(Tree& object);                 void storeContentInDB(Tree& object);
++              
+-         void storeContentInDB(Commit& object);                 void storeContentInDB(Commit& object);
++              
+-   };         };
++      class Author{    class Author{
+-              
++          public:        public:
+-  /**         /**
++              std::string name;            std::string name;
+-  * An TreeEntry is a simple structure that exists to package up the information that Tree needs to          * An TreeEntry is a simple structure that exists to package up the information that Tree needs to
++              std::string email;            std::string email;
+- know about its contents: the filename, and the object ID. Tree will also need to know the mode         know about its contents: the filename, and the object ID. Tree will also need to know the mode
++              time_t time;            time_t time;
+- of each file, but for now all our source code is in non-executable regular files, so we will hard-         of each file, but for now all our source code is in non-executable regular files, so we will hard-
++              Author(std::string name,std::string email,time_t& time){            Author(std::string name,std::string email,time_t& time){
+- code the 100644 mode string that appears in the tree file.         code the 100644 mode string that appears in the tree file.
++                  this->email=email;                this->email=email;
+-   */          */
++                  this->name=name;                this->name=name;
+- class TreeEntry {         class TreeEntry {
++                  this->time=time;                this->time=time;
+- public:         public:
++              }            }
+-     // operator overloaded             // operator overloaded
++              std::string to_stringg();            std::string to_stringg();
+-     TreeEntry& operator=(const TreeEntry& other) {             TreeEntry& operator=(const TreeEntry& other) {
++        };    };
+-         if (this != &other) { // Protect against self-assignment                 if (this != &other) { // Protect against self-assignment
++              
+-             this->name = other.name;                     this->name = other.name;
++              
+-             this->oid = other.oid;                     this->oid = other.oid;
++      // For History:    // For History:
+-             this->stat = other.stat;                     this->stat = other.stat;
++      class Refs{    class Refs{
+-         }                 }
++          public:        public:
+-         return *this;                 return *this;
++              std::string path;            std::string path;
+-     }             }
++              std::string oid;            std::string oid;
+-     // TreeEntry(const std::string& name, const std::string& oid) : name(name), oid(oid) {} // same as below             // TreeEntry(const std::string& name, const std::string& oid) : name(name), oid(oid) {} // same as below
++              Refs(std::string path);            Refs(std::string path);
+-     TreeEntry(std::string name, std::string oid,std::string stat) {             TreeEntry(std::string name, std::string oid,std::string stat) {
++              void update_HEAD(std::string oid);            void update_HEAD(std::string oid);
+-         this->name = name;                 this->name = name;
++              std::string HEAD_path();            std::string HEAD_path();
+-         this->oid = oid;                 this->oid = oid;
++              std::string Read_HEAD();            std::string Read_HEAD();
+-         this->stat = stat;                 this->stat = stat;
++        };    };
+-     }             }
+-              
++              
+-     // copy constructor             // copy constructor
++      class Index{    class Index{
+-     TreeEntry(const TreeEntry& other) : name(other.name), oid(other.oid), stat(other.stat) {}             TreeEntry(const TreeEntry& other) : name(other.name), oid(other.oid), stat(other.stat) {}
++          public:        public:
+-     std::string name;             std::string name;
++              std::vector<std::filesystem::path> Entries;            std::vector<std::filesystem::path> Entries;
+-     std::string oid;             std::string oid;
++        };    };
+-     // TODO: Customize these codes later for yeet.             // TODO: Customize these codes later for yeet.
++              
+-     const std::string REGULAR_MODE = "100644";             const std::string REGULAR_MODE = "100644";
++      class Diffs{    class Diffs{
+-     const std::string EXE_MODE = "100755";             const std::string EXE_MODE = "100755";
++          public:        public:
+-              
++              std::string path;            std::string path;
+-     std::string stat;             std::string stat;
++              std::string diffs;            std::string diffs;
+-              
++                          
+-   };         };
++        };    };
+-              
+-              
++      // For Diffs    // For Diffs
+- class Tree{         class Tree{
++              
+-     // const std::string ENTRY_FORMAT = "Z*H40"; no need             // const std::string ENTRY_FORMAT = "Z*H40"; no need
++      class Printer {    class Printer {
+-     public:             public:
++      public:    public:
+-              
++          Printer(std::ostream& output = std::cout) : output(output) {}        Printer(std::ostream& output = std::cout) : output(output) {}
+-         std::string oid;                 std::string oid;
++          void print(const std::vector<Edit> &diff)        void print(const std::vector<Edit> &diff)
+-         std::vector<TreeEntry> entries;                 std::vector<TreeEntry> entries;
++          {        {
+-         Tree(std::vector<TreeEntry>& entries){                 Tree(std::vector<TreeEntry>& entries){
++              // Store in Diff file            // Store in Diff file
+-             this->entries = entries;                     this->entries = entries;
++              storeDiff(diff);             storeDiff(diff); 
+-         }                 }
++              // for (const auto &edit : diff)            // for (const auto &edit : diff)
+-              
++              // {            // {
+-         std::string Type(){ return "tree"; }                 std::string Type(){ return "tree"; }
++                                  
+-         std::string ReturnS_tring();                 std::string ReturnS_tring();
++              //     // Print out in the terminal            //     // Print out in the terminal
+-   };         };
++              //     // print_edit(edit);            //     // print_edit(edit);
+-              
++              // }            // }
+-              
++          }        }
+- class Author{         class Author{
++                  
+-     public:             public:
++              
+-         std::string name;                 std::string name;
++      private:    private:
+-         std::string email;                 std::string email;
++          std::ostream& output;        std::ostream& output;
+-         time_t time;                 time_t time;
++          void print_edit(const Edit &edit)        void print_edit(const Edit &edit)
+-         Author(std::string name,std::string email,time_t& time){                 Author(std::string name,std::string email,time_t& time){
++          {        {
+-             this->email=email;                     this->email=email;
++              std::string col, reset = "\033[39m";            std::string col, reset = "\033[39m";
+-             this->name=name;                     this->name=name;
++              std::string tag;            std::string tag;
+-             this->time=time;                     this->time=time;
++                          
+-         }                 }
++              
+-         std::string to_stringg();                 std::string to_stringg();
++              switch (edit.type)            switch (edit.type)
+-   };         };
++              {            {
+-              
++              case Edit::EQL:            case Edit::EQL:
+-              
++                  col = "";                col = "";
+- // For History:         // For History:
++                  tag = " ";                tag = " ";
+- class Refs{         class Refs{
++                  break;                break;
+-     public:             public:
++              case Edit::DEL:            case Edit::DEL:
+-         std::string path;                 std::string path;
++                  col = "\033[31m";                col = "\033[31m";
+-         std::string oid;                 std::string oid;
++                  tag = "-";                tag = "-";
+-         Refs(std::string path);                 Refs(std::string path);
++                  break;                break;
+-         void update_HEAD(std::string oid);                 void update_HEAD(std::string oid);
++              case Edit::INS:            case Edit::INS:
+-         std::string HEAD_path();                 std::string HEAD_path();
++                  col = "\033[32m";                col = "\033[32m";
+-         std::string Read_HEAD();                 std::string Read_HEAD();
++                  tag = "+";                tag = "+";
+-   };         };
++                  break;                break;
+-              
++              }            }
+-              
++              
+- class Index{         class Index{
++              std::string old_line = edit.old_line.empty() ? "" : edit.old_line;            std::string old_line = edit.old_line.empty() ? "" : edit.old_line;
+-     public:             public:
++              std::string new_line = edit.new_line.empty() ? "" : edit.new_line;            std::string new_line = edit.new_line.empty() ? "" : edit.new_line;
+-         std::vector<std::filesystem::path> Entries;                 std::vector<std::filesystem::path> Entries;
++              
+-   };         };
++              // output << col << tag << " " << std::setw(4) << old_line << " " << std::setw(4) << new_line << "    " << (old_line.empty() ? new_line : old_line) << reset << std::endl;            // output << col << tag << " " << std::setw(4) << old_line << " " << std::setw(4) << new_line << "    " << (old_line.empty() ? new_line : old_line) << reset << std::endl;
+-              
++              
+- class Diffs{         class Diffs{
++          }        }
+-     public:             public:
++        };    };
+-         std::string path;                 std::string path;
++              
+-         std::string diffs;                 std::string diffs;
++              
+-                          
++              
+-   };         };
++      Well, what can I do?    Well, what can I do?
++              
++      1. First of all when Commit happens: Store the name of the path of the file and its generated hash. ie. the folder and the its file name in it.    1. First of all when Commit happens: Store the name of the path of the file and its generated hash. ie. the folder and the its file name in it.
++      It can be done by making a key value DS and then writing it in a file. (set or unordered set) ----> DONE ... DONE (Store file successfully created.)    It can be done by making a key value DS and then writing it in a file. (set or unordered set) ----> DONE ... DONE (Store file successfully created.)
++              
++      2. Then When I do diffs command with the path. I will:    2. Then When I do diffs command with the path. I will:
+- Well, what can I do?         Well, what can I do?
+-              
+- 1. First of all when Commit happens: Store the name of the path of the file and its generated hash. ie. the folder and the its file name in it.         1. First of all when Commit happens: Store the name of the path of the file and its generated hash. ie. the folder and the its file name in it.
+- It can be done by making a key value DS and then writing it in a file. (set or unordered set) ----> DONE ... DONE (Store file successfully created.)         It can be done by making a key value DS and then writing it in a file. (set or unordered set) ----> DONE ... DONE (Store file successfully created.)
+-              
+- 2. Then When I do diffs command with the path. I will:         2. Then When I do diffs command with the path. I will:
+- first go to that commit file where the key value store is present. Find the key/value of the path and takes the hashed value. It will then open the file that stores that files previous content.         first go to that commit file where the key value store is present. Find the key/value of the path and takes the hashed value. It will then open the file that stores that files previous content.
++      first go to that commit file where the key value store is present. Find the key/value of the path and takes the hashed value. It will then open the file that stores that files previous content. ----> DONE    first go to that commit file where the key value store is present. Find the key/value of the path and takes the hashed value. It will then open the file that stores that files previous content. ----> DONE
+-              
+- It will then pass that compressed content file to the Inflating function which will inflate it.         It will then pass that compressed content file to the Inflating function which will inflate it.
++      It will then pass that compressed content file to the Inflating function which will inflate it. ---> DONE    It will then pass that compressed content file to the Inflating function which will inflate it. ---> DONE
+-              
+- Then I put Mayer Byers Algo on the data of the current file and previous file and output in terms of lines: Then I put Mayer Byers Algo on the data of the current file and previous file and output in terms of lines:    Then I put Mayer Byers Algo on the data of the current file and previous file and output in terms of lines:
++      ---->> Done    ---->> Done
++              
++      --> My Mayer Byers algo is a little bit wrong. Have to properly understand it and then optimize it.    --> My Mayer Byers algo is a little bit wrong. Have to properly understand it and then optimize it.
+-              
+-              
+- --> Solve the saving to file issue. SOLVED --> Solve the saving to file issue. SOLVED    --> Solve the saving to file issue. SOLVED
++      #include <iostream>    #include <iostream>
++      #include "controllers.hpp"    #include "controllers.hpp"
++      #include<filesystem>    #include<filesystem>
++      #define fs std::filesystem    #define fs std::filesystem
++      #define ll long long    #define ll long long
++      using namespace std;    using namespace std;
++              
++              
++      int main(int argc, char* argv[]) {    int main(int argc, char* argv[]) {
++          // Flushing the cout and cerr.        // Flushing the cout and cerr.
++          cout<<unitbuf;         cout<<unitbuf; 
++          cerr<<unitbuf;        cerr<<unitbuf;
++          cout<<"Using cpp version: "<<__cplusplus<<endl; // To know my cpp version        cout<<"Using cpp version: "<<__cplusplus<<endl; // To know my cpp version
++          string path = fs::current_path();        string path = fs::current_path();
++          cout<<path<<endl;        cout<<path<<endl;
++          try{        try{
++              if(argc==1){            if(argc==1){
++                  // TODO Add some useful string in this case. As is for user to know the different types of commands.                // TODO Add some useful string in this case. As is for user to know the different types of commands.
++                  cerr<<"No argument Provied \n Use Command: yeet init. or yeet commit etc.\n";                cerr<<"No argument Provied \n Use Command: yeet init. or yeet commit etc.\n";
++                  return EXIT_FAILURE;                return EXIT_FAILURE;
++                  }                }
++              string arg=argv[1];            string arg=argv[1];
++              
++              if (argc==3) {            if (argc==3) {
++                  // TODO Add if-else conditions to distinguish different argument that the user is passing.                // TODO Add if-else conditions to distinguish different argument that the user is passing.
++                                  
++                  // cout<<subArg<<endl;                // cout<<subArg<<endl;
++                  // cout<<arg<<endl;                // cout<<arg<<endl;
++                  string subArg=argv[2];                string subArg=argv[2];
++                  if(arg=="init"){                if(arg=="init"){
++                      YeetInit(subArg);                    YeetInit(subArg);
++                  }                }
++              
++                  else if(arg=="add"){                else if(arg=="add"){
++                      YeetAdd();                    YeetAdd();
++                  }                 } 
++              
++              }             } 
++              
++              if(argc==2){            if(argc==2){
++                  if(arg=="status"){                if(arg=="status"){
+- #include <iostream>         #include <iostream>
+- #include "controllers.hpp"         #include "controllers.hpp"
+- #include<filesystem>         #include<filesystem>
+- #define fs std::filesystem         #define fs std::filesystem
+- #define ll long long         #define ll long long
+- using namespace std;         using namespace std;
+-              
+-              
+- int main(int argc, char* argv[]) {         int main(int argc, char* argv[]) {
+-     // Flushing the cout and cerr.             // Flushing the cout and cerr.
+-     cout<<unitbuf;              cout<<unitbuf; 
+-     cerr<<unitbuf;             cerr<<unitbuf;
+-     cout<<"Using cpp version: "<<__cplusplus<<endl; // To know my cpp version             cout<<"Using cpp version: "<<__cplusplus<<endl; // To know my cpp version
+-     string path = fs::current_path();             string path = fs::current_path();
+-     cout<<path<<endl;             cout<<path<<endl;
+-     try{             try{
+-         if(argc==1){                 if(argc==1){
+-             // TODO Add some useful string in this case. As is for user to know the different types of commands.                     // TODO Add some useful string in this case. As is for user to know the different types of commands.
+-             cerr<<"No argument Provied \n Use Command: yeet init. or yeet commit etc.\n";                     cerr<<"No argument Provied \n Use Command: yeet init. or yeet commit etc.\n";
+-             return EXIT_FAILURE;                     return EXIT_FAILURE;
+-             }                     }
+-         string arg=argv[1];                 string arg=argv[1];
+-              
+-         if (argc==3) {                 if (argc==3) {
+-             // TODO Add if-else conditions to distinguish different argument that the user is passing.                     // TODO Add if-else conditions to distinguish different argument that the user is passing.
+-                                  
+-             // cout<<subArg<<endl;                     // cout<<subArg<<endl;
+-             // cout<<arg<<endl;                     // cout<<arg<<endl;
+-             string subArg=argv[2];                     string subArg=argv[2];
+-             if(arg=="init"){                     if(arg=="init"){
+-                 YeetInit(subArg);                         YeetInit(subArg);
+-             }                     }
+-              
+-             else if(arg=="add"){                     else if(arg=="add"){
+-                 YeetAdd();                         YeetAdd();
+-             }                      } 
+-              
+-         }                  } 
+-              
+-         if(argc==2){                 if(argc==2){
+-             if(arg=="status"){                     if(arg=="status"){
+-                 YeetStatus();                         YeetStatus();
++                      YeetStatus(path);                    YeetStatus(path);
+-             }             }                }
+-             else if(arg=="commit"){             else if(arg=="commit"){                else if(arg=="commit"){
+-                 Commit myCommitObject(path);                 Commit myCommitObject(path);                    Commit myCommitObject(path);
+-                 myCommitObject.CommitMain(path);                 myCommitObject.CommitMain(path);                    myCommitObject.CommitMain(path);
+-             }             }                }
+-         }         }            }
+-              
+-         // else if(argc > 2) print("only one argiment is supported for now!");         // else if(argc > 2) print("only one argiment is supported for now!");            // else if(argc > 2) print("only one argiment is supported for now!");
+-                              
+-     }     }        }
+-     catch(const std::exception& e){     catch(const std::exception& e){        catch(const std::exception& e){
+-         // TODO write the number of arguments and the argv required for each command in the Documentation.         // TODO write the number of arguments and the argv required for each command in the Documentation.            // TODO write the number of arguments and the argv required for each command in the Documentation.
+-         std::cout<<"Wtf";         std::cout<<"Wtf";            std::cout<<"Wtf";
+-         std::cerr << e.what() << "\nException Happened somewhere! Error:501 \n";         std::cerr << e.what() << "\nException Happened somewhere! Error:501 \n";            std::cerr << e.what() << "\nException Happened somewhere! Error:501 \n";
+-     }     }        }
+-                  
+-     return EXIT_SUCCESS;     return EXIT_SUCCESS;        return EXIT_SUCCESS;
+-    }    }    }

@@ -8,10 +8,41 @@
 #include<sstream>
 #include<iomanip> // for input/output manipulators
 #include<algorithm>
+#include<unordered_set>
+#include <iomanip>
+
+// Structures:
+
+struct Edit
+{
+    enum Type
+    {
+        EQL,
+        DEL,
+        INS
+    } type;
+    std::string old_line;
+    std::string new_line;
+
+    Edit(Type t, const std::string &oldLine, const std::string &newLine)
+        : type(t), old_line(oldLine), new_line(newLine) {}
+};
+
+
+// Helper Functions
+void writeStoreinDB(std::unordered_map<std::string, std::string> Store);
+void ListFiles(std::string path,std::vector<std::filesystem::path>&FilePath);
+std::string Inflate(std::string path);
+std::vector<std::string> splitIntoLines(const std::string& str);
+int Shortest_Edit_Search(const std::vector<std::string>& a, const std::vector<std::string>& b, 
+                         std::vector<std::vector<int>>& trace);
+void Backtrack(std::string a, std::string b, std::vector<std::vector<int>> trace);
+std::vector<Edit> diff(const std::vector<std::string> &a, const std::vector<std::string> &b, const std::vector<std::vector<int>> &trace, int d);
+void storeDiff(const std::vector<Edit>& edits);
 
 void YeetAdd();
 
-void YeetStatus();
+void YeetStatus(std::string path);
 
 void YeetInit(std::string path);
 
@@ -20,6 +51,8 @@ class Blob{
     public:
         std::string oid;
         std::string data;
+        // Will not work, As I have to make a custom hash function for this
+        // std::unordered_set<std::pair<std::string, std::string>> BlobStore; 
         Blob(std::string data);
         std::string type();
 };
@@ -33,7 +66,7 @@ class Commit{
         std::string Writtenlines;
         std::string oid;
         std::string parent;
-        std::vector<std::string> IGNORE = {".","..",".git"};
+        std::vector<std::string> IGNORE = {".","..",".git",".yeet"};
         Commit(std::string path);
         Commit(std::string TreeOid, std::string AuthorData, std::string CommitMessage, std::string parent);
         void CommitMain(std::string path);
@@ -48,7 +81,7 @@ std::string File_name_Helper(std::string Objpath);
     https://www.zlib.net/manual.html#Basic
     @param the content of be compressed
     @return The compressed string
- */
+*/
 std::string Compressing_using_zlib(std::string& content);
 class Database{
     private:
@@ -90,8 +123,10 @@ class Database{
         }
     public:
         std::filesystem::path path;
+        std::unordered_map<std::string, std::string> Store;
         Database(std::filesystem::path path);
-        void storeContentInDB(Blob& object);
+        // Its storing the blob store also. ie the pair of file path and its oid.
+        void storeContentInDB(Blob& object,const std::string &path);
         void storeContentInDB(Tree& object);
         void storeContentInDB(Commit& object);
 };
@@ -101,7 +136,7 @@ class Database{
 know about its contents: the filename, and the object ID. Tree will also need to know the mode
 of each file, but for now all our source code is in non-executable regular files, so we will hard-
 code the 100644 mode string that appears in the tree file.
- */
+*/
 class TreeEntry {
 public:
     // operator overloaded
@@ -119,7 +154,7 @@ public:
         this->oid = oid;
         this->stat = stat;
     }
-    
+
     // copy constructor
     TreeEntry(const TreeEntry& other) : name(other.name), oid(other.oid), stat(other.stat) {}
     std::string name;
@@ -129,7 +164,7 @@ public:
     const std::string EXE_MODE = "100755";
 
     std::string stat;
-    
+
 };
 
 
@@ -174,6 +209,67 @@ class Refs{
 };
 
 
+class Index{
+    public:
+        std::vector<std::filesystem::path> Entries;
+};
 
-
+class Diffs{
+    public:
+        std::string path;
+        std::string diffs;
         
+};
+
+// For Diffs
+
+class Printer {
+public:
+    Printer(std::ostream& output = std::cout) : output(output) {}
+    void print(const std::vector<Edit> &diff)
+    {
+        // Store in Diff file
+        storeDiff(diff); 
+        // for (const auto &edit : diff)
+        // {
+            
+        //     // Print out in the terminal
+        //     // print_edit(edit);
+        // }
+    }
+    
+
+private:
+    std::ostream& output;
+    void print_edit(const Edit &edit)
+    {
+        std::string col, reset = "\033[39m";
+        std::string tag;
+        
+
+        switch (edit.type)
+        {
+        case Edit::EQL:
+            col = "";
+            tag = " ";
+            break;
+        case Edit::DEL:
+            col = "\033[31m";
+            tag = "-";
+            break;
+        case Edit::INS:
+            col = "\033[32m";
+            tag = "+";
+            break;
+        }
+
+        std::string old_line = edit.old_line.empty() ? "" : edit.old_line;
+        std::string new_line = edit.new_line.empty() ? "" : edit.new_line;
+
+        // output << col << tag << " " << std::setw(4) << old_line << " " << std::setw(4) << new_line << "    " << (old_line.empty() ? new_line : old_line) << reset << std::endl;
+
+    }
+};
+
+
+

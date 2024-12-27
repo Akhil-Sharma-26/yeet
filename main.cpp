@@ -16,7 +16,7 @@ int main(int argc, char* argv[]) {
     try{
         if(argc==1){
             // TODO Add some useful string in this case. As is for user to know the different types of commands.
-            cerr<<"No argument Provied \n";
+            cerr<<"No argument Provied \n Use Command: yeet init. or yeet commit etc.\n";
             return EXIT_FAILURE;
             }
         string arg=argv[1];
@@ -34,11 +34,12 @@ int main(int argc, char* argv[]) {
             else if(arg=="add"){
                 YeetAdd();
             } 
+
         } 
 
         if(argc==2){
             if(arg=="status"){
-                YeetStatus();
+                YeetStatus(path);
             }
             else if(arg=="commit"){
                 Commit myCommitObject(path);

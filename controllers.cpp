@@ -4,8 +4,160 @@
 #include <cryptopp/sha.h>
 #include <cryptopp/filters.h>
 #include <cryptopp/hex.h>
+
 #define fs std::filesystem
-void YeetStatus(){
+
+void YeetStatus(std::string path){
+
+    // TODO: Add edge case solution if the Store is empty
+    // TODO: Don't compare exe or binary files. only text files.
+    std::vector<std::filesystem::path>FilePath;
+
+    // Getting list of all files
+    ListFiles(path,FilePath);
+
+    // Making a visited map for later
+    std::unordered_map<std::filesystem::path, bool> visited;
+    for(auto it:FilePath){
+        visited[it] = false;
+    }
+    
+    int Totaladditions,Totaldeletions;
+    Totaladditions = 0, Totaldeletions = 0;
+
+    std::string StoreData;
+    std::fstream Store(path+"/.yeet/Store");
+
+    // Putting content of the Store file in the string StoreData
+    if(Store.is_open()){
+        std::string line;
+        while (std::getline(Store, line)) {
+            StoreData += line + "\n";
+        }
+        Store.close();
+    }
+    else{
+        std::cout<<"Error in opening Store File"<<std::endl;
+    }
+
+    bool space = false;
+    std::string PathofFile, oid;
+    PathofFile = ""; oid = "";
+    std::vector<std::string> FilePaths;
+    std::vector<std::string> oids;
+    for(int i=0;i<StoreData.size();i++){ 
+        if(StoreData[i] == ' '){
+            FilePaths.push_back(PathofFile);
+            PathofFile = "";
+            space = !space; continue;
+        }       
+
+        if(StoreData[i] == '\n'){
+            oids.push_back(oid);
+            oid = "";
+            space = !space; continue;
+        }     
+        
+        if(!space){
+            PathofFile += StoreData[i];
+        }
+        else{
+            oid += StoreData[i];
+        }
+    }
+
+    // Main Loop
+    for(int i=0;i<oids.size();i++){
+
+        int additions,deletions;
+        additions = 0, deletions = 0;
+        std::string thePathOfOid = "";
+        std::string fileName = oids[i].substr(2, oids[i].size() - 2); 
+        thePathOfOid = oids[i].substr(0, 2) + "/" + fileName;
+
+        std::string FullPath = path + "/.yeet/objects/" + thePathOfOid;
+
+        std::string InflatedContent = Inflate(FullPath);
+
+        if (std::filesystem::exists(FilePaths[i])) {
+            std::string NewFileContent="";
+            std::ifstream NowFile(FilePaths[i]);
+
+            if(NowFile.is_open()){
+                std::string line;
+                while(std::getline(NowFile,line)){
+                    NewFileContent+=line+"\n";
+                }
+                NowFile.close();
+            }
+
+            // Call Diffs algo here
+            std::vector<std::string> NewFileinLines = splitIntoLines(NewFileContent);
+            std::vector<std::string> OldFileinLines = splitIntoLines(InflatedContent);
+
+            std::vector<std::vector<int>> trace;
+            int ans = Shortest_Edit_Search(NewFileinLines, OldFileinLines, trace); 
+
+            // std::cout<<ans<<std::endl;
+            if(ans==0) {
+                // TODO: Don't add in commit
+                // std::cout<<"Files are identical."<<std::endl;
+                continue;
+            }            
+            
+            std::vector<Edit> diff_result = diff(OldFileinLines, NewFileinLines, trace, ans);
+
+            for(auto it:diff_result){
+                if(it.type == Edit::DEL) {
+                    deletions++;
+                    Totaldeletions++;
+                }
+                else if(it.type == Edit::INS) {
+                    additions++;
+                    Totaladditions++;
+                }
+            }
+
+            // Don't print exec file diffs.
+            if(! access (FilePaths[i].c_str(), X_OK)){
+                continue;
+            }
+
+            // don't show file if nothing changed
+            if(additions == 0 && deletions == 0){
+                continue;
+            }
+
+            // The file we are checking:
+            std::cout<<FilePaths[i]<<std::endl;
+            
+            // Printing the diffs
+            Printer printer;
+            printer.print(diff_result);
+
+            std::cout<<"This file additions: "<<additions<<"\n";
+            std::cout<<"This file deletions: "<<deletions<<std::endl;
+
+            visited[FilePaths[i]] = true;
+        } else {
+            deletions+=InflatedContent.size();
+        }
+    }
+
+    for(int i=0;i<visited.size();i++){
+        if(!visited[FilePaths[i]]){
+            // TODO: Add additions, deletions here too
+            // additions+=
+        }
+    }
+    if(Totaladditions == 0  && Totaldeletions == 0){
+        std::cout<<"No Change, Can't commit"<<std::endl;
+        // TODO: Add a check so that no commit can happen;
+    }
+    else{
+        std::cout<<"Total addtions: "<<Totaladditions<<"\nTotal deletions: "<<Totaldeletions<<std::endl;
+    }
+
 
 }
 
@@ -23,22 +175,26 @@ void YeetInit(std::string path="."){
     {
         // std::cout<<path;
         // TODO: Consider all cases the user can enter here
-        // He can enter . --> init in pwd ------> Will Workd
+        // He can enter . --> init in pwd ------> Will Work
         // He can enter ebc --> init in pwd/ebc --------> not work, you to mkdir ebc first
         // He can enter ebc/ --> init in pwd/ebc only not pwd/ebc/ -------> same as above
         // He can enter full path from root --> init at that path ---------> will not work
         std::string pwd = std::filesystem::current_path();
         std::string temp_pwd = pwd;
         std::string _actualPath=pwd+'/'+path+".yeet";
-        if(path.back()!='/'&& path.back()!='.'){ _actualPath=pwd+'/'+path+"/.yeet"; temp_pwd=pwd+'/'+path;}
-        if(path.back()=='.') _actualPath=pwd+"/.yeet"; 
-        std::cout<<"temp: "<<temp_pwd<<std::endl;
-        if(std::filesystem::exists(temp_pwd+"/.yeet")){
-            throw std::runtime_error("A yeet folder already exists in this directory. \n");
+        if(path.back()!='/' && path.back()!='.'){ 
+            _actualPath=pwd+'/'+path+"/.yeet";
+            temp_pwd=pwd+'/'+path;
         }
-        std::system("ls -a");
-        std::system("tree .");
-        std::cout<<"actual: "<<_actualPath<<std::endl;
+
+        if(path.back()=='.') 
+            _actualPath=pwd+"/.yeet"; 
+
+        if(std::filesystem::exists(temp_pwd+"/.yeet"))
+            throw std::runtime_error("A yeet folder already exists in this directory. \n");
+        
+        // std::system("tree .");
+
         std::filesystem::create_directory(_actualPath);
         std::filesystem::create_directory(_actualPath+"/objects");
         std::filesystem::create_directory(_actualPath+"/refs");
@@ -74,13 +230,30 @@ void YeetInit(std::string path="."){
             else {
                 throw std::runtime_error("Failed to create .yeet/config file.\n");
             }
+
+        // Making Store File
+        std::ofstream StoreFile(_actualPath+"/Store");
+        if(StoreFile.is_open()){
+            StoreFile<<"Empty Store\n";
+            StoreFile.close();
+        }
+        else {
+            throw std::runtime_error("Failed to create .yeet/Store file.\n");
+        }
+
+        // Make Diff file.
+        std::ofstream DiffFile(_actualPath+"/Diff");
+        if (DiffFile.is_open()) {
+            DiffFile << "No Diffs Yet\n";
+            DiffFile.close();
+        } else {
+            throw std::runtime_error("Failed to create .yeet/Diff file.\n");
+        }
+
         std::cout << "Initialized yeet directory\n";
     }
-    catch(const std::exception& e)
-    {
-        
+    catch(const std::exception& e){
         std::cerr << e.what() << '\n';
-        // return EXIT_FAILURE;
     }
     
 }
@@ -88,6 +261,8 @@ void YeetInit(std::string path="."){
 void YeetAdd(){
 
 }
+
+
 // Commit Class:
 // TODO: Add a check that you can only list files if a .yeet dir is present/ initialized.
 /**
@@ -97,7 +272,7 @@ void YeetAdd(){
 void Commit::ListFiles(std::string path,std::vector<std::filesystem::path>&FilePath){
     for (const auto & entry : fs::directory_iterator(path)){
         // This is my .gitignore
-        const bool IGNORE = entry.path().generic_string().find(".git") != std::string::npos || entry.path().generic_string().find(".yeet") != std::string::npos || entry.path().generic_string().find(".vscode") != std::string::npos || entry.path().generic_string().find(".xmake") != std::string::npos;
+        const bool IGNORE = entry.path().generic_string().find(".git") != std::string::npos || entry.path().generic_string().find(".yeet") != std::string::npos || entry.path().generic_string().find(".vscode") != std::string::npos || entry.path().generic_string().find(".xmake") != std::string::npos || entry.path().generic_string().find(".cmake") != std::string::npos || entry.path().generic_string().find("/build") != std::string::npos;
 
         if(IGNORE){
             continue;
@@ -106,7 +281,7 @@ void Commit::ListFiles(std::string path,std::vector<std::filesystem::path>&FileP
             ListFiles(entry.path(),FilePath);
         } 
         if(entry.is_directory()) {
-            continue;;
+            continue;
         }
         FilePath.push_back(entry);
     }
@@ -129,11 +304,17 @@ void Commit::CommitMain(std::string path){
             // Blob of that Data
             Blob newBlobObject(data); 
             // Storing that Blob
-            DbObj.storeContentInDB(newBlobObject); 
+            DbObj.storeContentInDB(newBlobObject, entry.generic_string()); 
             // Making a TreeEntry with path of that Blob
             TreeEntry TreeEntryObj(entry.generic_string(),newBlobObject.oid,_stat); 
             TreeEntries.push_back(TreeEntryObj); 
         }
+        for(auto it:DbObj.Store){
+            std::cout<<it.first<<" "<<it.second<<std::endl;
+        }
+        // Save the store in /Store file
+        writeStoreinDB(DbObj.Store);
+
         if (!TreeEntries.empty()) {
             Tree TreeObject(TreeEntries);
             DbObj.storeContentInDB(TreeObject);
@@ -152,7 +333,6 @@ void Commit::CommitMain(std::string path){
             Commit MainCommitObj(TreeObject.oid,author,message,parent);
             DbObj.storeContentInDB(MainCommitObj);
             RefObj.update_HEAD(MainCommitObj.oid); // Updating the HEAD file to new commit
-
             // std::cout<<"the parent value: "<<parent<<std::endl;
             bool is_RootCommit = false;
             if(parent=="ref:") is_RootCommit=true;
@@ -222,10 +402,16 @@ std::string calculateSHA1Hex(const std::string& content) { // used some copilot
     return hash;
 }
 
-void Database::storeContentInDB(Blob& object){
+void Database::storeContentInDB(Blob& object, const std::string& path){
     std::string Data = object.data;
-    std::string content = object.type() + " " + std::to_string(Data.size()) + "\0" + Data; // The null character is included just to use when we itterate over it.
+
+    // ! I am putiing only the data in the content to simplify the process of diff
+    // std::string content = object.type() + " " + std::to_string(Data.size()) + "\0" + Data; // The null character is included just to use when we itterate over it.
+    
+    std::string content = Data;
     object.oid = calculateSHA1Hex(content);
+    Store[path] = object.oid;
+    
     // std::cout<<object.oid<<std::endl; // Hashes are coming out.
     write_object(object.oid,content); // Writing/ making directories of the commit object/blob
 }
@@ -408,4 +594,260 @@ std::string Refs::Read_HEAD(){
     return FileContent;
 }
 
+void writeStoreinDB(std::unordered_map<std::string, std::string> Store){
+    for(auto it:Store){
+        std::cout<<it.first<<" "<<it.second<<std::endl;
+    }
+    std::cout<<"Hello"<<std::endl;
+    std::string _actualPath = fs::current_path();
+    std::cout<<_actualPath<<std::endl;
 
+    std::ofstream StoreFile(_actualPath+"/.yeet/Store");
+    if(StoreFile.is_open()){
+        for(auto it:Store){
+            StoreFile<<it.first<<" "<<it.second<<"\n";
+        }
+        StoreFile.close();
+    }
+
+    else {
+        throw std::runtime_error("Failed to create .yeet/Store file.\n");
+    }
+}
+
+
+// Helper Function for Listing Files:
+void ListFiles(std::string path,std::vector<std::filesystem::path>&FilePath){
+    for (const auto & entry : fs::directory_iterator(path)){
+        // This is my .gitignore
+        const bool IGNORE = entry.path().generic_string().find(".git") != std::string::npos || entry.path().generic_string().find(".yeet") != std::string::npos || entry.path().generic_string().find(".vscode") != std::string::npos || entry.path().generic_string().find(".xmake") != std::string::npos || entry.path().generic_string().find(".cmake") != std::string::npos || entry.path().generic_string().find("/build") != std::string::npos;
+
+        if(IGNORE){
+            continue;
+        }
+        if(entry.is_directory()) {
+            ListFiles(entry.path(),FilePath);
+        } 
+        if(entry.is_directory()) {
+            continue;
+        }
+        FilePath.push_back(entry);
+    }
+}
+
+std::vector<unsigned char> readFile(const std::string& filename) {
+    std::ifstream file(filename, std::ios::binary);
+    if (!file) {
+        std::cerr << "Cannot open file: " << filename << std::endl;
+        return {};
+    }
+    return std::vector<unsigned char>((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+}
+
+std::vector<unsigned char> decompressData(const std::vector<unsigned char>& compressedData) {
+    z_stream strm = {};
+    strm.total_in = strm.avail_in = compressedData.size();
+    strm.next_in = (Bytef*)compressedData.data();
+
+    std::vector<unsigned char> decompressedData(compressedData.size() * 2); // Start with double the input size
+
+    if (inflateInit(&strm) != Z_OK) {
+        std::cerr << "inflateInit failed" << std::endl;
+        return {};
+    }
+
+    int ret;
+    do {
+        strm.avail_out = decompressedData.size() - strm.total_out;
+        strm.next_out = (Bytef*)(decompressedData.data() + strm.total_out);
+
+        ret = inflate(&strm, Z_NO_FLUSH);
+
+        switch (ret) {
+            case Z_NEED_DICT:
+            case Z_DATA_ERROR:
+            case Z_MEM_ERROR:
+                std::cerr << "inflate error: " << ret << std::endl;
+                inflateEnd(&strm);
+                return {};
+            case Z_BUF_ERROR:
+            case Z_OK:
+                if (strm.avail_out == 0) {
+                    // Output buffer is full, increase its size
+                    decompressedData.resize(decompressedData.size() * 2);
+                }
+                break;
+        }
+    } while (ret != Z_STREAM_END);
+
+    inflateEnd(&strm);
+    decompressedData.resize(strm.total_out); // Resize to actual decompressed size
+    return decompressedData;
+}
+
+std::string Inflate(std::string path){
+
+    std::string inputFilename = path; 
+    std::string response = "";
+
+    auto compressedData = readFile(inputFilename);
+    if (compressedData.empty()) return "Error in compressed data";
+
+    auto decompressedData = decompressData(compressedData);
+    if (decompressedData.empty()) return "Error in decompresssion";
+
+    for(auto it:decompressedData){
+        response+=it;
+    }
+
+    return response;
+}
+
+// Diffs Algo
+
+// A function to convert a string to differnt lines. like a vector of strings
+std::vector<std::string> splitIntoLines(const std::string& str) {
+    std::vector<std::string> lines;
+    std::string temp;
+    for (char c : str) {
+        if (c == '\n') {
+            lines.push_back(temp);
+            temp.clear();
+        } else {
+            temp += c;
+        }
+    }
+    if (!temp.empty()) {
+        lines.push_back(temp);
+    }
+    return lines;
+}
+
+int Shortest_Edit_Search(const std::vector<std::string>& a, const std::vector<std::string>& b, 
+                         std::vector<std::vector<int>>& trace) {
+    int n = a.size(), m = b.size();
+    if (n == 0) return m;  // All insertions if `a` is empty
+    if (m == 0) return n;  // All deletions if `b` is empty
+
+    int max_distance = n + m;
+    int diagonal_offset = max_distance;  // To shift diagonals into the array
+    std::vector<int> diagonals(2 * max_distance + 1, -1);  // Track edit points for each diagonal
+    trace.clear();
+
+    diagonals[diagonal_offset + 1] = 0;  // Initialize diagonal k=1
+
+    for (int d = 0; d <= max_distance; ++d) {
+        for (int k = -d; k <= d; k += 2) {
+            int x;
+            if (k == -d || (k != d && diagonals[diagonal_offset + k - 1] < diagonals[diagonal_offset + k + 1])) {
+                // Move down
+                x = diagonals[diagonal_offset + k + 1];
+            } else {
+                // Move right
+                x = diagonals[diagonal_offset + k - 1] + 1;
+            }
+
+            int y = x - k;  // Corresponding y-coordinate
+            while (x < n && y < m && a[x] == b[y]) {
+                ++x;
+                ++y;
+            }
+
+            diagonals[diagonal_offset + k] = x;
+
+            // If we've reached the end of both strings
+            if (x >= n && y >= m) {
+                trace.push_back(diagonals);  // Store the final state
+                return d;
+            }
+        }
+        trace.push_back(diagonals);  // Store the state for this edit distance
+    }
+
+    return -1;  // This should never happen
+}
+
+
+
+std::vector<Edit> diff(const std::vector<std::string>& a, 
+                      const std::vector<std::string>& b,
+                      const std::vector<std::vector<int>>& trace,
+                      int d) {
+    std::vector<Edit> result;
+    if (trace.empty() || d < 0) return result;
+    
+    int x = a.size(), y = b.size();
+    int offset = x + y;
+    
+    for (int i = d; i > 0; --i) {
+        const std::vector<int>& v = trace[i];
+        int k = x - y;
+        
+        bool down = (k == -i || (k != i && v[offset + k - 1] < v[offset + k + 1]));
+        int k_prev = down ? k + 1 : k - 1;
+
+        int x_prev = v[offset + k_prev];
+        int y_prev = x_prev - k_prev;
+
+        while (x > x_prev && y > y_prev) {
+            if (a[x - 1] == b[y - 1]) {
+                result.push_back(Edit(Edit::EQL, a[x - 1], b[y - 1]));
+            } else {
+                result.push_back(Edit(Edit::DEL, a[x - 1], ""));
+                result.push_back(Edit(Edit::INS, "", b[y - 1]));
+            }
+            --x;
+            --y;
+        }
+
+        while (x > x_prev) {
+            result.push_back(Edit(Edit::DEL, a[x - 1], ""));
+            --x;
+        }
+
+        while (y > y_prev) {
+            result.push_back(Edit(Edit::INS, "", b[y - 1]));
+            --y;
+        }
+    }
+
+    while (x > 0) {
+        result.push_back(Edit(Edit::DEL, a[x - 1], ""));
+        --x;
+    }
+
+    while (y > 0) {
+        result.push_back(Edit(Edit::INS, "", b[y - 1]));
+        --y;
+    }
+
+    std::reverse(result.begin(), result.end());
+
+    // for (const auto& edit : result) {
+    //     std::cout << "Edit Type: " << (edit.type == Edit::EQL ? "EQL" : 
+    //                                 (edit.type == Edit::INS ? "INS" : "DEL"))
+    //             << ", Orig: " << edit.old_line
+    //             << ", Updated: " << edit.new_line
+    //             << std::endl;
+    // }
+
+    return result;
+}
+
+
+// Storing diffs in file
+void storeDiff(const std::vector<Edit>& edits) {
+    std::ofstream diff_file(".yeet/Diffs", std::ios::app);
+    if (diff_file.is_open()) {
+        for (const auto& edit : edits) {
+            std::string tag = (edit.type == Edit::INS) ? "+" : "-";
+            std::string old_line = edit.old_line.empty() ? "" : edit.old_line;
+            std::string new_line = edit.new_line.empty() ? "" : edit.new_line;
+
+            diff_file << tag << " " << std::setw(4) << old_line << " " << std::setw(4) << new_line << "    " << (old_line.empty() ? new_line : old_line) << std::endl;
+        }
+        diff_file.close();
+    } else {
+        std::cerr << "Unable to open file for writing diffs" << std::endl;
+    }
+}
