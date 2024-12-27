@@ -68,6 +68,7 @@ void YeetStatus(std::string path){
 
     // Main Loop
     for(int i=0;i<oids.size();i++){
+
         int additions,deletions;
         additions = 0, deletions = 0;
         std::string thePathOfOid = "";
@@ -77,7 +78,6 @@ void YeetStatus(std::string path){
         std::string FullPath = path + "/.yeet/objects/" + thePathOfOid;
 
         std::string InflatedContent = Inflate(FullPath);
-        std::cout<<InflatedContent<<"\n";
 
         if (std::filesystem::exists(FilePaths[i])) {
             std::string NewFileContent="";
@@ -98,27 +98,42 @@ void YeetStatus(std::string path){
             std::vector<std::vector<int>> trace;
             int ans = Shortest_Edit_Search(NewFileinLines, OldFileinLines, trace); 
 
-            std::cout<<ans<<std::endl;
+            // std::cout<<ans<<std::endl;
             if(ans==0) {
                 // TODO: Don't add in commit
-                std::cout<<"Files are identical."<<std::endl;
+                // std::cout<<"Files are identical."<<std::endl;
                 continue;
-            }
+            }            
             
             std::vector<Edit> diff_result = diff(OldFileinLines, NewFileinLines, trace, ans);
-
-            Printer printer;
-            printer.print(diff_result);
 
             for(auto it:diff_result){
                 if(it.type == Edit::DEL) {
                     deletions++;
-                    Totaldeletions++;}
+                    Totaldeletions++;
+                }
                 else if(it.type == Edit::INS) {
                     additions++;
                     Totaladditions++;
                 }
             }
+
+            // Don't print exec file diffs.
+            if(! access (FilePaths[i].c_str(), X_OK)){
+                continue;
+            }
+
+            // don't show file if nothing changed
+            if(additions == 0 && deletions == 0){
+                continue;
+            }
+
+            // The file we are checking:
+            std::cout<<FilePaths[i]<<std::endl;
+            
+            // Printing the diffs
+            Printer printer;
+            printer.print(diff_result);
 
             std::cout<<"This file additions: "<<additions<<"\n";
             std::cout<<"This file deletions: "<<deletions<<std::endl;
@@ -127,7 +142,6 @@ void YeetStatus(std::string path){
         } else {
             deletions+=InflatedContent.size();
         }
-        break;
     }
 
     for(int i=0;i<visited.size();i++){
@@ -136,8 +150,7 @@ void YeetStatus(std::string path){
             // additions+=
         }
     }
-    
-    if(Totaladditions == Totaldeletions == 0){
+    if(Totaladditions == 0  && Totaldeletions == 0){
         std::cout<<"No Change, Can't commit"<<std::endl;
         // TODO: Add a check so that no commit can happen;
     }
@@ -227,6 +240,16 @@ void YeetInit(std::string path="."){
         else {
             throw std::runtime_error("Failed to create .yeet/Store file.\n");
         }
+
+        // Make Diff file.
+        std::ofstream DiffFile(_actualPath+"/Diff");
+        if (DiffFile.is_open()) {
+            DiffFile << "No Diffs Yet\n";
+            DiffFile.close();
+        } else {
+            throw std::runtime_error("Failed to create .yeet/Diff file.\n");
+        }
+
         std::cout << "Initialized yeet directory\n";
     }
     catch(const std::exception& e){
@@ -800,13 +823,31 @@ std::vector<Edit> diff(const std::vector<std::string>& a,
 
     std::reverse(result.begin(), result.end());
 
-    for (const auto& edit : result) {
-        std::cout << "Edit Type: " << (edit.type == Edit::EQL ? "EQL" : 
-                                    (edit.type == Edit::INS ? "INS" : "DEL"))
-                << ", Orig: " << edit.old_line
-                << ", Updated: " << edit.new_line
-                << std::endl;
-    }
+    // for (const auto& edit : result) {
+    //     std::cout << "Edit Type: " << (edit.type == Edit::EQL ? "EQL" : 
+    //                                 (edit.type == Edit::INS ? "INS" : "DEL"))
+    //             << ", Orig: " << edit.old_line
+    //             << ", Updated: " << edit.new_line
+    //             << std::endl;
+    // }
 
     return result;
+}
+
+
+// Storing diffs in file
+void storeDiff(const std::vector<Edit>& edits) {
+    std::ofstream diff_file(".yeet/Diffs", std::ios::app);
+    if (diff_file.is_open()) {
+        for (const auto& edit : edits) {
+            std::string tag = (edit.type == Edit::INS) ? "+" : "-";
+            std::string old_line = edit.old_line.empty() ? "" : edit.old_line;
+            std::string new_line = edit.new_line.empty() ? "" : edit.new_line;
+
+            diff_file << tag << " " << std::setw(4) << old_line << " " << std::setw(4) << new_line << "    " << (old_line.empty() ? new_line : old_line) << std::endl;
+        }
+        diff_file.close();
+    } else {
+        std::cerr << "Unable to open file for writing diffs" << std::endl;
+    }
 }

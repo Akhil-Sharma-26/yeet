@@ -9,7 +9,7 @@
 #include<iomanip> // for input/output manipulators
 #include<algorithm>
 #include<unordered_set>
-
+#include <iomanip>
 
 // Structures:
 
@@ -38,6 +38,7 @@ int Shortest_Edit_Search(const std::vector<std::string>& a, const std::vector<st
                          std::vector<std::vector<int>>& trace);
 void Backtrack(std::string a, std::string b, std::vector<std::vector<int>> trace);
 std::vector<Edit> diff(const std::vector<std::string> &a, const std::vector<std::string> &b, const std::vector<std::vector<int>> &trace, int d);
+void storeDiff(const std::vector<Edit>& edits);
 
 void YeetAdd();
 
@@ -227,10 +228,14 @@ public:
     Printer(std::ostream& output = std::cout) : output(output) {}
     void print(const std::vector<Edit> &diff)
     {
-        for (const auto &edit : diff)
-        {
-            print_edit(edit);
-        }
+        // Store in Diff file
+        storeDiff(diff); 
+        // for (const auto &edit : diff)
+        // {
+            
+        //     // Print out in the terminal
+        //     // print_edit(edit);
+        // }
     }
     
 
@@ -240,6 +245,7 @@ private:
     {
         std::string col, reset = "\033[39m";
         std::string tag;
+        
 
         switch (edit.type)
         {
@@ -260,6 +266,10 @@ private:
         std::string old_line = edit.old_line.empty() ? "" : edit.old_line;
         std::string new_line = edit.new_line.empty() ? "" : edit.new_line;
 
-        output << col << tag << " " << std::setw(4) << old_line << " " << std::setw(4) << new_line << "    " << (old_line.empty() ? new_line : old_line) << reset << std::endl;
+        // output << col << tag << " " << std::setw(4) << old_line << " " << std::setw(4) << new_line << "    " << (old_line.empty() ? new_line : old_line) << reset << std::endl;
+
     }
 };
+
+
+
