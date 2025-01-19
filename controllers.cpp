@@ -9,8 +9,6 @@
 
 void YeetStatus(std::string path){
 
-    // TODO: Add edge case solution if the Store is empty
-    // TODO: Don't compare exe or binary files. only text files.
     std::vector<std::filesystem::path>FilePath;
 
     // Getting list of all files
@@ -38,6 +36,11 @@ void YeetStatus(std::string path){
     }
     else{
         std::cout<<"Error in opening Store File"<<std::endl;
+    }
+
+    if(StoreData == "Empty Store"){
+        std::cout<<"Nothing to Compare to. Make your first commit!!"<<std::endl;
+        return;
     }
 
     bool space = false;
@@ -108,6 +111,8 @@ void YeetStatus(std::string path){
             std::vector<Edit> diff_result = diff(OldFileinLines, NewFileinLines, trace, ans);
 
             for(auto it:diff_result){
+                
+                // TODO: Add number of lines.
                 if(it.type == Edit::DEL) {
                     deletions++;
                     Totaldeletions++;
@@ -146,8 +151,14 @@ void YeetStatus(std::string path){
 
     for(int i=0;i<visited.size();i++){
         if(!visited[FilePaths[i]]){
-            // TODO: Add additions, deletions here too
-            // additions+=
+            std::ifstream newFile(FilePaths[i]);
+            if (newFile.is_open()) {
+                std::string line;
+                while (std::getline(newFile, line)) {
+                    Totaladditions++;
+                }
+                newFile.close();
+            }
         }
     }
     if(Totaladditions == 0  && Totaldeletions == 0){
@@ -174,7 +185,6 @@ void YeetInit(std::string path="."){
     try
     {
         // std::cout<<path;
-        // TODO: Consider all cases the user can enter here
         // He can enter . --> init in pwd ------> Will Work
         // He can enter ebc --> init in pwd/ebc --------> not work, you to mkdir ebc first
         // He can enter ebc/ --> init in pwd/ebc only not pwd/ebc/ -------> same as above
@@ -843,7 +853,6 @@ void storeDiff(const std::vector<Edit>& edits) {
             std::string tag = (edit.type == Edit::INS) ? "+" : "-";
             std::string old_line = edit.old_line.empty() ? "" : edit.old_line;
             std::string new_line = edit.new_line.empty() ? "" : edit.new_line;
-
             diff_file << tag << " " << std::setw(4) << old_line << " " << std::setw(4) << new_line << "    " << (old_line.empty() ? new_line : old_line) << std::endl;
         }
         diff_file.close();
