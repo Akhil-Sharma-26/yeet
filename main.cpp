@@ -1,6 +1,6 @@
 #include <iostream>
 #include "controllers.hpp"
-#include<filesystem>
+#include <filesystem>
 #define fs std::filesystem
 #define ll long long
 using namespace std;
@@ -33,7 +33,7 @@ int main(int argc, char* argv[]) {
 
             else if(arg=="add"){
                 YeetAdd();
-            } 
+            }
 
         } 
 
@@ -44,6 +44,10 @@ int main(int argc, char* argv[]) {
             else if(arg=="commit"){
                 Commit myCommitObject(path);
                 myCommitObject.CommitMain(path);
+            }
+            else if(arg=="branch"){
+                // ask, if you want to see, create, or delete a branch
+                Branch::createBranch("abc" , fs::current_path());
             }
         }
 

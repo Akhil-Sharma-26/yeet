@@ -68,3 +68,6 @@ You can also use the following command:
 - I am also leaving the error handling for now.
 - Temparary Path approach for storing objects will do it later.
 
+## Brach Flow:
+1. Get the current branch name from the `Branch` file in the /.yeet  dir.
+2. Then use that to store the commit at the desired place.

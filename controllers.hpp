@@ -272,4 +272,13 @@ private:
 };
 
 
+namespace Branch{
+    void HandleBranch();
+    void createBranch(std::string BranchName, std::filesystem::path currPath);
+    void deleteBranch();
+    void SeeBranches();
+}
 
+namespace Helper{
+    std::string readFile(std::string path);
+}

@@ -7,6 +7,23 @@
 
 #define fs std::filesystem
 
+namespace Helper{
+    std::string readFile(std::string path){
+        // Open the stream to 'lock' the file.
+        std::ifstream f(path, std::ios::in);
+
+        // Obtain the size of the file.
+        const auto sz = fs::file_size(path);
+        std::string result(sz, '\0');
+
+        // Read the whole file into the buffer.
+        f.read(result.data(), sz);
+
+        return result;
+    }
+}
+
+
 void YeetStatus(std::string path){
 
     std::vector<std::filesystem::path>FilePath;
@@ -220,6 +237,15 @@ void YeetInit(std::string path="."){
                 throw std::runtime_error("Failed to create .yeet/HEAD file.\n");
             }
 
+        // Make HEAD_Branch file.
+        std::ofstream headFile(_actualPath+"/refs/heads/master");
+            if (headFile.is_open()) {
+                headFile << "ref: refs/heads/main\n";
+                headFile.close();
+            } else {
+                throw std::runtime_error("Failed to create .yeet/refs/heads/master file.\n");
+            }
+
         // Making Description file.
         std::ofstream descFile(_actualPath+"/description");
             if(descFile.is_open()){
@@ -371,8 +397,11 @@ Commit::Commit(std::string TreeOid, std::string AuthorData, std::string CommitMe
 }
 
 
+
 /**
+ * Helper function to get the content of a file into a string
 *  @param: `path` is of type fs::path. It needs the path to the file and then it reads all the content of it.
+*  @return: a `string` with the content of the file;
 */
 std::string Commit::readFile(fs::path path){
     // Open the stream to 'lock' the file.
@@ -580,18 +609,20 @@ Refs::Refs(std::string path){
 
 // @return the path to the HEAD file
 std::string Refs::HEAD_path(){
-    return path + "/.yeet/HEAD";
+    std::string currBranch = Helper::readFile(path+"./yeet/Branch");
+    return path + "/.yeet/refs/heads/" + currBranch;
 }
 
-// Updates the HEAD file to the latest commit
+// TODO: Updates the HEAD file to the latest commit according to the branch
+
 void Refs::update_HEAD(std::string oid){
     // std::cout<<path<<std::endl;
-    std::ofstream headFile( path+"/.yeet/HEAD");
+    std::ofstream headFile(HEAD_path());
     if (headFile.is_open()) {
         headFile << oid;
         headFile.close();
     } else {
-        throw std::runtime_error("Failed to open .yeet/HEAD file.\n");
+        throw std::runtime_error("Failed to open .yeet/refs/heads/ file.\n");
     }
 }
 
@@ -860,3 +891,56 @@ void storeDiff(const std::vector<Edit>& edits) {
         std::cerr << "Unable to open file for writing diffs" << std::endl;
     }
 }
+
+namespace Branch{
+    void createBranch(std::string BranchName, fs::path currPath){
+        // check if the names is valid:
+        if(BranchName.empty()) return;
+        
+        std::regex reg("^\.| \/\.| \.\.| \/$| \.lock$| @\{| [\x00-\x20*:?\[\\^~\x7f]/x");
+
+        if(std::regex_match(BranchName, reg)){
+            // invalid name of the branch
+            return;
+        }
+
+        std::string actPath = currPath.string() + "/.yeet/refs/heads" + BranchName;
+
+        if(fs::exists(actPath)){
+            return;
+        }
+
+        std::cout<<"Hello"<<std::endl;
+
+        // TODO: store the current commit in the new file
+        // get the oid, update the update_HEAD function of the REfs classs. make refs object.
+        // then pass the branch name also to the function to get telll which branch it shoul upate. ig
+        
+        // setting up the refs obj
+        Refs ref(currPath);
+
+        // updating the head file with the latest commit.
+        // putting content of the master into the new branch file.
+
+        // creating the new bracnh file:
+        std::string PrevBranch = Helper::readFile(currPath.string()+"/.yeet/Branch");
+        
+        std::string CommitID_ofPrevBranch = Helper::readFile(currPath.string()+"/.yeet/refs/heads/" + PrevBranch);
+
+        // making the file for the new Branch and storing the prevBranch ID into it.
+        
+        ref.update_HEAD(CommitID_ofPrevBranch);
+
+        // std::fstream f(actPath);
+        // if(f.is_open()){
+        //     f<<CommitID_ofPrevBranch;
+        //     f.close();
+        // }
+        // else {
+        //     throw std::runtime_error("Failed to create new Branch file.\n");
+        // }       
+
+    }
+}
+
+
