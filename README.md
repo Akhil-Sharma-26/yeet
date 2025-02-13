@@ -71,3 +71,11 @@ You can also use the following command:
 ## Brach Flow:
 1. Get the current branch name from the `Branch` file in the /.yeet  dir.
 2. Then use that to store the commit at the desired place.
+
+
+## Branch:
+[x] Branch Creation
+[x] Current Branch storage
+[x] Changing Branches (Checkout)
+[x] See all branches with commit ids
+[x] Commits on the active branch.

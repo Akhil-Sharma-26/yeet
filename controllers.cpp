@@ -237,15 +237,6 @@ void YeetInit(std::string path="."){
                 throw std::runtime_error("Failed to create .yeet/HEAD file.\n");
             }
 
-        // Make HEAD_Branch file.
-        std::ofstream headFile(_actualPath+"/refs/heads/master");
-            if (headFile.is_open()) {
-                headFile << "ref: refs/heads/main\n";
-                headFile.close();
-            } else {
-                throw std::runtime_error("Failed to create .yeet/refs/heads/master file.\n");
-            }
-
         // Making Description file.
         std::ofstream descFile(_actualPath+"/description");
             if(descFile.is_open()){
@@ -372,7 +363,7 @@ void Commit::CommitMain(std::string path){
             // std::cout<<"the parent value: "<<parent<<std::endl;
             bool is_RootCommit = false;
             if(parent=="ref:") is_RootCommit=true;
-            if(is_RootCommit)std::cout<<"\nThis is a root commit"<<std::endl;
+            if(is_RootCommit) std::cout<<"\nThis is a root commit"<<std::endl;
             std::cout<<"Your Commit id is: "<<MainCommitObj.oid<<"\nCommit-Message: "<<MainCommitObj.CommitMessage<<"\n";
         }
     }
@@ -609,7 +600,7 @@ Refs::Refs(std::string path){
 
 // @return the path to the HEAD file
 std::string Refs::HEAD_path(){
-    std::string currBranch = Helper::readFile(path+"./yeet/Branch");
+    std::string currBranch = Helper::readFile(path+"/.yeet/Branch");
     return path + "/.yeet/refs/heads/" + currBranch;
 }
 
@@ -897,20 +888,20 @@ namespace Branch{
         // check if the names is valid:
         if(BranchName.empty()) return;
         
-        std::regex reg("^\.| \/\.| \.\.| \/$| \.lock$| @\{| [\x00-\x20*:?\[\\^~\x7f]/x");
+        std::regex reg(R"(^\.|\/\.|\.\.|\/$|\.lock$|@\{|[\x00-\x20*:?\[\\^~\x7f])");
 
         if(std::regex_match(BranchName, reg)){
             // invalid name of the branch
+            std::cout<<"Invalid name of the Branch"<<std::endl;
             return;
         }
 
-        std::string actPath = currPath.string() + "/.yeet/refs/heads" + BranchName;
+        std::string actPath = currPath.string() + "/.yeet/refs/heads/" + BranchName;
 
         if(fs::exists(actPath)){
+            std::cout<<"ERROR::Branch with this name already exists"<<std::endl;
             return;
         }
-
-        std::cout<<"Hello"<<std::endl;
 
         // TODO: store the current commit in the new file
         // get the oid, update the update_HEAD function of the REfs classs. make refs object.
@@ -925,22 +916,75 @@ namespace Branch{
         // creating the new bracnh file:
         std::string PrevBranch = Helper::readFile(currPath.string()+"/.yeet/Branch");
         
+        std::cout<<"PrevBranch "<<PrevBranch<<std::endl;
+        
         std::string CommitID_ofPrevBranch = Helper::readFile(currPath.string()+"/.yeet/refs/heads/" + PrevBranch);
-
         // making the file for the new Branch and storing the prevBranch ID into it.
         
         ref.update_HEAD(CommitID_ofPrevBranch);
 
-        // std::fstream f(actPath);
-        // if(f.is_open()){
-        //     f<<CommitID_ofPrevBranch;
-        //     f.close();
-        // }
-        // else {
-        //     throw std::runtime_error("Failed to create new Branch file.\n");
-        // }       
+        std::ofstream f(actPath); // fstream is not capable of making new file, so use ofstream instead.
+        if(f.is_open()){
+            f<<CommitID_ofPrevBranch;
+            f.close();
+        }
+        else {
+            throw std::runtime_error("Failed to create new Branch file.\n");
+        }       
 
+    }
+    void SeeBranches(std::filesystem::path path){
+        std::filesystem::path BranchesDir= path.string() + "/.yeet/refs/heads";
+        
+        for (const auto& it : std::filesystem::directory_iterator(BranchesDir)) {
+            std::cout << it.path().filename().string() << " ";
+            std::fstream ff(it.path());
+            if(ff.is_open()){
+                std::string line;
+                while (std::getline(ff, line)) {
+                    std::cout << line << std::endl;
+                }
+                ff.close();
+            }
+        }
+
+    }
+
+    void currBranch(std::filesystem::path currPath){
+        std::fstream ff(currPath.string() + "/.yeet/Branch");
+        std::stringstream ss;
+        if(ff.is_open()){
+            ss << ff.rdbuf();
+            ff.close();
+        }
+        std::cout<<"BRANCH::Your Current Branch is: "<<ss.str()<<std::endl;
     }
 }
 
 
+namespace CheckOut{
+    void SwitchBranch(std::filesystem::path path, std::string swtichToBranchName){
+        std::string actPath = path.string() + "/.yeet/refs/heads/" + swtichToBranchName;
+
+        if(fs::exists(actPath)){
+            std::fstream ff(path.string() + "/.yeet/Branch");
+            std::stringstream ss;
+            if(ff.is_open()){
+                ss << ff.rdbuf();
+                std::cout<<ss.str()<<std::endl;
+                if(ss.str() == swtichToBranchName){
+                    std::cout<<"CHECKOUT::Already in the branch "<<swtichToBranchName<<std::endl;
+                    return;
+                }
+                ff << swtichToBranchName; 
+                ff.close();
+                std::cout<<"CHECKOUT::Successfully Change the branch to: "<<swtichToBranchName<<std::endl;
+            }
+
+        }
+        else{
+            std::cout<<"ERROR::Branch with this name already exists"<<std::endl;
+            return;
+        }
+    }
+}

@@ -46,8 +46,37 @@ int main(int argc, char* argv[]) {
                 myCommitObject.CommitMain(path);
             }
             else if(arg=="branch"){
-                // ask, if you want to see, create, or delete a branch
-                Branch::createBranch("abc" , fs::current_path());
+                std::cout<<"What you want to do?\ncreate a branch[1]\nsee all branches[2]\ndelete a branch[3]\nCurrent Branch[4]"<<std::endl;
+                int in;
+                cin>>in;
+                if(in == 1){
+                    std::cout<<"Tell us the name of the branch (NO SPACES)"<<std::endl;
+                    std::string BranchName;
+                    cin>>BranchName;
+                    Branch::createBranch(BranchName , fs::current_path());
+                }
+                else if(in == 2){
+                    // TODO: Call the show all branches function
+                    Branch::SeeBranches(fs::current_path());
+                }
+                else if(in == 3){
+                    // TODO: Select what branch you want to delete. // idk if it's possible or not
+                    std::cout<<"Under development"<<std::endl;
+                }
+                else if(in == 4){
+                    Branch::SeeBranches(fs::current_path());
+                }
+
+            }
+            else if(arg == "checkout"){
+                // TODO: implement a function which switches the current branch to the desired branch
+                // It can be done by changing the value in the `Branch` file.
+                // `Branch` file should contain the name of the current branch we are in.
+                std::cout << "\033[1m\033[3mWhich branch you want to switch into:? (TYPE FULL EXACT NAME OF THAT BRANCH)\033[0m" << std::endl;
+                Branch::SeeBranches(std::filesystem::current_path());
+                std::string BranchName;
+                cin>>BranchName;
+                CheckOut::SwitchBranch(fs::current_path(), BranchName);
             }
         }
 
@@ -56,7 +85,7 @@ int main(int argc, char* argv[]) {
     }
     catch(const std::exception& e){
         // TODO write the number of arguments and the argv required for each command in the Documentation.
-        std::cout<<"Wtf";
+        std::cout<<"Wtf ";
         std::cerr << e.what() << "\nException Happened somewhere! Error:501 \n";
     }
     
