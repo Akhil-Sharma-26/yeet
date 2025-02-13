@@ -86,3 +86,6 @@ You can also use the following command:
 
 ## Commit:
 [ ] Commits should check the diifs function output to check what are the files in which changes are made. (Find solution of the problem: what if branches are changed? then how to this?)
+
+## Status:
+[ ] Status function is not working at edge cases.

@@ -171,7 +171,7 @@ namespace Helper{
     }
 }
 
-
+// TODO: add error protection and edge case protection.
 void YeetStatus(std::string path){
 
     std::vector<std::filesystem::path>FilePath;
@@ -503,6 +503,8 @@ void Commit::CommitMain(std::string path){
         for(auto it:DbObj.Store){
             std::cout<<it.first<<" "<<it.second<<std::endl;
         }
+
+        // TODO: I changed this function output and Store datatype to map instead of unordered_map, is this causing the segmentation faults?
         // Save the store in /Store file
         writeStoreinDB(DbObj.Store);
 
