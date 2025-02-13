@@ -7,6 +7,142 @@
 
 #define fs std::filesystem
 
+namespace CommitHelper{
+    void YeetStatus(std::string path, std::vector<std::filesystem::path>& FilesWithChanges){
+
+        std::vector<std::filesystem::path>FilePath;
+    
+        // Getting list of all files
+        ListFiles(path,FilePath);
+    
+        // Making a visited map for later
+        std::unordered_map<std::filesystem::path, bool> visited;
+        for(auto it:FilePath){
+            visited[it] = false;
+        }
+        
+        int Totaladditions,Totaldeletions;
+        Totaladditions = 0, Totaldeletions = 0;
+    
+        std::string StoreData;
+        std::fstream Store(path+"/.yeet/Store");
+    
+        // Putting content of the Store file in the string StoreData
+        if(Store.is_open()){
+            std::string line;
+            while (std::getline(Store, line)) {
+                StoreData += line + "\n";
+            }
+            Store.close();
+        }
+        else{
+            std::cout<<"ERROR::STATUS::Error in opening Store File"<<std::endl;
+        }
+    
+        if(StoreData == "Empty Store"){
+            std::cout<<"ERROR::STATUS::Nothing to Compare to. Make your first commit!!"<<std::endl;
+            return ;
+        }
+    
+        bool space = false;
+        std::string PathofFile, oid;
+        PathofFile = ""; oid = "";
+        std::vector<std::string> FilePaths;
+        std::vector<std::string> oids;
+        for(int i=0;i<StoreData.size();i++){ 
+            if(StoreData[i] == ' '){
+                FilePaths.push_back(PathofFile);
+                PathofFile = "";
+                space = !space; continue;
+            }       
+    
+            if(StoreData[i] == '\n'){
+                oids.push_back(oid);
+                oid = "";
+                space = !space; continue;
+            }     
+            
+            if(!space){
+                PathofFile += StoreData[i];
+            }
+            else{
+                oid += StoreData[i];
+            }
+        }
+    
+        // Main Loop
+        for(int i=0;i<oids.size();i++){
+    
+            int additions,deletions;
+            additions = 0, deletions = 0;
+            std::string thePathOfOid = "";
+            std::string fileName = oids[i].substr(2, oids[i].size() - 2); 
+            thePathOfOid = oids[i].substr(0, 2) + "/" + fileName;
+    
+            std::string FullPath = path + "/.yeet/objects/" + thePathOfOid;
+    
+            std::string InflatedContent = Inflate(FullPath);
+    
+            if (std::filesystem::exists(FilePaths[i])) {
+                std::string NewFileContent="";
+                std::ifstream NowFile(FilePaths[i]);
+    
+                if(NowFile.is_open()){
+                    std::string line;
+                    while(std::getline(NowFile,line)){
+                        NewFileContent+=line+"\n";
+                    }
+                    NowFile.close();
+                }
+    
+                // Call Diffs algo here
+                std::vector<std::string> NewFileinLines = splitIntoLines(NewFileContent);
+                std::vector<std::string> OldFileinLines = splitIntoLines(InflatedContent);
+    
+                std::vector<std::vector<int>> trace;
+                int ans = Shortest_Edit_Search(NewFileinLines, OldFileinLines, trace); 
+    
+                // std::cout<<ans<<std::endl;
+                if(ans==0) {
+                    // TODO: Don't add in commit
+                    // std::cout<<"Files are identical."<<std::endl;
+                    continue;
+                }            
+                
+                std::vector<Edit> diff_result = diff(OldFileinLines, NewFileinLines, trace, ans);
+    
+                for(auto it:diff_result){
+                    
+                    // TODO: Add number of lines.
+                    if(it.type == Edit::DEL) {
+                        deletions++;
+                        Totaldeletions++;
+                    }
+                    else if(it.type == Edit::INS) {
+                        additions++;
+                        Totaladditions++;
+                    }
+                }
+    
+                // Don't print exec file diffs.
+    
+                // TODO: Check exe using this method. ie using cpp filesystem library, it's cross platform the access function only works in linux.
+                // if(std::filesystem::status(FilePath[i].c_str()).permissions() & std::filesystem::perms::owner_exec )
+                if(! access (FilePaths[i].c_str(), X_OK)){
+                    continue;
+                }
+    
+                // don't show file if nothing changed
+                if(additions == 0 && deletions == 0){
+                    continue;
+                }
+    
+                FilesWithChanges.push_back(FilePaths[i]);
+            }
+        }
+    }
+
+}
 namespace Helper{
     std::string readFile(std::string path){
         // Open the stream to 'lock' the file.
@@ -20,6 +156,18 @@ namespace Helper{
         f.read(result.data(), sz);
 
         return result;
+    }
+
+    // For the branch namespace to store the commit id to the new branch file.
+    void update_HEAD(std::string oid, std::string NewBranchPath){
+        // std::cout<<path<<std::endl;
+        std::ofstream headFile(NewBranchPath);
+        if (headFile.is_open()) {
+            headFile << oid;
+            headFile.close();
+        } else {
+            throw std::runtime_error("ERROR::UPDATE::Failed to open .yeet/refs/heads/ file.\n");
+        }
     }
 }
 
@@ -153,12 +301,11 @@ void YeetStatus(std::string path){
             // The file we are checking:
             std::cout<<FilePaths[i]<<std::endl;
             
+            std::cout<<"This file additions: "<<additions<<"\n";
+            std::cout<<"This file deletions: "<<deletions<<std::endl;
             // Printing the diffs
             Printer printer;
             printer.print(diff_result);
-
-            std::cout<<"This file additions: "<<additions<<"\n";
-            std::cout<<"This file deletions: "<<deletions<<std::endl;
 
             visited[FilePaths[i]] = true;
         } else {
@@ -218,7 +365,7 @@ void YeetInit(std::string path="."){
             _actualPath=pwd+"/.yeet"; 
 
         if(std::filesystem::exists(temp_pwd+"/.yeet"))
-            throw std::runtime_error("A yeet folder already exists in this directory. \n");
+            throw std::runtime_error("ERROR::INIT::A yeet folder already exists in this directory. \n");
         
         // std::system("tree .");
 
@@ -234,7 +381,7 @@ void YeetInit(std::string path="."){
                 headFile << "ref: refs/heads/main\n";
                 headFile.close();
             } else {
-                throw std::runtime_error("Failed to create .yeet/HEAD file.\n");
+                throw std::runtime_error("ERROR::INIT::Failed to create .yeet/HEAD file.\n");
             }
 
         // Making Description file.
@@ -244,7 +391,7 @@ void YeetInit(std::string path="."){
                 descFile.close();
             }
             else {
-                throw std::runtime_error("Failed to create .yeet/description file.\n");
+                throw std::runtime_error("ERROR::INIT::Failed to create .yeet/description file.\n");
             }
         
         // Making config file
@@ -255,7 +402,7 @@ void YeetInit(std::string path="."){
                 configFile.close();
             }
             else {
-                throw std::runtime_error("Failed to create .yeet/config file.\n");
+                throw std::runtime_error("ERROR::INIT::Failed to create .yeet/config file.\n");
             }
 
         // Making Store File
@@ -265,7 +412,7 @@ void YeetInit(std::string path="."){
             StoreFile.close();
         }
         else {
-            throw std::runtime_error("Failed to create .yeet/Store file.\n");
+            throw std::runtime_error("ERROR::INIT::Failed to create .yeet/Store file.\n");
         }
 
         // Make Diff file.
@@ -274,10 +421,19 @@ void YeetInit(std::string path="."){
             DiffFile << "No Diffs Yet\n";
             DiffFile.close();
         } else {
-            throw std::runtime_error("Failed to create .yeet/Diff file.\n");
+            throw std::runtime_error("ERROR::INIT::Failed to create .yeet/Diff file.\n");
         }
 
-        std::cout << "Initialized yeet directory\n";
+        // Make Current Branch file.
+        std::ofstream BranchFile(_actualPath+"/Branch");
+        if (BranchFile.is_open()) {
+            BranchFile << "master";
+            BranchFile.close();
+        } else {
+            throw std::runtime_error("ERROR::INIT::Failed to create .yeet/Diff file.\n");
+        }
+
+        std::cout << "YEET::Initialized yeet directory\n";
     }
     catch(const std::exception& e){
         std::cerr << e.what() << '\n';
@@ -319,10 +475,18 @@ void Commit::CommitMain(std::string path){
         std::vector<TreeEntry> TreeEntries;
         Database DbObj(Commit::path+"/.yeet/objects");
         Refs RefObj(Commit::path);
+
+        std::string message; std::cout<<"\nCOMMIT::Please enter your Commit Message:\n";
+        // store of the file which have any changes after the last commit
+        std::getline(std::cin >> std::ws, message); // ws means white spaces.
         std::vector<std::filesystem::path>FilePath;
+        // TODO: NEEDS WORK
+        // CommitHelper::YeetStatus(path, FilePath) ;
         ListFiles(path,FilePath);
         for (const auto & entry : FilePath){
             std::string _stat = "Non-Exe";
+            // TODO: Check exe using this method. ie using cpp filesystem library, it's cross platform the access function only works in linux.
+            // if(std::filesystem::status(FilePath[i].c_str()).permissions() & std::filesystem::perms::owner_exec )
             if (! access (entry.c_str(), X_OK)){ // Checks if a file is exe or not
                 _stat = "Exe";
             }
@@ -354,9 +518,8 @@ void Commit::CommitMain(std::string path){
             time_t currtime = time(nullptr);
             Author NewAuthorObj(name,email,currtime);
             std::string author = NewAuthorObj.to_stringg();
-            std::string message; std::cout<<"\nPlease enter your Commit Message:\n";
             // std::cin>>message; // This doesn't takes any spaces " "
-            std::getline(std::cin >> std::ws, message); // ws means white spaces.
+            
             Commit MainCommitObj(TreeObject.oid,author,message,parent);
             DbObj.storeContentInDB(MainCommitObj);
             RefObj.update_HEAD(MainCommitObj.oid); // Updating the HEAD file to new commit
@@ -364,12 +527,12 @@ void Commit::CommitMain(std::string path){
             bool is_RootCommit = false;
             if(parent=="ref:") is_RootCommit=true;
             if(is_RootCommit) std::cout<<"\nThis is a root commit"<<std::endl;
-            std::cout<<"Your Commit id is: "<<MainCommitObj.oid<<"\nCommit-Message: "<<MainCommitObj.CommitMessage<<"\n";
+            std::cout<<"COMMIT::Your Commit id is: "<<MainCommitObj.oid<<"\nCommit-Message: "<<MainCommitObj.CommitMessage<<"\n";
         }
     }
     catch(const std::exception& e)
     {
-        std::cerr << "\n An error occured while commit your latest changes. \nError by e.what(): "<< e.what();
+        std::cerr << "\nERROR::COMMITMAIN:: An error occured while commit your latest changes. \nError by e.what(): "<< e.what();
     }
     
     
@@ -435,6 +598,7 @@ std::string calculateSHA1Hex(const std::string& content) { // used some copilot
 void Database::storeContentInDB(Blob& object, const std::string& path){
     std::string Data = object.data;
 
+    // TODO: make proper diff here
     // ! I am putiing only the data in the content to simplify the process of diff
     // std::string content = object.type() + " " + std::to_string(Data.size()) + "\0" + Data; // The null character is included just to use when we itterate over it.
     
@@ -562,7 +726,7 @@ std::string Compressing_using_zlib(std::string& content) {
     stream.next_in = reinterpret_cast<Bytef*>(const_cast<char*>(content.data()));
 
     if (deflateInit(&stream, Z_DEFAULT_COMPRESSION) != Z_OK) {
-        throw std::runtime_error("Failed to initialize zlib deflate.");
+        throw std::runtime_error("ERROR::COMPRESSION:: Failed to initialize zlib deflate.");
     }
 
     std::vector<unsigned char> compressedData(compressBound(content.size()));
@@ -571,13 +735,13 @@ std::string Compressing_using_zlib(std::string& content) {
 
     if (deflate(&stream, Z_FINISH) != Z_STREAM_END) {
         deflateEnd(&stream);
-        throw std::runtime_error("Failed to deflate data.");
+        throw std::runtime_error("ERROR::COMPRESSION:: Failed to deflate data.");
     }
 
     compressedData.resize(stream.total_out);
 
     if (deflateEnd(&stream) != Z_OK) {
-        throw std::runtime_error("Failed to finalize zlib deflate.");
+        throw std::runtime_error("ERROR::COMPRESSION:: Failed to finalize zlib deflate.");
     }
 
     return std::string(compressedData.begin(), compressedData.end());
@@ -613,7 +777,7 @@ void Refs::update_HEAD(std::string oid){
         headFile << oid;
         headFile.close();
     } else {
-        throw std::runtime_error("Failed to open .yeet/refs/heads/ file.\n");
+        throw std::runtime_error("ERROR::HEADUPDATE:: Failed to open .yeet/refs/heads/ file.\n");
     }
 }
 
@@ -626,7 +790,7 @@ std::string Refs::Read_HEAD(){
     return FileContent;
 }
 
-void writeStoreinDB(std::unordered_map<std::string, std::string> Store){
+void writeStoreinDB(std::map<std::string, std::string> Store){
     for(auto it:Store){
         std::cout<<it.first<<" "<<it.second<<std::endl;
     }
@@ -643,7 +807,7 @@ void writeStoreinDB(std::unordered_map<std::string, std::string> Store){
     }
 
     else {
-        throw std::runtime_error("Failed to create .yeet/Store file.\n");
+        throw std::runtime_error("ERROR::STORE:: Failed to create .yeet/Store file.\n");
     }
 }
 
@@ -651,7 +815,7 @@ void writeStoreinDB(std::unordered_map<std::string, std::string> Store){
 // Helper Function for Listing Files:
 void ListFiles(std::string path,std::vector<std::filesystem::path>&FilePath){
     for (const auto & entry : fs::directory_iterator(path)){
-        // This is my .gitignore
+        // This is my .yeetignore
         const bool IGNORE = entry.path().generic_string().find(".git") != std::string::npos || entry.path().generic_string().find(".yeet") != std::string::npos || entry.path().generic_string().find(".vscode") != std::string::npos || entry.path().generic_string().find(".xmake") != std::string::npos || entry.path().generic_string().find(".cmake") != std::string::npos || entry.path().generic_string().find("/build") != std::string::npos;
 
         if(IGNORE){
@@ -670,7 +834,7 @@ void ListFiles(std::string path,std::vector<std::filesystem::path>&FilePath){
 std::vector<unsigned char> readFile(const std::string& filename) {
     std::ifstream file(filename, std::ios::binary);
     if (!file) {
-        std::cerr << "Cannot open file: " << filename << std::endl;
+        std::cerr << "ERROR::READINGFILE:: Cannot open file: " << filename << std::endl;
         return {};
     }
     return std::vector<unsigned char>((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
@@ -879,7 +1043,7 @@ void storeDiff(const std::vector<Edit>& edits) {
         }
         diff_file.close();
     } else {
-        std::cerr << "Unable to open file for writing diffs" << std::endl;
+        std::cerr << "ERROR::DIFFS:: Unable to open file for writing diffs" << std::endl;
     }
 }
 
@@ -892,14 +1056,14 @@ namespace Branch{
 
         if(std::regex_match(BranchName, reg)){
             // invalid name of the branch
-            std::cout<<"Invalid name of the Branch"<<std::endl;
+            std::cout<<"ERROR::BRANCH:: Invalid name of the Branch"<<std::endl;
             return;
         }
 
         std::string actPath = currPath.string() + "/.yeet/refs/heads/" + BranchName;
 
         if(fs::exists(actPath)){
-            std::cout<<"ERROR::Branch with this name already exists"<<std::endl;
+            std::cout<<"ERROR::BRANCH:: Branch with this name already exists"<<std::endl;
             return;
         }
 
@@ -907,21 +1071,21 @@ namespace Branch{
         // get the oid, update the update_HEAD function of the REfs classs. make refs object.
         // then pass the branch name also to the function to get telll which branch it shoul upate. ig
         
-        // setting up the refs obj
-        Refs ref(currPath);
 
         // updating the head file with the latest commit.
         // putting content of the master into the new branch file.
 
         // creating the new bracnh file:
         std::string PrevBranch = Helper::readFile(currPath.string()+"/.yeet/Branch");
-        
-        std::cout<<"PrevBranch "<<PrevBranch<<std::endl;
+
+        // TODO: add option to choose the base branch
+        // ! Currently making the prev branch as base branch.
         
         std::string CommitID_ofPrevBranch = Helper::readFile(currPath.string()+"/.yeet/refs/heads/" + PrevBranch);
         // making the file for the new Branch and storing the prevBranch ID into it.
         
-        ref.update_HEAD(CommitID_ofPrevBranch);
+        // TODO: Test this function
+        Helper::update_HEAD(CommitID_ofPrevBranch, actPath);
 
         std::ofstream f(actPath); // fstream is not capable of making new file, so use ofstream instead.
         if(f.is_open()){
@@ -929,14 +1093,17 @@ namespace Branch{
             f.close();
         }
         else {
-            throw std::runtime_error("Failed to create new Branch file.\n");
+            throw std::runtime_error("ERROR::BRANCH:: Failed to create new Branch file.\n");
         }       
 
     }
     void SeeBranches(std::filesystem::path path){
         std::filesystem::path BranchesDir= path.string() + "/.yeet/refs/heads";
         
+        std::cout<<"BRANCH:: Your branches are: "<<std::endl<<std::endl;
+        int count = 1;
         for (const auto& it : std::filesystem::directory_iterator(BranchesDir)) {
+            std::cout << count <<" ";
             std::cout << it.path().filename().string() << " ";
             std::fstream ff(it.path());
             if(ff.is_open()){
@@ -946,6 +1113,7 @@ namespace Branch{
                 }
                 ff.close();
             }
+            count++;
         }
 
     }
@@ -957,7 +1125,7 @@ namespace Branch{
             ss << ff.rdbuf();
             ff.close();
         }
-        std::cout<<"BRANCH::Your Current Branch is: "<<ss.str()<<std::endl;
+        std::cout<<"BRANCH:: Your Current Branch is: "<<ss.str()<<std::endl;
     }
 }
 
@@ -983,8 +1151,9 @@ namespace CheckOut{
 
         }
         else{
-            std::cout<<"ERROR::Branch with this name already exists"<<std::endl;
+            std::cout<<"ERROR::BRANCH:::: Branch with this name already exists"<<std::endl;
             return;
         }
     }
 }
+

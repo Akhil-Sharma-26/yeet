@@ -79,3 +79,10 @@ You can also use the following command:
 [x] Changing Branches (Checkout)
 [x] See all branches with commit ids
 [x] Commits on the active branch.
+[ ] Option to choose which branch I want to make my new branch from. (Currently the new branch will automatically start from the prev branch ie the branch you were in)
+
+## Checkout:
+[ ]logic to reset the working directory to the target branch’s commit using tree traversal.
+
+## Commit:
+[ ] Commits should check the diifs function output to check what are the files in which changes are made. (Find solution of the problem: what if branches are changed? then how to this?)

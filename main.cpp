@@ -16,7 +16,7 @@ int main(int argc, char* argv[]) {
     try{
         if(argc==1){
             // TODO Add some useful string in this case. As is for user to know the different types of commands.
-            cerr<<"No argument Provied \n Use Command: yeet init. or yeet commit etc.\n";
+            cerr<<"No argument Provied \n Use Command: yeet init . or yeet commit etc. or refer docs\n";
             return EXIT_FAILURE;
             }
         string arg=argv[1];
@@ -36,6 +36,7 @@ int main(int argc, char* argv[]) {
             }
 
         } 
+        std::cout<<"test"<<std::endl;
 
         if(argc==2){
             if(arg=="status"){
@@ -50,26 +51,24 @@ int main(int argc, char* argv[]) {
                 int in;
                 cin>>in;
                 if(in == 1){
-                    std::cout<<"Tell us the name of the branch (NO SPACES)"<<std::endl;
+                    std::cout<<"BRANCH::Tell us the name of the branch (NO SPACES)"<<std::endl;
                     std::string BranchName;
                     cin>>BranchName;
                     Branch::createBranch(BranchName , fs::current_path());
                 }
                 else if(in == 2){
-                    // TODO: Call the show all branches function
                     Branch::SeeBranches(fs::current_path());
                 }
                 else if(in == 3){
                     // TODO: Select what branch you want to delete. // idk if it's possible or not
-                    std::cout<<"Under development"<<std::endl;
+                    std::cout<<"BRANCH:: This feature is currently under development"<<std::endl;
                 }
                 else if(in == 4){
-                    Branch::SeeBranches(fs::current_path());
+                    Branch::currBranch(fs::current_path());
                 }
 
             }
             else if(arg == "checkout"){
-                // TODO: implement a function which switches the current branch to the desired branch
                 // It can be done by changing the value in the `Branch` file.
                 // `Branch` file should contain the name of the current branch we are in.
                 std::cout << "\033[1m\033[3mWhich branch you want to switch into:? (TYPE FULL EXACT NAME OF THAT BRANCH)\033[0m" << std::endl;
@@ -78,6 +77,9 @@ int main(int argc, char* argv[]) {
                 cin>>BranchName;
                 CheckOut::SwitchBranch(fs::current_path(), BranchName);
             }
+            else if(arg == "init"){
+                std::cout<<"ERROR::INIT::Add . after the init to initialise a yeet repo in the pwd. Like \nyeet init ."<<std::endl;
+            }
         }
 
         // else if(argc > 2) print("only one argiment is supported for now!");
@@ -85,7 +87,7 @@ int main(int argc, char* argv[]) {
     }
     catch(const std::exception& e){
         // TODO write the number of arguments and the argv required for each command in the Documentation.
-        std::cout<<"Wtf ";
+        std::cout<<"ERROR:: ";
         std::cerr << e.what() << "\nException Happened somewhere! Error:501 \n";
     }
     
