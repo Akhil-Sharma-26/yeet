@@ -30,7 +30,7 @@ struct Edit
 
 
 // Helper Functions
-void writeStoreinDB(std::unordered_map<std::string, std::string> Store);
+void writeStoreinDB(std::map<std::string, std::string> Store);
 void ListFiles(std::string path,std::vector<std::filesystem::path>&FilePath);
 std::string Inflate(std::string path);
 std::vector<std::string> splitIntoLines(const std::string& str);
@@ -123,7 +123,7 @@ class Database{
         }
     public:
         std::filesystem::path path;
-        std::unordered_map<std::string, std::string> Store;
+        std::map<std::string, std::string> Store;
         Database(std::filesystem::path path);
         // Its storing the blob store also. ie the pair of file path and its oid.
         void storeContentInDB(Blob& object,const std::string &path);
@@ -206,6 +206,7 @@ class Refs{
         void update_HEAD(std::string oid);
         std::string HEAD_path();
         std::string Read_HEAD();
+        std::string currentBranch();
 };
 
 
@@ -272,4 +273,23 @@ private:
 };
 
 
+namespace Branch{
+    void currBranch(std::filesystem::path currPath);
+    void HandleBranch();
+    void createBranch(std::string BranchName, std::filesystem::path currPath);
+    void deleteBranch();
+    void SeeBranches(std::filesystem::path path);
+}
 
+namespace Helper{
+    std::string readFile(std::string path);
+    void update_HEAD(std::string oid, std::string NewBranchPath);
+}
+
+namespace CheckOut{
+    void SwitchBranch(std::filesystem::path path, std::string swtichToBranchName);
+}
+
+namespace CommitHelper{
+    void YeetStatus(std::string path, std::vector<std::filesystem::path> &FilePath);
+}
