@@ -127,10 +127,11 @@ namespace CommitHelper{
                 // Don't print exec file diffs.
     
                 // TODO: Check exe using this method. ie using cpp filesystem library, it's cross platform the access function only works in linux.
+                // Commit exec files also
                 // if(std::filesystem::status(FilePath[i].c_str()).permissions() & std::filesystem::perms::owner_exec )
-                if(! access (FilePaths[i].c_str(), X_OK)){
-                    continue;
-                }
+                // if(! access (FilePaths[i].c_str(), X_OK)){
+                //     continue;
+                // }
     
                 // don't show file if nothing changed
                 if(additions == 0 && deletions == 0){
@@ -152,7 +153,8 @@ namespace Helper{
         const auto sz = fs::file_size(path);
         std::string result(sz, '\0');
 
-        // Read the whole file into the buffer.
+        // Read the whole file into the buffer. 
+        // TODO: This will fail at large files
         f.read(result.data(), sz);
 
         return result;
@@ -171,7 +173,6 @@ namespace Helper{
     }
 }
 
-// TODO: add error protection and edge case protection.
 void YeetStatus(std::string path){
 
     std::vector<std::filesystem::path>FilePath;
@@ -327,7 +328,6 @@ void YeetStatus(std::string path){
     }
     if(Totaladditions == 0  && Totaldeletions == 0){
         std::cout<<"No Change, Can't commit"<<std::endl;
-        // TODO: Add a check so that no commit can happen;
     }
     else{
         std::cout<<"Total addtions: "<<Totaladditions<<"\nTotal deletions: "<<Totaldeletions<<std::endl;
@@ -481,8 +481,11 @@ void Commit::CommitMain(std::string path){
         std::getline(std::cin >> std::ws, message); // ws means white spaces.
         std::vector<std::filesystem::path>FilePath;
         // TODO: NEEDS WORK
-        // CommitHelper::YeetStatus(path, FilePath) ;
-        ListFiles(path,FilePath);
+        CommitHelper::YeetStatus(path, FilePath) ;
+        if(FilePath.empty()) {
+            std::cout<<"ERROR::COMMIT:: Nothing to commit"<<std::endl;
+        }
+        // ListFiles(path,FilePath);
         for (const auto & entry : FilePath){
             std::string _stat = "Non-Exe";
             // TODO: Check exe using this method. ie using cpp filesystem library, it's cross platform the access function only works in linux.
@@ -528,6 +531,7 @@ void Commit::CommitMain(std::string path){
             // std::cout<<"the parent value: "<<parent<<std::endl;
             bool is_RootCommit = false;
             if(parent=="ref:") is_RootCommit=true;
+            std::cout<<"Commit added in the branch: "<<RefObj.currentBranch()<<std::endl;
             if(is_RootCommit) std::cout<<"\nThis is a root commit"<<std::endl;
             std::cout<<"COMMIT::Your Commit id is: "<<MainCommitObj.oid<<"\nCommit-Message: "<<MainCommitObj.CommitMessage<<"\n";
         }
@@ -768,6 +772,11 @@ Refs::Refs(std::string path){
 std::string Refs::HEAD_path(){
     std::string currBranch = Helper::readFile(path+"/.yeet/Branch");
     return path + "/.yeet/refs/heads/" + currBranch;
+}
+
+std::string Refs::currentBranch(){
+    std::string currBranch = Helper::readFile(path+"/.yeet/Branch");
+    return currBranch;
 }
 
 // TODO: Updates the HEAD file to the latest commit according to the branch
@@ -1133,28 +1142,33 @@ namespace Branch{
 
 
 namespace CheckOut{
-    void SwitchBranch(std::filesystem::path path, std::string swtichToBranchName){
-        std::string actPath = path.string() + "/.yeet/refs/heads/" + swtichToBranchName;
+    void SwitchBranch(std::filesystem::path path, std::string switchToBranchName){
+        std::string actPath = path.string() + "/.yeet/refs/heads/" + switchToBranchName;
 
         if(fs::exists(actPath)){
-            std::fstream ff(path.string() + "/.yeet/Branch");
-            std::stringstream ss;
-            if(ff.is_open()){
-                ss << ff.rdbuf();
-                std::cout<<ss.str()<<std::endl;
-                if(ss.str() == swtichToBranchName){
-                    std::cout<<"CHECKOUT::Already in the branch "<<swtichToBranchName<<std::endl;
-                    return;
-                }
-                ff << swtichToBranchName; 
-                ff.close();
-                std::cout<<"CHECKOUT::Successfully Change the branch to: "<<swtichToBranchName<<std::endl;
+            std::ifstream currentBranchFile(path.string() + "/.yeet/Branch");
+            std::string currentBranch;
+            if(currentBranchFile.is_open()){
+                std::getline(currentBranchFile, currentBranch);
+                currentBranchFile.close();
             }
 
+            if(currentBranch == switchToBranchName){
+                std::cout<<"CHECKOUT::Already in the branch "<<switchToBranchName<<std::endl;
+                return;
+            }
+
+            std::ofstream branchFile(path.string() + "/.yeet/Branch", std::ios::trunc);
+            if(branchFile.is_open()){
+                branchFile << switchToBranchName;
+                branchFile.close();
+                std::cout<<"CHECKOUT::Successfully Changed the branch to: "<<switchToBranchName<<std::endl;
+            } else {
+                std::cerr<<"ERROR::CHECKOUT::Failed to update the branch file"<<std::endl;
+            }
         }
         else{
-            std::cout<<"ERROR::BRANCH:::: Branch with this name already exists"<<std::endl;
-            return;
+            std::cout<<"ERROR::CHECKOUT::Branch "<<switchToBranchName<<" does not exist"<<std::endl;
         }
     }
 }

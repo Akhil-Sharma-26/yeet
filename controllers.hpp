@@ -206,6 +206,7 @@ class Refs{
         void update_HEAD(std::string oid);
         std::string HEAD_path();
         std::string Read_HEAD();
+        std::string currentBranch();
 };
 
 
