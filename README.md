@@ -26,8 +26,6 @@ export PATH=$PATH:/path/to/yeet/repo/
 ```bash
 yeet init .
 ```
-
-
 ## Make Sure:
 you have lcryptopp installed in your system. I am using fedora and I installed it using:
 ```bash 
