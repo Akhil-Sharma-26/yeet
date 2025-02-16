@@ -12,7 +12,7 @@ int main(int argc, char* argv[]) {
     cerr<<unitbuf;
     cout<<"Using cpp version: "<<__cplusplus<<endl; // To know my cpp version
     string path = fs::current_path();
-    cout<<path<<endl;
+    // cout<<path<<endl;
     try{
         if(argc==1){
             // TODO Add some useful string in this case. As is for user to know the different types of commands.
@@ -36,7 +36,6 @@ int main(int argc, char* argv[]) {
             }
 
         } 
-        std::cout<<"test"<<std::endl;
 
         if(argc==2){
             if(arg=="status"){
@@ -83,7 +82,8 @@ int main(int argc, char* argv[]) {
         }
 
         // else if(argc > 2) print("only one argiment is supported for now!");
-        
+        // test
+        // cv
     }
     catch(const std::exception& e){
         // TODO write the number of arguments and the argv required for each command in the Documentation.

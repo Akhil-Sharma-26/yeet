@@ -83,3 +83,4 @@ g++ main.cpp controllers.cpp -std=c++17 -lcryptopp -lz -fdiagnostics-all-candida
 
 ## Status:
 [x] Status function is not working at edge cases. (Not parsing exec was the problem)
+[ ] Design a new file structure `.diff` to store the diffs content

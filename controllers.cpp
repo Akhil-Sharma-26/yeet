@@ -7,13 +7,21 @@
 
 #define fs std::filesystem
 
+static inline void rtrim(std::string &s) {
+    s.erase(std::find_if(s.rbegin(), s.rend(),
+                [](int ch) { return !std::isspace(ch); }).base(), s.end());
+}
+
 namespace CommitHelper{
     void YeetStatus(std::string path, std::vector<std::filesystem::path>& FilesWithChanges){
-
-        std::vector<std::filesystem::path>FilePath;
+        // std::cout << "DEBUG: YeetStatus starting with path: " << path << std::endl;
     
+        std::vector<std::filesystem::path> FilePath;
+        
         // Getting list of all files
-        ListFiles(path,FilePath);
+        // std::cout << "DEBUG: About to call ListFiles" << std::endl;
+        ListFiles(path, FilePath);
+        // std::cout << "DEBUG: ListFiles found " << FilePath.size() << " total files" << std::endl;
     
         // Making a visited map for later
         std::unordered_map<std::filesystem::path, bool> visited;
@@ -21,12 +29,10 @@ namespace CommitHelper{
             visited[it] = false;
         }
         
-        int Totaladditions,Totaldeletions;
-        Totaladditions = 0, Totaldeletions = 0;
-    
         std::string StoreData;
         std::fstream Store(path+"/.yeet/Store");
-    
+        // std::cout << "DEBUG: Opening Store file at: " << path+"/.yeet/Store" << std::endl;
+        
         // Putting content of the Store file in the string StoreData
         if(Store.is_open()){
             std::string line;
@@ -34,39 +40,38 @@ namespace CommitHelper{
                 StoreData += line + "\n";
             }
             Store.close();
+            // std::cout << "DEBUG: Store file contents: " << StoreData << std::endl;
         }
         else{
             std::cout<<"ERROR::STATUS::Error in opening Store File"<<std::endl;
+            return;
+        }
+        rtrim(StoreData);
+    
+        if (StoreData == "Empty Store") {
+            // std::cout << "DEBUG: Empty Store detected, adding all files" << std::endl;
+            // Add all current files as changes for the initial commit
+            FilesWithChanges = FilePath;
+            // std::cout << "DEBUG: Added " << FilesWithChanges.size() << " files for initial commit" << std::endl;
+            return;
         }
     
-        if(StoreData == "Empty Store"){
-            std::cout<<"ERROR::STATUS::Nothing to Compare to. Make your first commit!!"<<std::endl;
-            return ;
-        }
+        int Totaladditions,Totaldeletions;
+        Totaladditions = 0, Totaldeletions = 0;
     
         bool space = false;
         std::string PathofFile, oid;
         PathofFile = ""; oid = "";
         std::vector<std::string> FilePaths;
         std::vector<std::string> oids;
-        for(int i=0;i<StoreData.size();i++){ 
-            if(StoreData[i] == ' '){
-                FilePaths.push_back(PathofFile);
-                PathofFile = "";
-                space = !space; continue;
-            }       
-    
-            if(StoreData[i] == '\n'){
-                oids.push_back(oid);
-                oid = "";
-                space = !space; continue;
-            }     
-            
-            if(!space){
-                PathofFile += StoreData[i];
-            }
-            else{
-                oid += StoreData[i];
+        std::istringstream storeStream(StoreData);
+
+        std::string line;
+        while (std::getline(storeStream, line)) {
+            size_t tabPos = line.find('\t');
+            if (tabPos != std::string::npos) {
+                FilePaths.push_back(line.substr(0, tabPos));
+                oids.push_back(line.substr(tabPos + 1));
             }
         }
     
@@ -95,7 +100,7 @@ namespace CommitHelper{
                     NowFile.close();
                 }
     
-                // Call Diffs algo here
+                // Calling Diffs algo here
                 std::vector<std::string> NewFileinLines = splitIntoLines(NewFileContent);
                 std::vector<std::string> OldFileinLines = splitIntoLines(InflatedContent);
     
@@ -175,37 +180,55 @@ namespace Helper{
 
 void YeetStatus(std::string path){
 
-    std::vector<std::filesystem::path>FilePath;
+    std::vector<std::filesystem::path> FilePath;
+    ListFiles(path, FilePath);
 
-    // Getting list of all files
-    ListFiles(path,FilePath);
-
-    // Making a visited map for later
     std::unordered_map<std::filesystem::path, bool> visited;
-    for(auto it:FilePath){
+    for (const auto& it : FilePath) {
         visited[it] = false;
     }
-    
-    int Totaladditions,Totaldeletions;
-    Totaladditions = 0, Totaldeletions = 0;
 
+    int Totaladditions = 0, Totaldeletions = 0;
     std::string StoreData;
-    std::fstream Store(path+"/.yeet/Store");
+    std::fstream Store(path + "/.yeet/Store");
 
-    // Putting content of the Store file in the string StoreData
-    if(Store.is_open()){
+    if (Store.is_open()) {
         std::string line;
         while (std::getline(Store, line)) {
             StoreData += line + "\n";
         }
         Store.close();
+    } else {
+        std::cout << "Error opening Store File" << std::endl;
+        return;
     }
-    else{
-        std::cout<<"Error in opening Store File"<<std::endl;
-    }
+    rtrim(StoreData);
+    if (StoreData == "Empty Store") {
+        // Clear existing Diff file
+        std::ofstream clearDiff(path + "/.yeet/Diff", std::ios::trunc);
+        clearDiff.close();
 
-    if(StoreData == "Empty Store"){
-        std::cout<<"Nothing to Compare to. Make your first commit!!"<<std::endl;
+        std::vector<Edit> all_edits;
+        for (const auto& file : FilePath) {
+            std::ifstream newFile(file);
+            if (newFile.is_open()) {
+                std::string content;
+                std::string line;
+                while (std::getline(newFile, line)) {
+                    content += line + "\n";
+                }
+                newFile.close();
+                std::vector<std::string> lines = splitIntoLines(content);
+                for (const auto& l : lines) {
+                    all_edits.emplace_back(Edit::INS, "", l);
+                }
+                Totaladditions += lines.size();
+                std::cout << file << " (new file)" << std::endl;
+            }
+        }
+        storeDiff(all_edits);
+        std::cout << "Total additions: " << Totaladditions << "\n";
+        std::cout << "No previous commit. All files are new.\n";
         return;
     }
 
@@ -214,29 +237,19 @@ void YeetStatus(std::string path){
     PathofFile = ""; oid = "";
     std::vector<std::string> FilePaths;
     std::vector<std::string> oids;
-    for(int i=0;i<StoreData.size();i++){ 
-        if(StoreData[i] == ' '){
-            FilePaths.push_back(PathofFile);
-            PathofFile = "";
-            space = !space; continue;
-        }       
+    std::istringstream storeStream(StoreData);
 
-        if(StoreData[i] == '\n'){
-            oids.push_back(oid);
-            oid = "";
-            space = !space; continue;
-        }     
-        
-        if(!space){
-            PathofFile += StoreData[i];
-        }
-        else{
-            oid += StoreData[i];
+    std::string line;
+    while (std::getline(storeStream, line)) {
+        size_t tabPos = line.find('\t');
+        if (tabPos != std::string::npos) {
+            FilePaths.push_back(line.substr(0, tabPos));
+            oids.push_back(line.substr(tabPos + 1));
         }
     }
 
-    // Main Loop
-    for(int i=0;i<oids.size();i++){
+    std::vector<Edit> all_edits;
+    for (size_t i = 0;i<oids.size();i++) {
 
         int additions,deletions;
         additions = 0, deletions = 0;
@@ -301,22 +314,29 @@ void YeetStatus(std::string path){
 
             // The file we are checking:
             std::cout<<FilePaths[i]<<std::endl;
-            
+            all_edits.insert(all_edits.end(), diff_result.begin(), diff_result.end());
             std::cout<<"This file additions: "<<additions<<"\n";
             std::cout<<"This file deletions: "<<deletions<<std::endl;
             // Printing the diffs
             Printer printer;
             printer.print(diff_result);
 
-            visited[FilePaths[i]] = true;
+            
         } else {
             deletions+=InflatedContent.size();
         }
+        visited[FilePaths[i]] = true;
     }
 
-    for(int i=0;i<visited.size();i++){
-        if(!visited[FilePaths[i]]){
-            std::ifstream newFile(FilePaths[i]);
+    // Clear existing Diff file
+
+    std::ofstream clearDiff(path + "/.yeet/Diff", std::ios::trunc);
+    clearDiff.close();
+    storeDiff(all_edits); // Write all collected diffs
+
+    for (const auto& it : FilePath) {
+        if (!visited[it]) {
+            std::ifstream newFile(it);
             if (newFile.is_open()) {
                 std::string line;
                 while (std::getline(newFile, line)) {
@@ -326,12 +346,15 @@ void YeetStatus(std::string path){
             }
         }
     }
+
     if(Totaladditions == 0  && Totaldeletions == 0){
         std::cout<<"No Change, Can't commit"<<std::endl;
     }
     else{
         std::cout<<"Total addtions: "<<Totaladditions<<"\nTotal deletions: "<<Totaldeletions<<std::endl;
     }
+
+    std::cout<<"DIFF:: All the changes have stored in the /.yeet/Diff file"<<std::endl;
 
 
 }
@@ -384,6 +407,14 @@ void YeetInit(std::string path="."){
                 throw std::runtime_error("ERROR::INIT::Failed to create .yeet/HEAD file.\n");
             }
 
+        std::ofstream masterBranch(_actualPath+"/refs/heads/master");
+        if (masterBranch.is_open()) {
+            masterBranch << "master";
+            masterBranch.close();
+        } else {
+            throw std::runtime_error("ERROR::INIT::Failed to create .yeet/refs/heads/master file.\n");
+        }
+
         // Making Description file.
         std::ofstream descFile(_actualPath+"/description");
             if(descFile.is_open()){
@@ -408,7 +439,7 @@ void YeetInit(std::string path="."){
         // Making Store File
         std::ofstream StoreFile(_actualPath+"/Store");
         if(StoreFile.is_open()){
-            StoreFile<<"Empty Store\n";
+            StoreFile<<"Empty Store";
             StoreFile.close();
         }
         else {
@@ -418,7 +449,7 @@ void YeetInit(std::string path="."){
         // Make Diff file.
         std::ofstream DiffFile(_actualPath+"/Diff");
         if (DiffFile.is_open()) {
-            DiffFile << "No Diffs Yet\n";
+            DiffFile << "No Diffs Yet";
             DiffFile.close();
         } else {
             throw std::runtime_error("ERROR::INIT::Failed to create .yeet/Diff file.\n");
@@ -460,53 +491,66 @@ void Commit::ListFiles(std::string path,std::vector<std::filesystem::path>&FileP
         if(IGNORE){
             continue;
         }
-        if(entry.is_directory()) {
-            ListFiles(entry.path(),FilePath);
-        } 
-        if(entry.is_directory()) {
-            continue;
+        if (entry.is_directory()) {
+            ListFiles(entry.path(), FilePath); // Recurse into directories
+        } else {
+            FilePath.push_back(entry); // Add files to the list
         }
-        FilePath.push_back(entry);
+
     }
 }
 void Commit::CommitMain(std::string path){
-    try
-    {
+    try {
+        // std::cout << "DEBUG: Starting CommitMain with path: " << path << std::endl;
+        
         std::vector<TreeEntry> TreeEntries;
         Database DbObj(Commit::path+"/.yeet/objects");
         Refs RefObj(Commit::path);
 
-        std::string message; std::cout<<"\nCOMMIT::Please enter your Commit Message:\n";
-        // store of the file which have any changes after the last commit
-        std::getline(std::cin >> std::ws, message); // ws means white spaces.
-        std::vector<std::filesystem::path>FilePath;
-        // TODO: NEEDS WORK
-        CommitHelper::YeetStatus(path, FilePath) ;
+        std::string message;
+        std::cout << "\nCOMMIT::Please enter your Commit Message:\n";
+        std::getline(std::cin >> std::ws, message);
+        
+        std::vector<std::filesystem::path> FilePath;
+        // std::cout << "DEBUG: About to call YeetStatus" << std::endl;
+        
+        CommitHelper::YeetStatus(path, FilePath);
+        // std::cout << "DEBUG: YeetStatus returned " << FilePath.size() << " files" << std::endl;
+        
         if(FilePath.empty()) {
-            std::cout<<"ERROR::COMMIT:: Nothing to commit"<<std::endl;
+            std::cout << "ERROR::COMMIT:: Nothing to commit" << std::endl;
+            return;
         }
-        // ListFiles(path,FilePath);
-        for (const auto & entry : FilePath){
-            std::string _stat = "Non-Exe";
-            // TODO: Check exe using this method. ie using cpp filesystem library, it's cross platform the access function only works in linux.
-            // if(std::filesystem::status(FilePath[i].c_str()).permissions() & std::filesystem::perms::owner_exec )
-            if (! access (entry.c_str(), X_OK)){ // Checks if a file is exe or not
-                _stat = "Exe";
-            }
-             // content of Current FiLe.
-            std::string data = readFile(entry);
-            // Blob of that Data
-            Blob newBlobObject(data); 
-            // Storing that Blob
-            DbObj.storeContentInDB(newBlobObject, entry.generic_string()); 
-            // Making a TreeEntry with path of that Blob
-            TreeEntry TreeEntryObj(entry.generic_string(),newBlobObject.oid,_stat); 
-            TreeEntries.push_back(TreeEntryObj); 
-        }
-        for(auto it:DbObj.Store){
-            std::cout<<it.first<<" "<<it.second<<std::endl;
+        
+        // Debug: Print all files being committed
+        // std::cout << "DEBUG: Files to be committed:" << std::endl;
+        for(const auto& file : FilePath) {
+            std::cout << "  - " << file << std::endl;
         }
 
+        for (const auto& entry : FilePath) {
+            std::string _stat = "Non-Exe";
+            if (!access(entry.c_str(), X_OK)) {
+                _stat = "Exe";
+            }
+            // std::cout << "DEBUG: Processing file: " << entry << " (status: " << _stat << ")" << std::endl;
+            
+            std::string data = readFile(entry);
+            // std::cout << "DEBUG: Read " << data.length() << " bytes" << std::endl;
+            
+            Blob newBlobObject(data);
+            // std::cout << "DEBUG: Created blob with oid: " << newBlobObject.oid << std::endl;
+            
+            DbObj.storeContentInDB(newBlobObject, entry.generic_string());
+            
+            TreeEntry TreeEntryObj(entry.generic_string(), newBlobObject.oid, _stat);
+            TreeEntries.push_back(TreeEntryObj);
+        }
+
+        // std::cout << "DEBUG: Store contents:" << std::endl;
+        for(auto it : DbObj.Store) {
+            std::cout << "  " << it.first << " -> " << it.second << std::endl;
+        }
         // TODO: I changed this function output and Store datatype to map instead of unordered_map, is this causing the segmentation faults?
         // Save the store in /Store file
         writeStoreinDB(DbObj.Store);
@@ -516,7 +560,7 @@ void Commit::CommitMain(std::string path){
             DbObj.storeContentInDB(TreeObject);
             // std::cout << "My Tree Id is wao: " << TreeObject.oid << std::endl;
 
-            std::string parent = RefObj.Read_HEAD(); // The oid of previous commit
+            std::string parent = RefObj.Read_HEAD(path); // The oid of previous commit
             std::string name = getenv("YEET_AUTHOR_NAME");
             std::string email = getenv("YEET_AUTHOR_EMAIL");
             // std::cout<<"Name: "<<name<<"\nmail: "<<email<<"\n"; // working
@@ -530,7 +574,7 @@ void Commit::CommitMain(std::string path){
             RefObj.update_HEAD(MainCommitObj.oid); // Updating the HEAD file to new commit
             // std::cout<<"the parent value: "<<parent<<std::endl;
             bool is_RootCommit = false;
-            if(parent=="ref:") is_RootCommit=true;
+            if(parent=="master") is_RootCommit=true;
             std::cout<<"Commit added in the branch: "<<RefObj.currentBranch()<<std::endl;
             if(is_RootCommit) std::cout<<"\nThis is a root commit"<<std::endl;
             std::cout<<"COMMIT::Your Commit id is: "<<MainCommitObj.oid<<"\nCommit-Message: "<<MainCommitObj.CommitMessage<<"\n";
@@ -792,8 +836,8 @@ void Refs::update_HEAD(std::string oid){
     }
 }
 
-std::string Refs::Read_HEAD(){
-    std::ifstream headFile(Refs::HEAD_path(),std::ios::binary);
+std::string Refs::Read_HEAD(std::string currPath){
+    std::ifstream headFile(currPath + "/.yeet/refs/heads/" + currentBranch(),std::ios::binary);
     std::string FileContent; // Becuase I am using string, It will not pick up anything after a space. I need to use getLine() function.
     if(headFile){
         headFile>>FileContent; // All content of the file into the string
@@ -805,15 +849,14 @@ void writeStoreinDB(std::map<std::string, std::string> Store){
     for(auto it:Store){
         std::cout<<it.first<<" "<<it.second<<std::endl;
     }
-    std::cout<<"Hello"<<std::endl;
     std::string _actualPath = fs::current_path();
-    std::cout<<_actualPath<<std::endl;
 
     std::ofstream StoreFile(_actualPath+"/.yeet/Store");
     if(StoreFile.is_open()){
         for(auto it:Store){
-            StoreFile<<it.first<<" "<<it.second<<"\n";
+            StoreFile << it.first << "\t" << it.second << "\n";
         }
+    
         StoreFile.close();
     }
 
@@ -824,25 +867,38 @@ void writeStoreinDB(std::map<std::string, std::string> Store){
 
 
 // Helper Function for Listing Files:
-void ListFiles(std::string path,std::vector<std::filesystem::path>&FilePath){
+void ListFiles(std::string path, std::vector<std::filesystem::path>& FilePath){
+    // std::cout << "DEBUG: ListFiles starting with path: " << path << std::endl;
+    
     for (const auto & entry : fs::directory_iterator(path)){
+        // std::cout << "DEBUG: Found entry: " << entry.path().generic_string() << std::endl;
+        
         // This is my .yeetignore
-        const bool IGNORE = entry.path().generic_string().find(".git") != std::string::npos || entry.path().generic_string().find(".yeet") != std::string::npos || entry.path().generic_string().find(".vscode") != std::string::npos || entry.path().generic_string().find(".xmake") != std::string::npos || entry.path().generic_string().find(".cmake") != std::string::npos || entry.path().generic_string().find("/build") != std::string::npos;
+        const bool IGNORE = entry.path().generic_string().find(".git") != std::string::npos || 
+                          entry.path().generic_string().find(".yeet") != std::string::npos || 
+                          entry.path().generic_string().find(".vscode") != std::string::npos || 
+                          entry.path().generic_string().find(".xmake") != std::string::npos || 
+                          entry.path().generic_string().find(".cmake") != std::string::npos || 
+                          entry.path().generic_string().find("/build") != std::string::npos;
 
         if(IGNORE){
+            // std::cout << "DEBUG: Ignoring " << entry.path().generic_string() << std::endl;
             continue;
         }
-        if(entry.is_directory()) {
-            ListFiles(entry.path(),FilePath);
-        } 
-        if(entry.is_directory()) {
-            continue;
+        
+        if (entry.is_directory()) {
+            ListFiles(entry.path(), FilePath); // Recurse into directories
+        } else {
+            FilePath.push_back(entry); // Add files to the list
         }
-        FilePath.push_back(entry);
     }
 }
 
 std::vector<unsigned char> readFile(const std::string& filename) {
+    if(filename == "/home/akhil/dev/yeet/.yeet/objects/St/ore"){
+        std::vector<unsigned char> res = {};
+        return res;
+    }  
     std::ifstream file(filename, std::ios::binary);
     if (!file) {
         std::cerr << "ERROR::READINGFILE:: Cannot open file: " << filename << std::endl;
@@ -896,6 +952,9 @@ std::string Inflate(std::string path){
 
     std::string inputFilename = path; 
     std::string response = "";
+
+    std::cout<<inputFilename<<std::endl;
+    if(inputFilename == "/home/akhil/dev/yeet/.yeet/objects/Store") return "";
 
     auto compressedData = readFile(inputFilename);
     if (compressedData.empty()) return "Error in compressed data";
@@ -1044,7 +1103,7 @@ std::vector<Edit> diff(const std::vector<std::string>& a,
 
 // Storing diffs in file
 void storeDiff(const std::vector<Edit>& edits) {
-    std::ofstream diff_file(".yeet/Diffs", std::ios::app);
+    std::ofstream diff_file(".yeet/Diff", std::ios::trunc); 
     if (diff_file.is_open()) {
         for (const auto& edit : edits) {
             std::string tag = (edit.type == Edit::INS) ? "+" : "-";
