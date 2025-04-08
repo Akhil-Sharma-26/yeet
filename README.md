@@ -76,19 +76,19 @@ g++ main.cpp controllers.cpp -std=c++17 -lcryptopp -lz -fdiagnostics-all-candida
 - More robust Testing is needed. (Trying to implement it using GoogleTests.)
 
 ## Branch:
-[x] Branch Creation
-[x] Current Branch storage
-[x] Changing Branches (Checkout)
-[x] See all branches with commit ids
-[x] Commits on the active branch.
-[ ] Option to choose which branch I want to make my new branch from. (Currently the new branch will automatically start from the prev branch ie the branch you were in)
+- [x] Branch Creation
+- [x] Current Branch storage
+- [x] Changing Branches (Checkout)
+- [x] See all branches with commit ids
+- [x] Commits on the active branch.
+- [ ] Option to choose which branch I want to make my new branch from. (Currently the new branch will automatically start from the prev branch ie the branch you were in)
 
 ## Checkout:
-[ ]logic to reset the working directory to the target branch’s commit using tree traversal.
+- [ ]logic to reset the working directory to the target branch’s commit using tree traversal.
 
 ## Commit:
-[ ] Commits should check the diifs function output to check what are the files in which changes are made. (Find solution of the problem: what if branches are changed? then how to this?)
+- [ ] Commits should check the diifs function output to check what are the files in which changes are made. (Find solution of the problem: what if branches are changed? then how to this?)
 
 ## Status:
-[x] Status function is not working at edge cases. (Not parsing exec was the problem)
-[ ] Design a new file structure `.diff` to store the diffs content
+- [x] Status function is not working at edge cases. (Not parsing exec was the problem)
+- [ ] Design a new file structure `.diff` to store the diffs content
