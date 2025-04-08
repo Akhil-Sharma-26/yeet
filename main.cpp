@@ -34,8 +34,11 @@ int main(int argc, char* argv[]) {
             else if(arg=="add"){
                 YeetAdd();
             }
+            // testing status
 
         } 
+        // testing the commit
+
 
         if(argc==2){
             if(arg=="status"){

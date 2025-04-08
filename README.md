@@ -38,6 +38,14 @@ Search according to your OS.
 - You can only yeet init in a already made directory. You can not yeet init in a directory that does not exist.
 - There is no option to base/rebase for the branch/checkout command
 
+## Workflow diagrams:
+The below are very minimal and abstracted view of the working of the project. You have to go throught the code to learn the details of the implementation.
+1. ![Sequence Diagram](assets/Sequence_Diagram.png)
+2. ![Data Flow](assets/Data_FLow.png)
+3. ![Branching Data Flow](assets/Branching_FLow.png)
+4. ![Class Diagram](assets/Class_Diagram.png)
+
+
 ## Testing The compression:
 Use the Testing_inflating.cpp file as follow for decompressing your blob data: 
 ```bash
