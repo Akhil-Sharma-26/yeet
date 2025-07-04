@@ -1,3 +1,4 @@
+#pragma once
 #include<string>
 #include<vector>
 #include<filesystem>
@@ -10,7 +11,8 @@
 #include<algorithm>
 #include<unordered_set>
 #include <iomanip>
-
+#include "include/Commit.hpp"
+#include "include/Tree.hpp"
 // Structures:
 
 struct Edit
@@ -46,7 +48,6 @@ void YeetStatus(std::string path);
 
 void YeetInit(std::string path);
 
-class Tree;
 class Blob{
     public:
         std::string oid;
@@ -57,22 +58,6 @@ class Blob{
         std::string type();
 };
 
-class Commit{
-    public:
-        std::string path;
-        std::string TreeOID;
-        std::string AuthorData;
-        std::string CommitMessage;
-        std::string Writtenlines;
-        std::string oid;
-        std::string parent;
-        std::vector<std::string> IGNORE = {".","..",".git",".yeet"};
-        Commit(std::string path);
-        Commit(std::string TreeOid, std::string AuthorData, std::string CommitMessage, std::string parent);
-        void CommitMain(std::string path);
-        void ListFiles(std::string path,std::vector<std::filesystem::path>& FilePath);
-        std::string readFile(std::filesystem::path path);
-    };
 
 std::string Directory_name_Helper(std::string Objpath);
 std::string File_name_Helper(std::string Objpath);
@@ -129,57 +114,6 @@ class Database{
         void storeContentInDB(Blob& object,const std::string &path);
         void storeContentInDB(Tree& object);
         void storeContentInDB(Commit& object);
-};
-
-/**
- * An TreeEntry is a simple structure that exists to package up the information that Tree needs to
-know about its contents: the filename, and the object ID. Tree will also need to know the mode
-of each file, but for now all our source code is in non-executable regular files, so we will hard-
-code the 100644 mode string that appears in the tree file.
-*/
-class TreeEntry {
-public:
-    // operator overloaded
-    TreeEntry& operator=(const TreeEntry& other) {
-        if (this != &other) { // Protect against self-assignment
-            this->name = other.name;
-            this->oid = other.oid;
-            this->stat = other.stat;
-        }
-        return *this;
-    }
-    // TreeEntry(const std::string& name, const std::string& oid) : name(name), oid(oid) {} // same as below
-    TreeEntry(std::string name, std::string oid,std::string stat) {
-        this->name = name;
-        this->oid = oid;
-        this->stat = stat;
-    }
-
-    // copy constructor
-    TreeEntry(const TreeEntry& other) : name(other.name), oid(other.oid), stat(other.stat) {}
-    std::string name;
-    std::string oid;
-    // TODO: Customize these codes later for yeet.
-    const std::string REGULAR_MODE = "100644";
-    const std::string EXE_MODE = "100755";
-
-    std::string stat;
-
-};
-
-
-class Tree{
-    // const std::string ENTRY_FORMAT = "Z*H40"; no need
-    public:
-
-        std::string oid;
-        std::vector<TreeEntry> entries;
-        Tree(std::vector<TreeEntry>& entries){
-            this->entries = entries;
-        }
-
-        std::string Type(){ return "tree"; }
-        std::string ReturnS_tring();
 };
 
 

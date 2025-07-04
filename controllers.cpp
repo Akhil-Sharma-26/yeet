@@ -477,28 +477,6 @@ void YeetAdd(){
 }
 
 
-// Commit Class:
-// TODO: Add a check that you can only list files if a .yeet dir is present/ initialized.
-/**
- * Lists all the files in the current yeet repo.
- * @author Akhil Sharma
- */
-void Commit::ListFiles(std::string path,std::vector<std::filesystem::path>&FilePath){
-    for (const auto & entry : fs::directory_iterator(path)){
-        // This is my .gitignore
-        const bool IGNORE = entry.path().generic_string().find(".git") != std::string::npos || entry.path().generic_string().find(".yeet") != std::string::npos || entry.path().generic_string().find(".vscode") != std::string::npos || entry.path().generic_string().find(".xmake") != std::string::npos || entry.path().generic_string().find(".cmake") != std::string::npos || entry.path().generic_string().find("/build") != std::string::npos;
-
-        if(IGNORE){
-            continue;
-        }
-        if (entry.is_directory()) {
-            ListFiles(entry.path(), FilePath); // Recurse into directories
-        } else {
-            FilePath.push_back(entry); // Add files to the list
-        }
-
-    }
-}
 void Commit::CommitMain(std::string path){
     try {
         // std::cout << "DEBUG: Starting CommitMain with path: " << path << std::endl;
@@ -661,7 +639,7 @@ void Database::storeContentInDB(Blob& object, const std::string& path){
 }
 
 void Database::storeContentInDB(Tree& object){
-    std::string Data = object.ReturnS_tring();
+    std::string Data = object.Return_String();
     std::string content = object.Type() + " " + std::to_string(Data.size()) + "\0" + Data; // The null character is included just to use when we itterate over it.
     // std::cout<<"the content: "<<content<<std::endl;
     object.oid = calculateSHA1Hex(content);
@@ -686,7 +664,7 @@ void Database::storeContentInDB(Commit& object){
  * @return String, which will be used in storing the tree to Database.
  * The entries contains all the files commit info.
  */
-std::string Tree::ReturnS_tring(){
+std::string Tree::Return_String(){
     std::ostringstream result;
 
     // std::ostringstream result; // The ostringstream stands for output string stream just like ofstream
@@ -694,11 +672,11 @@ std::string Tree::ReturnS_tring(){
     // result << "The answer to life, the universe, and everything is " << 42 << ".";
     // Sort entries by name
 
-    std::sort(entries.begin(), entries.end(), [](const TreeEntry& a, const TreeEntry& b) {
+    std::sort(enteries.begin(), enteries.end(), [](const TreeEntry& a, const TreeEntry& b) {
         return a.name < b.name;
     });
 
-    for (const auto& entry : entries) {
+    for (const auto& entry : enteries) {
         std::string FileStat = (entry.stat == "Exe") ? entry.EXE_MODE : entry.REGULAR_MODE;
         result << FileStat << " " << entry.name << " " << entry.oid<< "\n";
     }

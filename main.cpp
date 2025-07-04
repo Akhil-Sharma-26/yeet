@@ -1,7 +1,6 @@
 #include <iostream>
 #include "controllers.hpp"
 #include <filesystem>
-#define fs std::filesystem
 #define ll long long
 using namespace std;
 
