@@ -664,25 +664,25 @@ void Database::storeContentInDB(Commit& object){
  * @return String, which will be used in storing the tree to Database.
  * The entries contains all the files commit info.
  */
-std::string Tree::Return_String(){
-    std::ostringstream result;
+// std::string Tree::Return_String(){
+//     std::ostringstream result;
 
-    // std::ostringstream result; // The ostringstream stands for output string stream just like ofstream
-    // Using the 'result' stream to concatenate strings and numbers
-    // result << "The answer to life, the universe, and everything is " << 42 << ".";
-    // Sort entries by name
+//     // std::ostringstream result; // The ostringstream stands for output string stream just like ofstream
+//     // Using the 'result' stream to concatenate strings and numbers
+//     // result << "The answer to life, the universe, and everything is " << 42 << ".";
+//     // Sort entries by name
 
-    std::sort(enteries.begin(), enteries.end(), [](const TreeEntry& a, const TreeEntry& b) {
-        return a.name < b.name;
-    });
+//     std::sort(enteries.begin(), enteries.end(), [](const TreeEntry& a, const TreeEntry& b) {
+//         return a.name < b.name;
+//     });
 
-    for (const auto& entry : enteries) {
-        std::string FileStat = (entry.stat == "Exe") ? entry.EXE_MODE : entry.REGULAR_MODE;
-        result << FileStat << " " << entry.name << " " << entry.oid<< "\n";
-    }
-    // std::cout<<result.str()<<std::endl;
-    return result.str();
-}
+//     for (const auto& entry : enteries) {
+//         std::string FileStat = (entry.stat == "Exe") ? entry.EXE_MODE : entry.REGULAR_MODE;
+//         result << FileStat << " " << entry.name << " " << entry.oid<< "\n";
+//     }
+//     // std::cout<<result.str()<<std::endl;
+//     return result.str();
+// }
 
 
 

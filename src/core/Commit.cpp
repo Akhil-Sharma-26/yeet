@@ -1,5 +1,5 @@
-#include "../../include/Commit.hpp"
-#include "../../include/Tree.hpp"
+#include "../../include/core/Commit.hpp"
+#include "../../Tree.h"
 
 void Commit::ListFiles(std::string path,std::vector<fs::path>& FilePath){
     for(auto const&it: fs::directory_iterator(path)){

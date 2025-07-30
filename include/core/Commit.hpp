@@ -1,3 +1,4 @@
+#pragma once
 #include"libs.hpp"
 class Commit{
 private:

@@ -1,4 +1,6 @@
+#pragma once
 #include"libs.hpp"
+#include<algorithm>
 
 /* An TreeEntry is a simple structure that exists to package up the information that Tree needs to
 know about its contents: the filename, and the object ID. Tree will also need to know the mode

@@ -19,12 +19,32 @@ include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}/include  # New includes
 )
 
-# Find all current source files TODO: to be gradually replaced
-file(GLOB_RECURSE ALL_CURRENT_SOURCES "*.cpp" "!build/*")
+# Find external packages
+find_package(cryptopp QUIET)
+find_package(ZLIB REQUIRED)
 
-# Set up libraries and executables with current sources
-# TODO: These will be refined in subsequent steps
-add_executable(yeet ${ALL_CURRENT_SOURCES})
+# Define source files explicitly while transitioning
+set(CORE_SOURCES
+    src/core/Tree.cpp
+    src/core/Commit.cpp
+)
 
-# Enabling testing infrastructure TODO:(to be used later)
+set(LEGACY_SOURCES
+    main.cpp
+    controllers.cpp
+)
+
+# Create the executable with current sources
+add_executable(yeet ${LEGACY_SOURCES} ${CORE_SOURCES})
+
+# Link against required libraries
+target_link_libraries(yeet PRIVATE cryptopp z)
+
+# Add compiler options for optimization and error handling
+target_compile_options(yeet PRIVATE -O2 -Wall)
+
+# Enable testing infrastructure (to be used later)
 enable_testing()
+
+# Include CPack module for packaging
+include(CPack)
