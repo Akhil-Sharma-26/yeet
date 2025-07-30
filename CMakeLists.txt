@@ -1,14 +1,30 @@
-cmake_minimum_required(VERSION 3.28)
+cmake_minimum_required(VERSION 3.14)
+project(YEET VERSION 0.1.0 
+        DESCRIPTION "YEET Version Control System" 
+        LANGUAGES CXX)
+
+# Set C++ standard
 set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED True)
-project(yeet)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
-add_executable(yeet main.cpp controllers.cpp)
+# Output directories
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
-# Add compiler options for optimization and error handling
-target_compile_options(yeet PRIVATE -O2 -Wall)
+# Include directories - both old and new
+include_directories(
+    ${CMAKE_CURRENT_SOURCE_DIR}     # Old root includes
+    ${CMAKE_CURRENT_SOURCE_DIR}/include  # New includes
+)
 
-target_link_libraries(yeet cryptopp z)
+# Find all current source files TODO: to be gradually replaced
+file(GLOB_RECURSE ALL_CURRENT_SOURCES "*.cpp" "!build/*")
 
-# Include CPack module
-include(CPack)
+# Set up libraries and executables with current sources
+# TODO: These will be refined in subsequent steps
+add_executable(yeet ${ALL_CURRENT_SOURCES})
+
+# Enabling testing infrastructure TODO:(to be used later)
+enable_testing()

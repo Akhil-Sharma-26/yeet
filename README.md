@@ -12,7 +12,7 @@ I am using the filesystem library to make it cross-platform.
 2. Open the terminal and navigate to this directory.
 3. Run the following command:
 ```bash
- g++ main.cpp controllers.cpp -std=c++17 -lcryptopp -lz -o yeet
+ g++ src/main.cpp controllers.cpp src/CORE/Commit.cpp src/CORE/Tree.cpp -std=c++17 -lcryptopp -lz -o yeet
 ```
 4. Set the permissions for the executable file:
 ```bash
@@ -92,3 +92,6 @@ g++ main.cpp controllers.cpp -std=c++17 -lcryptopp -lz -fdiagnostics-all-candida
 ## Status:
 - [x] Status function is not working at edge cases. (Not parsing exec was the problem)
 - [ ] Design a new file structure `.diff` to store the diffs content
+
+
+`Wall -Wextra -pedantic`
