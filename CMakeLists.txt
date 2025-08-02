@@ -1,50 +1,61 @@
 cmake_minimum_required(VERSION 3.14)
-project(YEET VERSION 0.1.0 
-        DESCRIPTION "YEET Version Control System" 
-        LANGUAGES CXX)
+project(YEET VERSION 0.1.0 LANGUAGES CXX)
 
 # Set C++ standard
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
 
-# Output directories
+# Build settings
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
-# Include directories - both old and new
-include_directories(
-    ${CMAKE_CURRENT_SOURCE_DIR}     # Old root includes
-    ${CMAKE_CURRENT_SOURCE_DIR}/include  # New includes
-)
-
-# Find external packages
-find_package(cryptopp QUIET)
+# Find ZLIB package (standard package with CMake support)
 find_package(ZLIB REQUIRED)
 
-# Define source files explicitly while transitioning
-set(CORE_SOURCES
-    src/core/Tree.cpp
-    src/core/Commit.cpp
+# Find cryptopp using find_library instead of find_package
+find_library(CRYPTOPP_LIBRARY
+    NAMES cryptopp
+    PATHS /usr/lib /usr/lib64 /usr/local/lib
+    DOC "The Crypto++ library"
 )
 
-set(LEGACY_SOURCES
-    main.cpp
-    controllers.cpp
+if(NOT CRYPTOPP_LIBRARY)
+    message(FATAL_ERROR "Crypto++ library not found. Please install cryptopp-devel package.")
+endif()
+
+# Find cryptopp headers
+find_path(CRYPTOPP_INCLUDE_DIR
+    NAMES cryptopp/sha.h
+    PATHS /usr/include /usr/local/include
+    DOC "The Crypto++ include directory"
 )
 
-# Create the executable with current sources
-add_executable(yeet ${LEGACY_SOURCES} ${CORE_SOURCES})
+if(NOT CRYPTOPP_INCLUDE_DIR)
+    message(FATAL_ERROR "Crypto++ headers not found. Please install cryptopp-devel package.")
+endif()
 
-# Link against required libraries
-target_link_libraries(yeet PRIVATE cryptopp z)
+message(STATUS "Found Crypto++: ${CRYPTOPP_LIBRARY}")
+message(STATUS "Crypto++ include dir: ${CRYPTOPP_INCLUDE_DIR}")
 
-# Add compiler options for optimization and error handling
-target_compile_options(yeet PRIVATE -O2 -Wall)
+# Add component subdirectories
+add_subdirectory(YeetCore)
+add_subdirectory(YeetUtils)
+add_subdirectory(YeetCLI)
 
-# Enable testing infrastructure (to be used later)
-enable_testing()
+# Option for building tests
+option(BUILD_TESTING "Build the testing tree." OFF)
 
-# Include CPack module for packaging
-include(CPack)
+# Enable testing only if the option is ON and GTest is found
+if(BUILD_TESTING)
+    # Try to find GTest
+    find_package(GTest QUIET)
+    
+    if(GTest_FOUND)
+        enable_testing()
+        add_subdirectory(YeetTests)
+    else()
+        message(STATUS "GTest not found. Tests will not be built.")
+        message(STATUS "To build tests, install gtest-devel and set BUILD_TESTING=ON")
+    endif()
+endif()

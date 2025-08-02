@@ -11,8 +11,8 @@
 #include<algorithm>
 #include<unordered_set>
 #include <iomanip>
-#include "include/core/Commit.hpp"
-#include "Tree.h"
+#include "commit.h"
+#include "tree.h"
 // Structures:
 
 struct Edit

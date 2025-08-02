@@ -2,6 +2,25 @@
 This has not been fully tested on Windows yet, so if you are using Windows and have found some issues, please give me feedback. :)
 I am using the filesystem library to make it cross-platform.
 
+## UPDATES:
+1. Starting the development for windows also.
+2. Now I will be using the strucuture:
+```
+YEET/
+├── YEET.sln                  # Main solution file
+├── YeetCore/                 # Core functionality as static library
+├── YeetUtils/                # Utility functions as static library
+├── YeetCLI/                  # Command-line interface executable
+└── YeetTests/                # Test project
+```
+3. I am also adding Google Test to the project, for better and consistent testing.
+
+
+> All of the above changes will need some time to get fully tested and might break somethings. 
+> This new Update will be the biggest for the future of this project.
+
+Hope this works out
+
 # Introduction:
 - This is a project to make my own version control with some improvements.
 - Through this, I also want to learn the backend of version control and make my grasp stronger on C++.
