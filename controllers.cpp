@@ -843,35 +843,6 @@ void writeStoreinDB(std::map<std::string, std::string> Store){
     }
 }
 
-
-// Helper Function for Listing Files:
-void ListFiles(std::string path, std::vector<std::filesystem::path>& FilePath){
-    // std::cout << "DEBUG: ListFiles starting with path: " << path << std::endl;
-    
-    for (const auto & entry : fs::directory_iterator(path)){
-        // std::cout << "DEBUG: Found entry: " << entry.path().generic_string() << std::endl;
-        
-        // This is my .yeetignore
-        const bool IGNORE = entry.path().generic_string().find(".git") != std::string::npos || 
-                          entry.path().generic_string().find(".yeet") != std::string::npos || 
-                          entry.path().generic_string().find(".vscode") != std::string::npos || 
-                          entry.path().generic_string().find(".xmake") != std::string::npos || 
-                          entry.path().generic_string().find(".cmake") != std::string::npos || 
-                          entry.path().generic_string().find("/build") != std::string::npos;
-
-        if(IGNORE){
-            // std::cout << "DEBUG: Ignoring " << entry.path().generic_string() << std::endl;
-            continue;
-        }
-        
-        if (entry.is_directory()) {
-            ListFiles(entry.path(), FilePath); // Recurse into directories
-        } else {
-            FilePath.push_back(entry); // Add files to the list
-        }
-    }
-}
-
 std::vector<unsigned char> readFile(const std::string& filename) {
     if(filename == "/home/akhil/dev/yeet/.yeet/objects/St/ore"){
         std::vector<unsigned char> res = {};
