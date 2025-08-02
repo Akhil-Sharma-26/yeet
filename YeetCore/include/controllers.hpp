@@ -1,9 +1,8 @@
 #pragma once
-#include<string>
 #include<vector>
 #include<filesystem>
 #include<zlib.h> // for database class
-#include<cryptopp/sha.h> // for database class
+#include<sha.h> // for database class
 #include<iostream>
 #include<fstream>
 #include<sstream>
@@ -11,6 +10,28 @@
 #include<algorithm>
 #include<unordered_set>
 #include <iomanip>
+#include<filesystem>
+#include <sha.h>
+#include <filters.h>
+#include <hex.h>
+#include <iostream>  
+#include <vector>  
+#include <string>  
+#include <algorithm>  
+#include <unordered_map>  
+#include <fstream>  
+#include <sstream>  
+#include <iomanip>  
+#include <filesystem>  
+#include <regex>  
+#include <stdexcept>  
+#include <ctime>  
+#include <cstdlib>  
+#include <iterator>  
+#include <zlib.h>  
+#include <sha.h>  
+#include <filters.h>  
+#include <hex.h>
 #include "commit.h"
 #include "tree.h"
 // Structures:

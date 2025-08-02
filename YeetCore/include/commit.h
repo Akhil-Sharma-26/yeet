@@ -3,7 +3,7 @@
 class Commit{
 private:
     // Lists all the files in the current yeet repo.
-    void ListFiles(std::string path,std::vector<fs::path>& FilePath); 
+    void ListFiles(const std::filesystem::path& path, std::vector<std::filesystem::path>& FilePath);
     // TODO: This ListFiles need to check the diffs also to disnguish betweeen new and old files.
     // TODO: Add a check that you can only list files if a .yeet dir is present/ initialized.
 

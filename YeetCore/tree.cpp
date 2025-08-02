@@ -22,7 +22,7 @@ std::string Tree::Type() {
 }
 
 std::string Tree::Return_String(){
-    std::ostringstream result;
+    std::ostringstream result{};
 
     // Sort entries by name
     std::sort(enteries.begin(), enteries.end(), [](const TreeEntry& a, const TreeEntry& b) {

@@ -1,9 +1,5 @@
 #include"include/controllers.hpp"
-#include<bits/stdc++.h>
-#include<filesystem>
-#include <cryptopp/sha.h>
-#include <cryptopp/filters.h>
-#include <cryptopp/hex.h>
+#include <corecrt_io.h>
 
 #define fs std::filesystem
 
@@ -30,7 +26,7 @@ void ListFiles(std::string path, std::vector<std::filesystem::path>& FilePath) {
         }
 
         if(entry.is_directory()){
-            ListFiles(entry.path(), FilePath); // Recurse into that directory
+            ListFiles(entry.path().string(), FilePath); // Recurse into that directory
         }
         else {
             FilePath.push_back(entry);
@@ -185,6 +181,25 @@ namespace CommitHelper{
     }
 
 }
+
+
+bool isExecutableFile(const std::filesystem::path& path) {
+#ifdef _WIN32
+    // On Windows, check file extension
+    std::string ext = path.extension().string();
+    std::transform(ext.begin(), ext.end(), ext.begin(),
+        [](unsigned char c) { return std::tolower(c); });
+
+    // Common executable extensions on Windows
+    return ext == ".exe" || ext == ".bat" || ext == ".cmd" ||
+        ext == ".com" || ext == ".ps1" || ext == ".vbs";
+#else
+    // On Unix-like systems, use access
+    return access(path.c_str(), X_OK) == 0;
+#endif
+}
+
+
 namespace Helper{
     std::string readFile(std::string path){
         // Open the stream to 'lock' the file.
@@ -339,7 +354,7 @@ void YeetStatus(std::string path){
             }
 
             // Don't print exec file diffs.
-            if(! access (FilePaths[i].c_str(), X_OK)){
+            if (!isExecutableFile(FilePaths[i])) {
                 continue;
             }
 
@@ -412,7 +427,7 @@ void YeetInit(std::string path="."){
         // He can enter ebc --> init in pwd/ebc --------> not work, you to mkdir ebc first
         // He can enter ebc/ --> init in pwd/ebc only not pwd/ebc/ -------> same as above
         // He can enter full path from root --> init at that path ---------> will not work
-        std::string pwd = std::filesystem::current_path();
+        std::string pwd = std::filesystem::current_path().string();
         std::string temp_pwd = pwd;
         std::string _actualPath=pwd+'/'+path+".yeet";
         if(path.back()!='/' && path.back()!='.'){ 
@@ -544,7 +559,7 @@ void Commit::CommitMain(std::string path){
 
         for (const auto& entry : FilePath) {
             std::string _stat = "Non-Exe";
-            if (!access(entry.c_str(), X_OK)) {
+            if (!isExecutableFile(entry)) {
                 _stat = "Exe";
             }
             // std::cout << "DEBUG: Processing file: " << entry << " (status: " << _stat << ")" << std::endl;
@@ -863,7 +878,7 @@ void writeStoreinDB(std::map<std::string, std::string> Store){
     for(auto it:Store){
         std::cout<<it.first<<" "<<it.second<<std::endl;
     }
-    std::string _actualPath = fs::current_path();
+    std::string _actualPath = fs::current_path().string();
 
     std::ofstream StoreFile(_actualPath+"/.yeet/Store");
     if(StoreFile.is_open()){

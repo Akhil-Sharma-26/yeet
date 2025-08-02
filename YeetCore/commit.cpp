@@ -1,7 +1,7 @@
 #include "include/commit.h"
 // #include "../../Tree.h"
 
-void Commit::ListFiles(std::string path,std::vector<fs::path>& FilePath){
+void ListFiles(const std::filesystem::path& path, std::vector<std::filesystem::path>& FilePath) {
     for(auto const&it: fs::directory_iterator(path)){
 
         // TODO: Find a good way to do this thing
@@ -16,7 +16,7 @@ void Commit::ListFiles(std::string path,std::vector<fs::path>& FilePath){
         if(IGNORE) continue;
 
         if(it.is_directory()) 
-            ListFiles(it.path(), FilePath); // Recurssing into the the sub Directory
+            ListFiles(it.path().string(), FilePath); // Recurssing into the the sub Directory
 
         else   
             FilePath.push_back(it.path()); // Pushing the paths into the final Vector.

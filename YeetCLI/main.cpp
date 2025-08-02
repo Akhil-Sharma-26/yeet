@@ -10,7 +10,7 @@ int main(int argc, char* argv[]) {
     cout<<unitbuf; 
     cerr<<unitbuf;
     cout<<"Using cpp version: "<<__cplusplus<<endl; // To know my cpp version
-    string path = fs::current_path();
+    string path = fs::current_path().string();
     // cout<<path<<endl;
     try{
         if(argc==1){

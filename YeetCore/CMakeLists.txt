@@ -2,23 +2,31 @@
 add_library(YeetCore STATIC
     tree.cpp
     commit.cpp
-    repository.cpp
     controllers.cpp
+    repository.cpp
 )
 
 # Include directories
 target_include_directories(YeetCore
     PUBLIC
-        ${CMAKE_CURRENT_SOURCE_DIR}/include  # Public headers
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
     PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}          # Private implementation headers
+        ${CMAKE_CURRENT_SOURCE_DIR}
+        ${ZLIB_INCLUDE_DIRS}
+        ${CRYPTOPP_INCLUDE_DIR}  # This will point to external/cryptopp
 )
 
 # Link dependencies
 target_link_libraries(YeetCore
     PUBLIC
-        ZLIB::ZLIB
+        ${ZLIB_LIBRARIES}
+    PRIVATE
+        ${CRYPTOPP_LIBRARY}      # This will be the cryptopp library we built
 )
 
-# Compiler options
-target_compile_options(YeetCore PRIVATE -Wall -Wextra)
+# Compiler-specific options
+if(MSVC)
+    target_compile_options(YeetCore PRIVATE /W4)
+else()
+    target_compile_options(YeetCore PRIVATE -Wall -Wextra)
+endif()

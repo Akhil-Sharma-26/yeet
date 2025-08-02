@@ -1,0 +1,15 @@
+﻿{
+    "configurations": [
+        {
+            "name": "x64-Debug",
+            "generator": "Ninja",
+            "configurationType": "Debug",
+            "inheritEnvironments": [ "msvc_x64_x64" ],
+            "buildRoot": "${env.TEMP}\\cmake-build-${projectDirName}\\build\\${name}",
+            "installRoot": "${env.TEMP}\\cmake-build-${projectDirName}\\install\\${name}",
+            "cmakeCommandArgs": "",
+            "buildCommandArgs": "",
+            "ctestCommandArgs": ""
+        }
+    ]
+}
