@@ -2,6 +2,25 @@
 This has not been fully tested on Windows yet, so if you are using Windows and have found some issues, please give me feedback. :)
 I am using the filesystem library to make it cross-platform.
 
+## UPDATES:
+1. Starting the development for windows also.
+2. Now I will be using the strucuture:
+```
+YEET/
+├── YEET.sln                  # Main solution file
+├── YeetCore/                 # Core functionality as static library
+├── YeetUtils/                # Utility functions as static library
+├── YeetCLI/                  # Command-line interface executable
+└── YeetTests/                # Test project
+```
+3. I am also adding Google Test to the project, for better and consistent testing.
+
+
+> All of the above changes will need some time to get fully tested and might break somethings. 
+> This new Update will be the biggest for the future of this project.
+
+Hope this works out
+
 # Introduction:
 - This is a project to make my own version control with some improvements.
 - Through this, I also want to learn the backend of version control and make my grasp stronger on C++.
@@ -12,7 +31,7 @@ I am using the filesystem library to make it cross-platform.
 2. Open the terminal and navigate to this directory.
 3. Run the following command:
 ```bash
- g++ main.cpp controllers.cpp -std=c++17 -lcryptopp -lz -o yeet
+ g++ src/main.cpp controllers.cpp src/CORE/Commit.cpp src/CORE/Tree.cpp -std=c++17 -lcryptopp -lz -o yeet
 ```
 4. Set the permissions for the executable file:
 ```bash
@@ -92,3 +111,6 @@ g++ main.cpp controllers.cpp -std=c++17 -lcryptopp -lz -fdiagnostics-all-candida
 ## Status:
 - [x] Status function is not working at edge cases. (Not parsing exec was the problem)
 - [ ] Design a new file structure `.diff` to store the diffs content
+
+
+`Wall -Wextra -pedantic`
