@@ -1,5 +1,9 @@
 #include <iostream>
 #include "../YeetCore/include/controllers.hpp"
+#include "../YeetCore/include/repository.hpp"
+#include "../YeetCore/include/commit.hpp"
+#include "../YeetCore/include/db.hpp"
+#include "../YeetCore/include/branch.hpp"
 #include <filesystem>
 #define ll long long
 using namespace std;

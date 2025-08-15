@@ -1,4 +1,4 @@
-#include"include/tree.h"
+#include"include/tree.hpp"
 
 TreeEntry& TreeEntry::operator=(const TreeEntry& other){
     if(this != &other) { // to protect against self-assignment

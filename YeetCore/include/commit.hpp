@@ -1,13 +1,17 @@
 #pragma once
 #include"../../YeetUtils/include/libs.hpp"
-class Commit{
-private:
-    // Lists all the files in the current yeet repo.
-    void ListFiles(const std::filesystem::path& path, std::vector<std::filesystem::path>& FilePath);
-    // TODO: This ListFiles need to check the diffs also to disnguish betweeen new and old files.
-    // TODO: Add a check that you can only list files if a .yeet dir is present/ initialized.
+#include"../../YeetUtils/include/file_utils.hpp"
+#include"../../YeetUtils/include/compression_utils.hpp"
+#include"../../YeetUtils/include/diff_utils.hpp"
+#include"tree.hpp"
+#include"db.hpp"
+#include"refs_auth.hpp"
+#include<unordered_map>
 
-    
+/**
+ * 
+ */
+class Commit{
 public:
 
     std::string path; // The Actual File path of the files that will be stored in the commit

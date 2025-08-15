@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.14)
-project(YEET VERSION 0.1.0 LANGUAGES CXX)
+project(YEET VERSION 0.1.0 LANGUAGES C CXX)
 
 # Set C++ standard
 set(CMAKE_CXX_STANDARD 17)
@@ -15,26 +15,28 @@ if(POLICY CMP0135)
   cmake_policy(SET CMP0135 NEW)
 endif()
 
-include(FetchContent)
 
 # --- ZLIB ---
-find_package(ZLIB QUIET)
-if(NOT ZLIB_FOUND)
-    message(STATUS "ZLIB not found, downloading and building zlib")
-    FetchContent_Declare(
-        zlib
-        URL https://zlib.net/zlib131.zip
-        DOWNLOAD_EXTRACT_TIMESTAMP TRUE
-    )
-    FetchContent_MakeAvailable(zlib)
-    if(NOT TARGET ZLIB::ZLIB)
-        add_library(ZLIB::ZLIB ALIAS zlib)
-    endif()
-    set(ZLIB_LIBRARIES zlib)
-    set(ZLIB_INCLUDE_DIRS ${zlib_SOURCE_DIR} ${zlib_BINARY_DIR})
-else()
-    set(ZLIB_LIBRARIES ZLIB::ZLIB)
-endif()
+include(FetchContent)
+
+# Download and build zlib with FetchContent
+FetchContent_Declare(
+    zlib
+    URL https://zlib.net/zlib-1.3.1.tar.gz
+    URL_HASH SHA256=9a93b2b7dfdac77ceba5a558a580e74667dd6fede4585b91eefb60f03b72df23
+)
+FetchContent_MakeAvailable(zlib)
+
+# Set the ZLIB variables to use the correct library
+set(ZLIB_LIBRARIES zlibstatic)
+set(ZLIB_INCLUDE_DIRS 
+    ${zlib_SOURCE_DIR}
+    ${zlib_BINARY_DIR}
+)
+
+# Make sure to print the paths for debugging
+message(STATUS "zlib source dir: ${zlib_SOURCE_DIR}")
+message(STATUS "zlib binary dir: ${zlib_BINARY_DIR}")
 
 # --- Use local Crypto++ ---
 set(CRYPTOPP_SRC_DIR ${CMAKE_SOURCE_DIR}/external/cryptopp)
@@ -77,7 +79,8 @@ endif()
 # Set variables for our components to use
 set(CRYPTOPP_LIBRARY cryptopp)
 set(CRYPTOPP_INCLUDE_DIR ${CRYPTOPP_SRC_DIR})
-
+set(ZLIB_LIBRARIES zlib CACHE INTERNAL "zlib library")
+set(ZLIB_INCLUDE_DIRS ${ZLIB_SRC_DIR} CACHE INTERNAL "zlib include dir")
 
 
 message(STATUS "Using local Crypto++ from: ${CRYPTOPP_INCLUDE_DIR}")

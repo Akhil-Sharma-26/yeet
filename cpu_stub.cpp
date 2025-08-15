@@ -1,7 +1,8 @@
 // Stub implementations for CPU detection functions
 #include "config.h"
 #include "cpu.h"
-
+#include <cstring>
+#include<string>
 NAMESPACE_BEGIN(CryptoPP)
 
 bool CRYPTOPP_SECTION_INIT g_x86DetectionDone = false;

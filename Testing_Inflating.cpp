@@ -3,7 +3,7 @@
 #include <vector>
 #include <zlib.h>
 #include<chrono>
-std::vector<unsigned char> readFile(const std::string& filename) {
+std::vector<unsigned char> readFile1(const std::string& filename) {
     std::ifstream file(filename, std::ios::binary);
     if (!file) {
         std::cerr << "Cannot open file: " << filename << std::endl;
@@ -69,7 +69,7 @@ int main() {
     std::string inputFilename = "/home/akhil/dev/yeet/.yeet/objects/90/3670faa1d7400e14e93d847d054498fd749982"; 
     std::string outputFilename = "/home/akhil/dev/yeet/test-abc";
 
-    auto compressedData = readFile(inputFilename);
+    auto compressedData = readFile1(inputFilename);
     if (compressedData.empty()) return 1;
     // std::cout<<"Help"<<std::endl;
     auto decompressedData = decompressData(compressedData);

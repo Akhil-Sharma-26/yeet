@@ -4,6 +4,7 @@ add_library(YeetCore STATIC
     commit.cpp
     controllers.cpp
     repository.cpp
+    db.cpp
 )
 
 # Include directories
