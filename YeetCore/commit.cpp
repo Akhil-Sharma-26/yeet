@@ -157,6 +157,8 @@ void Commit::CommitMain(std::string path){
         CommitHelper::YeetStatus(path, FilePath);
         // std::cout << "DEBUG: YeetStatus returned " << FilePath.size() << " files" << std::endl;
         
+        // cout<<"FilePath"<< 
+
         if(FilePath.empty()) {
             std::cout << "ERROR::COMMIT:: Nothing to commit" << std::endl;
             return;

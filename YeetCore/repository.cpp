@@ -171,7 +171,7 @@ void YeetStatus(std::string path){
         return;
     }
 
-    bool space = false;
+    // bool space = false;
     std::string PathofFile, oid;
     PathofFile = ""; oid = "";
     std::vector<std::string> FilePaths;
