@@ -20,6 +20,7 @@ std::vector<std::string> splitIntoLines(const std::string& str) {
     return lines;
 }
 
+// computes the shortest edit distance (minimum number of insertions, deletions, and substitutions) required to transform one vector of strings into another. It uses a diagonal-based dynamic programming approach, tracks intermediate states in the trace parameter, and returns the edit distance as an integer
 int Shortest_Edit_Search(const std::vector<std::string>& a, const std::vector<std::string>& b, 
                          std::vector<std::vector<int>>& trace) {
     int n = a.size(), m = b.size();
@@ -65,7 +66,7 @@ int Shortest_Edit_Search(const std::vector<std::string>& a, const std::vector<st
 }
 
 
-
+// computes the differences between two sequences of strings (a and b) using a trace matrix and a maximum edit distance (d). It returns a vector of Edit objects representing the sequence of edits (insertions, deletions, and equalities) required to transform a into b.
 std::vector<Edit> diff(const std::vector<std::string>& a, 
                       const std::vector<std::string>& b,
                       const std::vector<std::vector<int>>& trace,

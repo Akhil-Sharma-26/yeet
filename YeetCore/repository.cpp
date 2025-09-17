@@ -12,7 +12,6 @@
 void YeetInit(std::string path){
     try
     {
-        // std::cout<<path;
         // He can enter . --> init in pwd ------> Will Work
         // He can enter ebc --> init in pwd/ebc --------> not work, you to mkdir ebc first
         // He can enter ebc/ --> init in pwd/ebc only not pwd/ebc/ -------> same as above
@@ -122,15 +121,20 @@ void YeetStatus(std::string path){
     std::vector<std::filesystem::path> FilePath;
     ListFiles(path, FilePath);
 
+    // checks for visited files
     std::unordered_map<std::filesystem::path, bool> visited;
     for (const auto& it : FilePath) {
         visited[it] = false;
     }
 
+    // total additions and delections to show at the end
     int Totaladditions = 0, Totaldeletions = 0;
     std::string StoreData;
+
+    // Store contains the prev files
     std::fstream Store(path + "/.yeet/Store");
 
+    // getting the data from the store
     if (Store.is_open()) {
         std::string line;
         while (std::getline(Store, line)) {
@@ -141,9 +145,9 @@ void YeetStatus(std::string path){
         std::cout << "Error opening Store File" << std::endl;
         return;
     }
-    rtrim(StoreData);
+    rtrim(StoreData); // remvoing any extra spaces;
     if (StoreData == "Empty Store") {
-        // Clear existing Diff file
+        // Clear existing Diff file beacuse its a new commit
         std::ofstream clearDiff(path + "/.yeet/Diff", std::ios::trunc);
         clearDiff.close();
 
@@ -179,6 +183,8 @@ void YeetStatus(std::string path){
     std::istringstream storeStream(StoreData);
 
     std::string line;
+    // this is parsing of the store file acc to the format I've stored the data in
+    // its like filePaths + "\t" + oids
     while (std::getline(storeStream, line)) {
         size_t tabPos = line.find('\t');
         if (tabPos != std::string::npos) {
@@ -242,7 +248,7 @@ void YeetStatus(std::string path){
             }
 
             // Don't print exec file diffs.
-            if(! access (FilePaths[i].c_str(), X_OK)){
+            if(access (FilePaths[i].c_str(), X_OK)){ // fixed a bug here. apparanlty, access function returns 0 if the file is executable.
                 continue;
             }
 
@@ -261,8 +267,15 @@ void YeetStatus(std::string path){
             printer.print(diff_result);
 
             
-        } else {
-            deletions+=InflatedContent.size();
+        } else { // file is deleted
+            // This is a BUG. I have to add the lines. not the size of the file ie not the chars
+                // deletions+=InflatedContent.size();
+            std::vector<std::string> lines = splitIntoLines(InflatedContent);
+            int line_count = lines.size();
+            deletions +=line_count;
+            Totaldeletions += line_count;
+            for(auto &line: lines)
+            all_edits.emplace_back(Edit::DEL, line, "");
         }
         visited[FilePaths[i]] = true;
     }
@@ -271,20 +284,30 @@ void YeetStatus(std::string path){
 
     std::ofstream clearDiff(path + "/.yeet/Diff", std::ios::trunc);
     clearDiff.close();
-    storeDiff(all_edits); // Write all collected diffs
+    // storeDiff(all_edits); // Write all collected diffs --> this is a BUG. it will be called later. after updating all_edits
 
     for (const auto& it : FilePath) {
         if (!visited[it]) {
+	        std::cout<<it<<" (new file) "<<std::endl;
             std::ifstream newFile(it);
             if (newFile.is_open()) {
+		        std::string content="";
                 std::string line;
+		        int new_file_additions = 0;
                 while (std::getline(newFile, line)) {
-                    Totaladditions++;
+		            content += line+"\n";
+		            all_edits.emplace_back(Edit::INS, "", line);
+                    new_file_additions++;
                 }
                 newFile.close();
+		        Totaladditions+=new_file_additions;
+		        std::cout<<"This file's additions: "<<new_file_additions<<"\n";
             }
         }
     }
+
+    // now Storing the diffs for the next commit
+    storeDiff(all_edits);
 
     if(Totaladditions == 0  && Totaldeletions == 0){
         std::cout<<"No Change, Can't commit"<<std::endl;

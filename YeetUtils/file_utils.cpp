@@ -36,7 +36,7 @@ std::string readFile(std::filesystem::path path) {
     return result;
 }
 
-
+// Used in the Inflate function to return the compressed data.
 std::vector<unsigned char> readFile(const std::string& filename) {
     if(filename == "/home/akhil/dev/yeet/.yeet/objects/St/ore"){
         std::vector<unsigned char> res = {};

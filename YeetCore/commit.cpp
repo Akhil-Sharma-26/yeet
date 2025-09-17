@@ -76,7 +76,7 @@ namespace CommitHelper{
     
             std::string InflatedContent = Inflate(FullPath);
     
-            if (fs::exists(FilePaths[i])) {
+            if (fs::exists(FilePaths[i])) { // TODO: BUG!! this if-else block is not checking for deleted files. Need to handle that
                 std::string NewFileContent="";
                 std::ifstream NowFile(FilePaths[i]);
     
@@ -134,6 +134,12 @@ namespace CommitHelper{
                 FilesWithChanges.push_back(FilePaths[i]);
             }
         }
+
+        for(const auto& it:FilePath){
+            if(visited.find(it) == visited.end()){
+                FilesWithChanges.push_back(it);
+            }
+        }
     }
 
 }
@@ -172,7 +178,7 @@ void Commit::CommitMain(std::string path){
 
         for (const auto& entry : FilePath) {
             std::string _stat = "Non-Exe";
-            if (!isExecutableFile(entry)) {
+            if (isExecutableFile(entry)) { 
                 _stat = "Exe";
             }
             // std::cout << "DEBUG: Processing file: " << entry << " (status: " << _stat << ")" << std::endl;

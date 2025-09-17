@@ -11,10 +11,10 @@ using namespace std;
 
 int main(int argc, char* argv[]) {
     // Flushing the cout and cerr.
-    cout<<unitbuf; 
+    cout<<unitbuf;  // enbaling the unitbuf flag for automatic flushing for output. has no effect on input
     cerr<<unitbuf;
     cout<<"Using cpp version: "<<__cplusplus<<endl; // To know my cpp version
-    string path = fs::current_path().string();
+    string path = fs::current_path().string(); // my curr_path
     // cout<<path<<endl;
     try{
         if(argc==1){
@@ -25,33 +25,37 @@ int main(int argc, char* argv[]) {
         string arg=argv[1];
 
         if (argc==3) {
-            // TODO Add if-else conditions to distinguish different argument that the user is passing.
+            // TODO: Add if-else conditions to distinguish different argument that the user is passing.
             
-            // cout<<subArg<<endl;
-            // cout<<arg<<endl;
             string subArg=argv[2];
             if(arg=="init"){
-                YeetInit(subArg);
+		// TODO: Abstract it more. Like create an object or something
+                YeetInit(subArg); // initialises a .init file
             }
 
             else if(arg=="add"){
+		// TODO: Implement this functionality. currently everthing is added automatically
                 YeetAdd();
             }
-            // testing status
 
         } 
-        // testing the commit
-
 
         if(argc==2){
             if(arg=="status"){
+		// Prints the total number of addiion and deletion happened since the last commit
                 YeetStatus(path);
             }
             else if(arg=="commit"){
+		// Commits the current instance into history
                 Commit myCommitObject(path);
                 myCommitObject.CommitMain(path);
             }
+
+	    /*
+	     * Proud of the below implementation. Need to do the above as well
+	     * */
             else if(arg=="branch"){
+		// TODO: I think there must be some better way to do this
                 std::cout<<"What you want to do?\ncreate a branch[1]\nsee all branches[2]\ndelete a branch[3]\nCurrent Branch[4]"<<std::endl;
                 int in;
                 cin>>in;
@@ -77,6 +81,7 @@ int main(int argc, char* argv[]) {
                 // It can be done by changing the value in the `Branch` file.
                 // `Branch` file should contain the name of the current branch we are in.
                 std::cout << "\033[1m\033[3mWhich branch you want to switch into:? (TYPE FULL EXACT NAME OF THAT BRANCH)\033[0m" << std::endl;
+		// TODO: I think I can parse the file and let the user select what branch they wanna checkout to
                 Branch::SeeBranches(std::filesystem::current_path());
                 std::string BranchName;
                 cin>>BranchName;
@@ -87,15 +92,11 @@ int main(int argc, char* argv[]) {
             }
         }
 
-        // else if(argc > 2) print("only one argiment is supported for now!");
-        // test
-        // cv
     }
     catch(const std::exception& e){
         // TODO write the number of arguments and the argv required for each command in the Documentation.
         std::cout<<"ERROR:: ";
         std::cerr << e.what() << "\nException Happened somewhere! Error:501 \n";
-    }
-    
+    }    
     return EXIT_SUCCESS;
 }
