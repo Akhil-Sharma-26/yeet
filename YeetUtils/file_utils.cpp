@@ -2,27 +2,40 @@
 
 
 void ListFiles(std::string path, std::vector<std::filesystem::path>& FilePath) {
-    for (const auto & entry : std::filesystem::directory_iterator(path)) {
-        
-        // TODO: Make a file and get names from there
-        // My .yeet-ignore
-        const bool IGNORE = entry.path().generic_string().find(".git") != std::string::npos ||
-        entry.path().generic_string().find(".yeet") != std::string::npos || 
-                          entry.path().generic_string().find(".vscode") != std::string::npos || 
-                          entry.path().generic_string().find(".xmake") != std::string::npos || 
-                          entry.path().generic_string().find(".cmake") != std::string::npos || 
-                          entry.path().generic_string().find("/build") != std::string::npos;
+    try{
+        // recursive_directory_iterator goes inside the subdirs also
+        // As I am using recurssive_iterarotr I don't myself have to do the recurssion.
+        for (const auto & entry : std::filesystem::recursive_directory_iterator(path)) {
+            
+            // TODO: Make a file and get names from there
+            // My .yeet-ignore
+            const bool IGNORE = entry.path().generic_string().find(".git") != std::string::npos ||
+                                entry.path().generic_string().find("/.yeet") != std::string::npos || 
+                                entry.path().generic_string().find("/.vscode") != std::string::npos || 
+                                entry.path().generic_string().find("/.xmake") != std::string::npos || 
+                                entry.path().generic_string().find("/.cmake") != std::string::npos || 
+                                entry.path().generic_string().find("/build") != std::string::npos ||
+                                entry.path().generic_string().find("/.cache") != std::string::npos ||
+                                entry.path().generic_string().find("/external") != std::string::npos;
 
-        if(IGNORE){
-            continue; // SKip that
-        }
+            if(IGNORE){
+                // If it's a directory we're ignoring (like '/build'), we need to tell the
+                // iterator not to even enter it. This is a major performance optimization.
+                if (entry.is_directory()) {
+                    // C++17 feature: disable recursion for this path
+                    // entry.disable_recursion_pending(); // This might not be available on all compilers
+                }
+                continue; // Skip this entry entirely.
+            }
 
-        if(entry.is_directory()){
-            ListFiles(entry.path().string(), FilePath); // Recurse into that directory
+            if (entry.is_regular_file()) {
+                FilePath.push_back(entry.path());
+            }
         }
-        else {
-            FilePath.push_back(entry);
-        }
+    }
+    catch (const std::filesystem::filesystem_error& e) {
+        // This is important for robustness. What if a directory can't be read?
+        std::cerr << "Error accessing path: " << e.path1() << " - " << e.what() << std::endl;
     }
 }
 

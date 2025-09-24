@@ -1,26 +1,33 @@
 #include "include/commit.hpp"
 
 namespace CommitHelper{
-    void YeetStatus(std::string path, std::vector<fs::path>& FilesWithChanges){
+    bool YeetStatus(std::string path, std::vector<fs::path>& FilesWithChanges){
         // std::cout << "DEBUG: YeetStatus starting with path: " << path << std::endl;
     
         std::vector<fs::path> FilePath;
         
         // Getting list of all files
         // std::cout << "DEBUG: About to call ListFiles" << std::endl;
+
+        // Gets a complete list of files in the directory rn
         ListFiles(path, FilePath);
+
         // std::cout << "DEBUG: ListFiles found " << FilePath.size() << " total files" << std::endl;
-    
-        // Making a visited map for later
-        std::unordered_map<fs::path, bool> visited;
-        for(auto it:FilePath){
-            visited[it] = false;
+
+        // Using a Hash Set to see if a File existed in the prev commit or not
+        std::unordered_set<fs::path> allCurrFiles;
+        for(const auto &it:FilePath){
+            allCurrFiles.insert(it);
         }
         
         std::string StoreData;
-        std::fstream Store(path+"/.yeet/Store");
+        std::fstream Store(path+"/.yeet/Store"); // store file contains the file paths and oids from the prev commit
         // std::cout << "DEBUG: Opening Store file at: " << path+"/.yeet/Store" << std::endl;
         
+        // another way to get the data:
+        // storeData.assign(std::istreambuf_iterator<char>(storeFile), std::istreambuf_iterator<char>());
+        // storeFile.close();
+
         // Putting content of the Store file in the string StoreData
         if(Store.is_open()){
             std::string line;
@@ -32,7 +39,7 @@ namespace CommitHelper{
         }
         else{
             std::cout<<"ERROR::STATUS::Error in opening Store File"<<std::endl;
-            return;
+            return false;
         }
         rtrim(StoreData);
     
@@ -41,15 +48,11 @@ namespace CommitHelper{
             // Add all current files as changes for the initial commit
             FilesWithChanges = FilePath;
             // std::cout << "DEBUG: Added " << FilesWithChanges.size() << " files for initial commit" << std::endl;
-            return;
+            // returning true if there are files to commit
+            return !FilePath.empty();
         }
-    
-        int Totaladditions,Totaldeletions;
-        Totaladditions = 0, Totaldeletions = 0;
-    
+        
         // bool space = false;
-        std::string PathofFile, oid;
-        PathofFile = ""; oid = "";
         std::vector<std::string> FilePaths;
         std::vector<std::string> oids;
         std::istringstream storeStream(StoreData);
@@ -62,84 +65,56 @@ namespace CommitHelper{
                 oids.push_back(line.substr(tabPos + 1));
             }
         }
+
+        // flag to see if there are any changes or not
+        bool has_changes = false;
+
     
         // Main Loop
         for(size_t i=0;i<oids.size();i++){
-    
-            int additions,deletions;
-            additions = 0, deletions = 0;
-            std::string thePathOfOid = "";
-            std::string fileName = oids[i].substr(2, oids[i].size() - 2); 
-            thePathOfOid = oids[i].substr(0, 2) + "/" + fileName;
-    
-            std::string FullPath = path + "/.yeet/objects/" + thePathOfOid;
-    
-            std::string InflatedContent = Inflate(FullPath);
-    
-            if (fs::exists(FilePaths[i])) { // TODO: BUG!! this if-else block is not checking for deleted files. Need to handle that
-                std::string NewFileContent="";
-                std::ifstream NowFile(FilePaths[i]);
-    
-                if(NowFile.is_open()){
-                    std::string line;
-                    while(std::getline(NowFile,line)){
-                        NewFileContent+=line+"\n";
-                    }
-                    NowFile.close();
+
+            const auto& oldPath = FilePath[i];
+            const std::string oldOid = oids[i];
+
+            if(allCurrFiles.count(oldPath)){
+                // checking mods
+                std::string currContent = readFile(oldPath);
+
+                Blob currBlob(currContent); // its constructor will calculate the hashes etc.
+
+                // if the hash from the old store file doen't match the new file hash hten there as some changes
+                if(oldOid != currBlob.oid){
+                    has_changes = true;
                 }
-    
-                // Calling Diffs algo here
-                std::vector<std::string> NewFileinLines = splitIntoLines(NewFileContent);
-                std::vector<std::string> OldFileinLines = splitIntoLines(InflatedContent);
-    
-                std::vector<std::vector<int>> trace;
-                int ans = Shortest_Edit_Search(NewFileinLines, OldFileinLines, trace); 
-    
-                // std::cout<<ans<<std::endl;
-                if(ans==0) {
-                    // TODO: Don't add in commit
-                    // std::cout<<"Files are identical."<<std::endl;
-                    continue;
-                }            
-                
-                std::vector<Edit> diff_result = diff(OldFileinLines, NewFileinLines, trace, ans);
-    
-                for(auto it:diff_result){
-                    
-                    // TODO: Add number of lines.
-                    if(it.type == Edit::DEL) {
-                        deletions++;
-                        Totaldeletions++;
-                    }
-                    else if(it.type == Edit::INS) {
-                        additions++;
-                        Totaladditions++;
-                    }
-                }
-    
-                // Don't print exec file diffs.
-    
-                // TODO: Check exe using this method. ie using cpp filesystem library, it's cross platform the access function only works in linux.
-                // Commit exec files also
-                // if(fs::status(FilePath[i].c_str()).permissions() & fs::perms::owner_exec )
-                // if(! access (FilePaths[i].c_str(), X_OK)){
-                //     continue;
-                // }
-    
-                // don't show file if nothing changed
-                if(additions == 0 && deletions == 0){
-                    continue;
-                }
-    
-                FilesWithChanges.push_back(FilePaths[i]);
+
+                // even ifthere is change in the file or not, as long as it exists, we have to include it in the list for the new commit's snapshot
+                FilesWithChanges.push_back(oldPath);
+            }
+            else{
+                // The file from the last commit doesn't exist anymore here. but DELETION is also a changes, threfore I must mark it as a change
+                has_changes = true;
             }
         }
 
-        for(const auto& it:FilePath){
-            if(visited.find(it) == visited.end()){
-                FilesWithChanges.push_back(it);
+        // to find new files, comparing the list of files from last commit witht the curr on the disk
+        // using set for just its fast lookup
+        std::unordered_set<fs::path> oldFileSet(FilePath.begin(), FilePath.end());
+
+        for(const auto& it:allCurrFiles){
+            // if a file on disk can't be found in the set of old files then its NEW
+            if(oldFileSet.find(it)==oldFileSet.end()){
+                has_changes= true;
+                FilesWithChanges.push_back(it); // the new file
             }
         }
+
+
+        if(!has_changes){
+            FilesWithChanges.clear(); // nothing to commit;
+        }
+
+        return has_changes;
+
     }
 
 }
@@ -148,7 +123,7 @@ namespace CommitHelper{
 void Commit::CommitMain(std::string path){
     try {
         // std::cout << "DEBUG: Starting CommitMain with path: " << path << std::endl;
-        
+
         std::vector<TreeEntry> TreeEntries;
         Database DbObj(Commit::path+"/.yeet/objects");
         Refs RefObj(Commit::path);
@@ -160,12 +135,7 @@ void Commit::CommitMain(std::string path){
         std::vector<fs::path> FilePath;
         // std::cout << "DEBUG: About to call YeetStatus" << std::endl;
         
-        CommitHelper::YeetStatus(path, FilePath);
-        // std::cout << "DEBUG: YeetStatus returned " << FilePath.size() << " files" << std::endl;
-        
-        // cout<<"FilePath"<< 
-
-        if(FilePath.empty()) {
+        if(!CommitHelper::YeetStatus(path, FilePath)){
             std::cout << "ERROR::COMMIT:: Nothing to commit" << std::endl;
             return;
         }
