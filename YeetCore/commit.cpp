@@ -51,7 +51,7 @@ namespace CommitHelper{
             // returning true if there are files to commit
             return !FilePath.empty();
         }
-        
+
         // bool space = false;
         std::vector<std::string> FilePaths;
         std::vector<std::string> oids;
@@ -117,9 +117,38 @@ namespace CommitHelper{
 
     }
 
+    // This function brings the oid of the Tree object from the .yeet/object
+    
+    std::string getTreeOidFromCommit(const std::string CommitContent){
+        std::istringstream st(CommitContent);
+        std::string line;
+
+        while(std::getline(st, line)){
+            // in the commit obj the tree oid is stored as tree <oid>
+            if(line.rfind("tree", 0) == 0){
+                return line.substr(5);
+            }
+        }
+
+        return "";
+    }
+
+    std::string trimm(const std::string& str){
+        const std::string IGNORE = " \n\r\t\f\v";
+        size_t first = str.find_first_not_of(IGNORE);
+
+        if(std::string::npos == first){
+            return str;
+        }
+
+        size_t last = str.find_last_not_of(IGNORE);
+        return str.substr(first, (last-first+1));
+    }
+
 }
 
 
+// TODO: Rewrite this to ASK for the COMMIT MESSAGE at the last. before that do the pre-processing
 void Commit::CommitMain(std::string path){
     try {
         // std::cout << "DEBUG: Starting CommitMain with path: " << path << std::endl;
@@ -179,6 +208,25 @@ void Commit::CommitMain(std::string path){
             // std::cout << "My Tree Id is wao: " << TreeObject.oid << std::endl;
 
             std::string parent = RefObj.Read_HEAD(path); // The oid of previous commit
+
+            if(!parent.empty() && parent != "master"){
+                std::string parentCommitPath = path + "/.yeet/objects/" + parent.substr(0, 2) + "/" + parent.substr(2);
+
+                // Inflate (decompress) the parent commit object's content.
+                std::string parentCommitContent = Inflate(parentCommitPath);
+                
+                // Use our new helper to get the parent's tree OID.
+                std::string parentTreeOid = CommitHelper::getTreeOidFromCommit(parentCommitContent);
+
+                // std::cout<<TreeObject.oid<<" "<<parentTreeOid<<std::endl;
+                // THE FINAL CHECK: If the new tree's hash is the same as the parent's, abort!
+                if (TreeObject.oid == CommitHelper::trimm(parentTreeOid)) {
+                    std::cout << "Nothing to commit, working tree is clean." << std::endl;
+                    return; // ABORT the commit.
+                }
+
+            }
+
             std::string name = getenv("YEET_AUTHOR_NAME");
             std::string email = getenv("YEET_AUTHOR_EMAIL");
             // std::cout<<"Name: "<<name<<"\nmail: "<<email<<"\n"; // working
