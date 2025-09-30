@@ -37,9 +37,14 @@ cmake ..
 make 
 ```
 4. The `cmake ..` will make the a "makefile" and then you can "make" it using `make` command.
-5. Run the executable file and initialize an empty yeet repo:
+5. Go to `build/bin` and you will find the executable. 
+6. Run the executable file and initialize an empty yeet repo:
 ```bash
-yeet init .
+./yeet init .
+```
+(Or better, don;t go to `build/bin` and
+```bash
+./build/bin/yeet init . 
 ```
 
 ## Make Sure:
