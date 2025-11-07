@@ -32,7 +32,7 @@ public:
     Commit(std::string TreeOid, std::string AuthorData, std::string CommitMessage, std::string parent); 
 
     // Main Logic/Workflow of the commit command;
-    void CommitMain(std::string path); 
+    void CommitMain(); 
     
 
 

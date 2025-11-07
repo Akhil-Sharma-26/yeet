@@ -149,7 +149,7 @@ namespace CommitHelper{
 
 
 // TODO: Rewrite this to ASK for the COMMIT MESSAGE at the last. before that do the pre-processing
-void Commit::CommitMain(std::string path){
+void Commit::CommitMain(){
     try {
         // std::cout << "DEBUG: Starting CommitMain with path: " << path << std::endl;
 

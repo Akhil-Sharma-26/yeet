@@ -12,34 +12,18 @@
 void YeetInit(std::string path){
     try
     {
-        // He can enter . --> init in pwd ------> Will Work
-        // He can enter ebc --> init in pwd/ebc --------> not work, you to mkdir ebc first
-        // He can enter ebc/ --> init in pwd/ebc only not pwd/ebc/ -------> same as above
-        // He can enter full path from root --> init at that path ---------> will not work
-        std::string pwd = std::filesystem::current_path().string();
-        std::string temp_pwd = pwd;
-        std::string _actualPath=pwd+'/'+path+".yeet";
-        if(path.back()!='/' && path.back()!='.'){ 
-            _actualPath=pwd+'/'+path+"/.yeet";
-            temp_pwd=pwd+'/'+path;
-        }
-
-        if(path.back()=='.') 
-            _actualPath=pwd+"/.yeet"; 
-
-        if(std::filesystem::exists(temp_pwd+"/.yeet"))
+        path += "/.yeet";
+        if(std::filesystem::exists(path))
             throw std::runtime_error("ERROR::INIT::A yeet folder already exists in this directory. \n");
-        
-        // std::system("tree .");
 
-        std::filesystem::create_directory(_actualPath);
-        std::filesystem::create_directory(_actualPath+"/objects");
-        std::filesystem::create_directory(_actualPath+"/refs");
-        std::filesystem::create_directory(_actualPath+"/refs/heads");
-        std::filesystem::create_directory(_actualPath+"/refs/tags");
+        std::filesystem::create_directory(path);
+        std::filesystem::create_directory(path+"/objects");
+        std::filesystem::create_directory(path+"/refs");
+        std::filesystem::create_directory(path+"/refs/heads");
+        std::filesystem::create_directory(path+"/refs/tags");
 
         // Make HEAD file.
-        std::ofstream headFile(_actualPath+"/HEAD");
+        std::ofstream headFile(path+"/HEAD");
             if (headFile.is_open()) {
                 headFile << "ref: refs/heads/main\n";
                 headFile.close();
@@ -47,16 +31,17 @@ void YeetInit(std::string path){
                 throw std::runtime_error("ERROR::INIT::Failed to create .yeet/HEAD file.\n");
             }
 
-        std::ofstream masterBranch(_actualPath+"/refs/heads/master");
-        if (masterBranch.is_open()) {
-            masterBranch << "master";
-            masterBranch.close();
-        } else {
-            throw std::runtime_error("ERROR::INIT::Failed to create .yeet/refs/heads/master file.\n");
-        }
+        // making the head files
+        std::ofstream masterBranch(path+"/refs/heads/master");
+            if (masterBranch.is_open()) {
+                masterBranch << "master";
+                masterBranch.close();
+            } else {
+                throw std::runtime_error("ERROR::INIT::Failed to create .yeet/refs/heads/master file.\n");
+            }
 
         // Making Description file.
-        std::ofstream descFile(_actualPath+"/description");
+        std::ofstream descFile(path+"/description");
             if(descFile.is_open()){
                 descFile<<"Demo Description. This file contains the info and descriptio about the repository.\n";
                 descFile.close();
@@ -66,9 +51,9 @@ void YeetInit(std::string path){
             }
         
         // Making config file
-        std::ofstream configFile(_actualPath+"/config");
+        std::ofstream configFile(path+"/config");
             if(configFile.is_open()){
-                // TODO: Find a configparser for C++. and replace the content of this configFile.
+                // TODO: Find a configparser for C++. and replace the content of this configFile. or make my own
                 configFile<<"Demo Config\n";
                 configFile.close();
             }
@@ -77,34 +62,34 @@ void YeetInit(std::string path){
             }
 
         // Making Store File
-        std::ofstream StoreFile(_actualPath+"/Store");
-        if(StoreFile.is_open()){
-            StoreFile<<"Empty Store";
-            StoreFile.close();
-        }
-        else {
-            throw std::runtime_error("ERROR::INIT::Failed to create .yeet/Store file.\n");
-        }
+        std::ofstream StoreFile(path+"/Store");
+            if(StoreFile.is_open()){
+                StoreFile<<"Empty Store";
+                StoreFile.close();
+            }
+            else {
+                throw std::runtime_error("ERROR::INIT::Failed to create .yeet/Store file.\n");
+            }
 
         // Make Diff file.
-        std::ofstream DiffFile(_actualPath+"/Diff");
-        if (DiffFile.is_open()) {
-            DiffFile << "No Diffs Yet";
-            DiffFile.close();
-        } else {
-            throw std::runtime_error("ERROR::INIT::Failed to create .yeet/Diff file.\n");
-        }
+        std::ofstream DiffFile(path+"/Diff");
+            if (DiffFile.is_open()) {
+                DiffFile << "No Diffs Yet";
+                DiffFile.close();
+            } else {
+                throw std::runtime_error("ERROR::INIT::Failed to create .yeet/Diff file.\n");
+            }
 
         // Make Current Branch file.
-        std::ofstream BranchFile(_actualPath+"/Branch");
-        if (BranchFile.is_open()) {
-            BranchFile << "master";
-            BranchFile.close();
-        } else {
-            throw std::runtime_error("ERROR::INIT::Failed to create .yeet/Diff file.\n");
-        }
+        std::ofstream BranchFile(path+"/Branch");
+            if (BranchFile.is_open()) {
+                BranchFile << "master";
+                BranchFile.close();
+            } else {
+                throw std::runtime_error("ERROR::INIT::Failed to create .yeet/Diff file.\n");
+            }
 
-        std::cout << "YEET::Initialized yeet directory\n";
+        std::cout << "Initialized yeet directory at\n"<< path << std::endl;
     }
     catch(const std::exception& e){
         std::cerr << e.what() << '\n';
