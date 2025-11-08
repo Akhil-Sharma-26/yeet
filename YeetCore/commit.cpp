@@ -154,7 +154,7 @@ void Commit::CommitMain(){
         // std::cout << "DEBUG: Starting CommitMain with path: " << path << std::endl;
 
         std::vector<TreeEntry> TreeEntries;
-        Database DbObj(Commit::path+"/.yeet/objects");
+        Database DbObj(fs::path(Commit::path+"/.yeet/objects"));
         Refs RefObj(Commit::path);
 
         std::string message;
@@ -210,8 +210,9 @@ void Commit::CommitMain(){
             std::string parent = RefObj.Read_HEAD(path); // The oid of previous commit
 
             if(!parent.empty() && parent != "master"){
-                std::string parentCommitPath = path + "/.yeet/objects/" + parent.substr(0, 2) + "/" + parent.substr(2);
+                std::string pp = path + "/.yeet/objects/" + parent.substr(0, 2) + "/" + parent.substr(2);
 
+                fs::path parentCommitPath = fs::path(pp);
                 // Inflate (decompress) the parent commit object's content.
                 std::string parentCommitContent = Inflate(parentCommitPath);
                 
@@ -227,8 +228,40 @@ void Commit::CommitMain(){
 
             }
 
-            std::string name = getenv("YEET_AUTHOR_NAME");
-            std::string email = getenv("YEET_AUTHOR_EMAIL");
+            std::string name, email;
+            #ifdef _WIN32
+                #include<windows.h>
+                char buff_name[512], buff_mail[512];
+                DWORD res1, res2;
+                if(!res1 = GetEnvironmentVariableA("YEET_AUTHOR_NAME", buff_name, sizeof(buff_name))==0 || res2 = GetEnvironmentVariableA("YEET_AUTHOR_EMAIL", buff_mail, sizeof(buff_mail))==0 ){ // no env exists
+                    std::cout<<"\n> Please setup your YEET_AUTHOR_NAME and YEET_AUTHOR_EMAIL env variables"<<std::endl;
+                    exit(1);
+                }
+
+                if ((res1 > 0 && res1 < sizeof(buff_name)) &&  (res2 > 0 && res2 < sizeof(buff_mail))) {
+                    std::cout << "YEET_AUTHOR_NAME: " << buff_name << std::endl;
+                    std::cout << "YEET_AUTHOR_EMAIL: " << buff_mail << std::endl;
+
+                    std::string temp(buff_name, sizeof(buff_name));
+                    std::string temp1(buff_mail, sizeof(buff_mail));
+
+                    name = temp;
+                    email = temp1;
+                } else if (result == 0) {
+                    std::cerr << "YEET_AUTHOR_NAME and YEET_AUTHOR_EMAIL not found." << std::endl;
+                } else {
+                    std::cerr << "Error retrieving YEET_AUTHOR_NAME and YEET_AUTHOR_EMAIL or buffer too small." << std::endl;
+                }
+            #endif
+
+            #ifdef __linux__
+                if(!getenv("YEET_AUTHOR_NAME") && !getenv("YEET_AUTHOR_EMAIL")){
+                    std::cout<<"\n> Please setup your YEET_AUTHOR_NAME and YEET_AUTHOR_EMAIL env variables"<<std::endl;
+                    exit(1);
+                }
+                name = getenv("YEET_AUTHOR_NAME");
+                email = getenv("YEET_AUTHOR_EMAIL");
+            #endif
             // std::cout<<"Name: "<<name<<"\nmail: "<<email<<"\n"; // working
             time_t currtime = time(nullptr);
             Author NewAuthorObj(name,email,currtime);

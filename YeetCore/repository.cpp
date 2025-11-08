@@ -9,21 +9,23 @@
  * @return Nothing for now
  * @author Akhil Sharma
  */
-void YeetInit(std::string path){
+void YeetInit(std::string pth){
     try
     {
-        path += "/.yeet";
+        std::filesystem::path path = std::filesystem::path(pth);
+        path = path / ".yeet";
         if(std::filesystem::exists(path))
             throw std::runtime_error("ERROR::INIT::A yeet folder already exists in this directory. \n");
 
         std::filesystem::create_directory(path);
-        std::filesystem::create_directory(path+"/objects");
-        std::filesystem::create_directory(path+"/refs");
-        std::filesystem::create_directory(path+"/refs/heads");
-        std::filesystem::create_directory(path+"/refs/tags");
+        std::filesystem::create_directory(path / "objects");
+        std::filesystem::create_directory(path / "refs");
+        std::filesystem::create_directory(path / "refs" / "heads");
+        std::filesystem::create_directory(path / "refs" / "tags");
 
         // Make HEAD file.
-        std::ofstream headFile(path+"/HEAD");
+        std::filesystem::path headPath = path / "HEAD";
+        std::ofstream headFile(headPath.string());
             if (headFile.is_open()) {
                 headFile << "ref: refs/heads/main\n";
                 headFile.close();
@@ -32,7 +34,7 @@ void YeetInit(std::string path){
             }
 
         // making the head files
-        std::ofstream masterBranch(path+"/refs/heads/master");
+        std::ofstream masterBranch(path / "refs" / "heads" / "master");
             if (masterBranch.is_open()) {
                 masterBranch << "master";
                 masterBranch.close();
@@ -41,7 +43,7 @@ void YeetInit(std::string path){
             }
 
         // Making Description file.
-        std::ofstream descFile(path+"/description");
+        std::ofstream descFile(path / "description");
             if(descFile.is_open()){
                 descFile<<"Demo Description. This file contains the info and descriptio about the repository.\n";
                 descFile.close();
@@ -51,7 +53,7 @@ void YeetInit(std::string path){
             }
         
         // Making config file
-        std::ofstream configFile(path+"/config");
+        std::ofstream configFile(path / "config");
             if(configFile.is_open()){
                 // TODO: Find a configparser for C++. and replace the content of this configFile. or make my own
                 configFile<<"Demo Config\n";
@@ -62,7 +64,7 @@ void YeetInit(std::string path){
             }
 
         // Making Store File
-        std::ofstream StoreFile(path+"/Store");
+        std::ofstream StoreFile(path / "Store");
             if(StoreFile.is_open()){
                 StoreFile<<"Empty Store";
                 StoreFile.close();
@@ -72,7 +74,7 @@ void YeetInit(std::string path){
             }
 
         // Make Diff file.
-        std::ofstream DiffFile(path+"/Diff");
+        std::ofstream DiffFile(path / "Diff");
             if (DiffFile.is_open()) {
                 DiffFile << "No Diffs Yet";
                 DiffFile.close();
@@ -81,13 +83,58 @@ void YeetInit(std::string path){
             }
 
         // Make Current Branch file.
-        std::ofstream BranchFile(path+"/Branch");
+        std::ofstream BranchFile(path / "Branch");
             if (BranchFile.is_open()) {
                 BranchFile << "master";
                 BranchFile.close();
             } else {
-                throw std::runtime_error("ERROR::INIT::Failed to create .yeet/Diff file.\n");
+                throw std::runtime_error("ERROR::INIT::Failed to create .yeet/Branch file.\n");
             }
+
+        // Handling author id and email
+        #ifdef _WIN32
+            #include<windows.h>
+            char buff_name[512], buff_mail[512];
+            if(!GetEnvironmentVariableA("YEET_AUTHOR_NAME", buff_name, sizeof(buff_name))==0 || GetEnvironmentVariableA("YEET_AUTHOR_EMAIL", buff_mail, sizeof(buff_mail))==0 ){ // no env exists
+            std::string name, email;
+            std::cout<<"\n> You are making your first Yeet repository in this computer."<<std::endl;
+            std::cout<<"> You have to set \"YEET_AUTHOR_NAME\" and \"YEET_AUTHOR_EMAIL\" environment variables."<<std::endl;
+            std::cout<<"> YEET_AUTHOR_NAME: ";
+            getline(std::cin, name);
+            std::cout<<"\n> YEET_AUTHOR_EMAIL: ";
+            getline(std::cin, email);
+            if(SetEnvironmentVariableA("YEET_AUTHOR_NAME", name)){
+                std::cout<<"\n> Author Name env set succesffully"<<std::endl;
+            }
+            else{
+                std::cout<<"> There was an error during setting the YEET_AUTHOR_NAME env. Error: "<<GetLastError()<<std::endl;
+            }
+
+            if(SetEnvironmentVariableA("YEET_AUTHOR_EMAIL", email)){
+                std::cout<<"\n> Author EMAIL env set succesffully"<<std::endl;
+            }
+            else{
+                std::cout<<"> There was an error during setting the YEET_AUTHOR_EMAIL env. Error: "<<
+                GetLastError()<<std::endl;
+            }
+        #endif
+
+        #ifdef __linux__
+            if(!getenv("YEET_AUTHOR_NAME") && !getenv("YEET_AUTHOR_EMAIL")){
+                std::string name, email;
+                std::cout<<"\n> You are making your first Yeet repository in this computer."<<std::endl;
+                std::cout<<"> You have to set \"YEET_AUTHOR_NAME\" and \"YEET_AUTHOR_EMAIL\" environment variables."<<std::endl;
+                std::cout<<"> YEET_AUTHOR_NAME: ";
+                getline(std::cin, name);
+                std::cout<<"\n> YEET_AUTHOR_EMAIL: ";
+                getline(std::cin, email);
+
+                if( setenv("YEET_AUTHOR_NAME", name.c_str(), 1) != 0 ||  setenv("YEET_AUTHOR_EMAIL",
+                    email. c_str(), 1)!=0){
+                    std::cout<<"\n> Error Setting up the env variables. Please do it Manually! "<<std::endl;
+                }
+            }
+        #endif
 
         std::cout << "Initialized yeet directory at\n"<< path << std::endl;
     }
@@ -102,6 +149,10 @@ void YeetAdd(){
 }
 
 void YeetStatus(std::string path){
+    if(!std::filesystem::exists(std::filesystem::path(path) / ".yeet")){
+        std::cout<<"> You are not in a yeet Repository."<<std::endl;
+        return;
+    }
 
     std::vector<std::filesystem::path> FilePath;
     ListFiles(path, FilePath);
@@ -116,8 +167,9 @@ void YeetStatus(std::string path){
     int Totaladditions = 0, Totaldeletions = 0;
     std::string StoreData;
 
+    std::filesystem::path act = std::filesystem::path(path);
     // Store contains the prev files
-    std::fstream Store(path + "/.yeet/Store");
+    std::fstream Store(act / ".yeet" / "Store");
 
     // getting the data from the store
     if (Store.is_open()) {
@@ -133,7 +185,7 @@ void YeetStatus(std::string path){
     rtrim(StoreData); // remvoing any extra spaces;
     if (StoreData == "Empty Store") {
         // Clear existing Diff file beacuse its a new commit
-        std::ofstream clearDiff(path + "/.yeet/Diff", std::ios::trunc);
+        std::ofstream clearDiff(act / ".yeet" / "Diff", std::ios::trunc);
         clearDiff.close();
 
         std::vector<Edit> all_edits;
@@ -187,7 +239,8 @@ void YeetStatus(std::string path){
         std::string fileName = oids[i].substr(2, oids[i].size() - 2); 
         thePathOfOid = oids[i].substr(0, 2) + "/" + fileName;
 
-        std::string FullPath = path + "/.yeet/objects/" + thePathOfOid;
+        std::string yas = path + "/.yeet/objects/" + thePathOfOid;
+        fs::path FullPath = fs::path(yas);
 
         std::string InflatedContent = Inflate(FullPath);
 
@@ -267,7 +320,7 @@ void YeetStatus(std::string path){
 
     // Clear existing Diff file
 
-    std::ofstream clearDiff(path + "/.yeet/Diff", std::ios::trunc);
+    std::ofstream clearDiff(act / ".yeet" / "Diff", std::ios::trunc);
     clearDiff.close();
     // storeDiff(all_edits); // Write all collected diffs --> this is a BUG. it will be called later. after updating all_edits
 

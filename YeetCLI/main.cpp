@@ -5,32 +5,26 @@
 #include "../YeetCore/include/db.hpp"
 #include "../YeetCore/include/branch.hpp"
 #include <filesystem>
-#define ll long long
-using namespace std;
-
 
 int main(int num_of_arg, char* argv[]) {
     // Flushing the cout and cerr.
-    cout<<unitbuf;  // enbaling the unitbuf flag for automatic flushing for output. has no effect on input
-    cerr<<unitbuf;
-    cout<<"You are using cpp version: "<<__cplusplus<<endl; // To know my cpp version
-    string pwd = fs::current_path();
+    std::cout<<std::unitbuf;  // enbaling the unitbuf flag for automatic flushing for output. has no effect on input
+    std::cerr<<std::unitbuf;
+    std::cout<<"You are using cpp version: "<<__cplusplus<<std::endl; // To know my cpp version
+    std::string pwd = fs::current_path();
 
+    // TODO: instead of so many if-else, implement a map based approach
     try{
         if(num_of_arg==1){
-            // TODO Add some useful string in this case. As is for user to know the different types of commands.
-            cerr<<"No argument Provied! \n> Use Command: yeet init [Path] to initialize a repository \n> yeet commit to commit \n> yeet branch to see the branching options \n> yeet status to see the changes etc to the files etc. or refer docs\n";
+            std::cerr<<"No argument Provied! \n> Use Command: yeet init [Path] to initialize a repository \n> yeet commit to commit \n> yeet branch to see the branching options \n> yeet status to see the changes etc to the files etc. or refer docs\n";
             return EXIT_FAILURE;
         }
 
-        string command = argv[1];
+        std::string command = argv[1];
 
         if (num_of_arg == 3) {
-            // TODO: Add if-else conditions to distinguish different argument that the user is passing.
-
             if(command == "init"){
-		        // TODO: Abstract it more. Like create an object or something
-                string path = argv[2];
+                std::string path = argv[2];
                 if(fs::exists(path)){
                     YeetInit(path); // initialises a .init file
                 }
@@ -41,12 +35,12 @@ int main(int num_of_arg, char* argv[]) {
 
             else if(command == "add"){
 		        // TODO: Implement this functionality. currently everthing is added automatically
-                vector<string> File_names(num_of_arg - 2);
+                std::vector<std::string> File_names(num_of_arg - 2);
                 for(int i=2;i<num_of_arg;i++){
                     File_names[i] = argv[i];
                 }
 
-                // Then will pass this vector of string to the Add function
+                // Then will pass this vector of std::string to the Add function
                 YeetAdd();
             }
 
@@ -65,14 +59,14 @@ int main(int num_of_arg, char* argv[]) {
 
 
             else if(command == "branch"){
-		        // TODO: I think there must be some better way to do this
+                // and yes, there is: TODO: Make a map of commands and there functions. yes!
                 std::cout<<"What you want to do?\ncreate a branch[1]\nsee all branches[2]\ndelete a branch[3]\nCurrent Branch[4]"<<std::endl;
                 int in;
-                cin>>in;
+                std::cin>>in;
                 if(in == 1){
                     std::cout<<"BRANCH::Tell us the name of the branch (NO SPACES)"<<std::endl;
                     std::string BranchName;
-                    cin>>BranchName;
+                    std::cin>>BranchName;
                     Branch::createBranch(BranchName , fs::current_path());
                 }
                 else if(in == 2){
@@ -94,7 +88,7 @@ int main(int num_of_arg, char* argv[]) {
 		        // TODO: I think I can parse the file and let the user select what branch they wanna checkout to
                 Branch::SeeBranches(std::filesystem::current_path());
                 std::string BranchName;
-                cin>>BranchName;
+                std::cin>>BranchName;
                 CheckOut::SwitchBranch(fs::current_path(), BranchName);
             }
             else if(command == "init"){
