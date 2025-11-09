@@ -22,10 +22,13 @@ class Author{
 class Refs{
     public:
         std::string path;
-        std::string oid;
+        std::string commit_oid;
         Refs(std::string path);
-        void update_HEAD(std::string oid);
+        void update_HEAD(std::string commit_oid);
         std::string HEAD_path();
         std::string Read_HEAD(std::string currPath);
         std::string currentBranch();
+        
+        // @return returns false if no history exists
+        bool show_history();
 };

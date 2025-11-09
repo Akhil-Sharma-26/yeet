@@ -153,3 +153,11 @@ void writeStoreinDB(std::map<std::string, std::string> Store){
         throw std::runtime_error("ERROR::STORE:: Failed to create .yeet/Store file.\n");
     }
 }
+
+// Checks if the pwd has a .yeet folder or not
+bool is_yeet_repo(fs::path pt){
+    if(fs::exists(pt / ".yeet")){
+        return true;
+    }
+    return false;
+}

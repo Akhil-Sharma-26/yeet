@@ -3,7 +3,6 @@ add_library(YeetCore STATIC
     branch.cpp
     tree.cpp
     commit.cpp
-    controllers.cpp
     repository.cpp
     db.cpp
     refs_auth.cpp

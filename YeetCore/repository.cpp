@@ -9,10 +9,10 @@
  * @return Nothing for now
  * @author Akhil Sharma
  */
-void YeetInit(std::string pth){
+void YeetInit(std::string src){
     try
     {
-        std::filesystem::path path = std::filesystem::path(pth);
+        std::filesystem::path path = std::filesystem::path(src);
         path = path / ".yeet";
         if(std::filesystem::exists(path))
             throw std::runtime_error("ERROR::INIT::A yeet folder already exists in this directory. \n");

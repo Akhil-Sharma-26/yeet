@@ -155,11 +155,12 @@ void Commit::CommitMain(){
 
         std::vector<TreeEntry> TreeEntries;
         Database DbObj(fs::path(Commit::path+"/.yeet/objects"));
+        
         Refs RefObj(Commit::path);
 
         std::string message;
         std::cout << "\nCOMMIT::Please enter your Commit Message:\n";
-        std::getline(std::cin >> std::ws, message);
+        std::getline(std::cin, message);
         
         std::vector<fs::path> FilePath;
         // std::cout << "DEBUG: About to call YeetStatus" << std::endl;
@@ -194,7 +195,7 @@ void Commit::CommitMain(){
             TreeEntries.push_back(TreeEntryObj);
         }
 
-        // std::cout << "DEBUG: Store contents:" << std::endl;
+        std::cout << "DEBUG: DB Store contents:" << std::endl;
         for(auto it : DbObj.Store) {
             std::cout << "  " << it.first << " -> " << it.second << std::endl;
         }
@@ -262,6 +263,7 @@ void Commit::CommitMain(){
                 name = getenv("YEET_AUTHOR_NAME");
                 email = getenv("YEET_AUTHOR_EMAIL");
             #endif
+
             // std::cout<<"Name: "<<name<<"\nmail: "<<email<<"\n"; // working
             time_t currtime = time(nullptr);
             Author NewAuthorObj(name,email,currtime);
