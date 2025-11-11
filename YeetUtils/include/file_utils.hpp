@@ -3,8 +3,8 @@
 #include"libs.hpp"
 #include<fstream>
 
-#ifdef __linux__
-#include<unistd.h>
+#if defined(__linux__) || defined(__APPLE__)
+    #include <unistd.h>
 #endif
 /**
  * 
