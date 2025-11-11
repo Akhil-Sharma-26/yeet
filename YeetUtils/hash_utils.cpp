@@ -1,11 +1,11 @@
 #include"include/hash_utils.hpp"
 
 // Creating Hash
-std::string calculateSHA1Hex(const std::string& content) { // used some copilot
-    CryptoPP::SHA1 sha1;
+std::string calculateSHA256Hex(const std::string& content) { // used some copilot
+    CryptoPP::SHA256 SHA256;
     std::string hash;
-    // Create a filter that calculates the SHA1 hash and then encodes it as hexadecimal
-    CryptoPP::StringSource(content, true, new CryptoPP::HashFilter(sha1, new CryptoPP::HexEncoder(new CryptoPP::StringSink(hash),false)));
+    // Create a filter that calculates the SHA256 hash and then encodes it as hexadecimal
+    CryptoPP::StringSource(content, true, new CryptoPP::HashFilter(SHA256, new CryptoPP::HexEncoder(new CryptoPP::StringSink(hash),false)));
 
     return hash;
 }

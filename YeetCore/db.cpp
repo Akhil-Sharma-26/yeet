@@ -23,7 +23,7 @@ void Database::storeContentInDB(Blob &object, const std::string &path){
     // std::string content = object.type() + " " + std::to_string(Data.size()) + "\0" + Data; // The null character is included just to use when we itterate over it.
     
     std::string content = Data;
-    object.oid = calculateSHA1Hex(content);
+    object.oid = calculateSHA256Hex(content);
     Store[path] = object.oid;
 
     // std::cout<<object.oid<<std::endl; // Hashes are coming out.
@@ -34,7 +34,7 @@ void Database::storeContentInDB(Tree &object){
     std::string Data = object.Return_String();
     std::string content = object.Type() + " " + std::to_string(Data.size()) + "\0" + Data; // The null character is included just to use when we itterate over it.
     // std::cout<<"the content: "<<content<<std::endl;
-    object.oid = calculateSHA1Hex(content);
+    object.oid = calculateSHA256Hex(content);
     // std::cout<<"The hash of the tree object is: "<<object.oid<<std::endl; // Hashes are coming out.
     write_object(object.oid, content); // Writing/ making directories of the commit object/blob
 }
@@ -44,7 +44,7 @@ void Database::storeContentInDB(Commit &object){
     std::string content = "Commit  \nData Size: " + std::to_string(Data.size()) + "\0 \n" + Data; // The null character is included just to use when we itterate over it.
     // TODO: I have added Data size as extra here for readablitliy, but it may create problem later.
     // std::cout<<"the content: "<<content<<std::endl;
-    object.oid = calculateSHA1Hex(content);
+    object.oid = calculateSHA256Hex(content);
     // std::cout<<"The hash of the Commit object is: "<<object.oid<<std::endl; // Hashes are coming out.
     write_object(object.oid, content); // Writing/ making directories of the commit object/blob
 }

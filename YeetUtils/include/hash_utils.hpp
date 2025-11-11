@@ -5,5 +5,5 @@
 #include <filters.h>
 #include <hex.h>
 
-std::string calculateSHA1Hex(const std::string& content);
+std::string calculateSHA256Hex(const std::string& content);
 std::string timeToString(time_t currtime);
