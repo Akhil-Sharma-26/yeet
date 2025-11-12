@@ -45,7 +45,3 @@ std::string Refs::Read_HEAD(std::string currPath){
     }
     return FileContent;
 }
-
-bool Refs::show_history(){
-
-}

@@ -93,6 +93,9 @@ void YeetInit(std::string src){
 
         // Handling author id and email
         #ifdef _WIN32
+            #ifdef _WINNT_
+            #undef _WINNT_
+            #endif
             #include<windows.h>
             char buff_name[512], buff_mail[512];
             if(!GetEnvironmentVariableA("YEET_AUTHOR_NAME", buff_name, sizeof(buff_name))==0 || GetEnvironmentVariableA("YEET_AUTHOR_EMAIL", buff_mail, sizeof(buff_mail))==0 ){ // no env exists

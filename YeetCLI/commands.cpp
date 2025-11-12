@@ -53,8 +53,7 @@ int commands(int num_of_arg, char* argv[]){
 
             else if(command == "history"){
                 if(is_yeet_repo(pwd)){
-                    Refs ref(pwd);
-                    ref.show_history();
+                    history::showHistory(pwd);
                 }
             }
 

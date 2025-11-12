@@ -2,8 +2,10 @@
 
 #include"libs.hpp"
 #include<fstream>
-#include<unistd.h>
 
+#if defined(__linux__) || defined(__APPLE__)
+    #include <unistd.h>
+#endif
 /**
  * 
  */
@@ -57,3 +59,5 @@ bool isExecutableFile(const std::filesystem::path& path);
  * 
  */
 void writeStoreinDB(std::map<std::string, std::string> Store);
+
+bool is_yeet_repo(fs::path pt);

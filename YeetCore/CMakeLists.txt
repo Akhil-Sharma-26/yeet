@@ -6,6 +6,7 @@ add_library(YeetCore STATIC
     repository.cpp
     db.cpp
     refs_auth.cpp
+    history.cpp
 )
 
 # Include directories
