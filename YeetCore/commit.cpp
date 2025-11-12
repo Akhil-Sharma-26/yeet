@@ -262,6 +262,7 @@ void Commit::CommitMain(){
             #ifdef __linux__
                 if(!getenv("YEET_AUTHOR_NAME") && !getenv("YEET_AUTHOR_EMAIL")){
                     std::cout<<"\n> Please setup your YEET_AUTHOR_NAME and YEET_AUTHOR_EMAIL env variables"<<std::endl;
+                    std::cout<<"\n> Run the script \"SetupENVvars.sh\" to set those variables or do manually!!"<<std::endl;
                     exit(1);
                 }
                 name = getenv("YEET_AUTHOR_NAME");
