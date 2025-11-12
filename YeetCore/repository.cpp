@@ -9,10 +9,10 @@
  * @return Nothing for now
  * @author Akhil Sharma
  */
-void YeetInit(std::string pth){
+void YeetInit(std::string src){
     try
     {
-        std::filesystem::path path = std::filesystem::path(pth);
+        std::filesystem::path path = std::filesystem::path(src);
         path = path / ".yeet";
         if(std::filesystem::exists(path))
             throw std::runtime_error("ERROR::INIT::A yeet folder already exists in this directory. \n");
@@ -93,6 +93,9 @@ void YeetInit(std::string pth){
 
         // Handling author id and email
         #ifdef _WIN32
+            #ifdef _WINNT_
+            #undef _WINNT_
+            #endif
             #include<windows.h>
             char buff_name[512], buff_mail[512];
             if(!GetEnvironmentVariableA("YEET_AUTHOR_NAME", buff_name, sizeof(buff_name))==0 || GetEnvironmentVariableA("YEET_AUTHOR_EMAIL", buff_mail, sizeof(buff_mail))==0 ){ // no env exists
@@ -121,18 +124,20 @@ void YeetInit(std::string pth){
 
         #ifdef __linux__
             if(!getenv("YEET_AUTHOR_NAME") && !getenv("YEET_AUTHOR_EMAIL")){
-                std::string name, email;
+                // std::string name, email;
                 std::cout<<"\n> You are making your first Yeet repository in this computer."<<std::endl;
                 std::cout<<"> You have to set \"YEET_AUTHOR_NAME\" and \"YEET_AUTHOR_EMAIL\" environment variables."<<std::endl;
-                std::cout<<"> YEET_AUTHOR_NAME: ";
-                getline(std::cin, name);
-                std::cout<<"\n> YEET_AUTHOR_EMAIL: ";
-                getline(std::cin, email);
+                // std::cout<<"> YEET_AUTHOR_NAME: ";
+                // getline(std::cin, name);
+                // std::cout<<"\n> YEET_AUTHOR_EMAIL: ";
+                // getline(std::cin, email);
 
-                if( setenv("YEET_AUTHOR_NAME", name.c_str(), 1) != 0 ||  setenv("YEET_AUTHOR_EMAIL",
-                    email. c_str(), 1)!=0){
-                    std::cout<<"\n> Error Setting up the env variables. Please do it Manually! "<<std::endl;
-                }
+                // if( setenv("YEET_AUTHOR_NAME", name.c_str(), 1) != 0 ||  setenv("YEET_AUTHOR_EMAIL",
+                //     email. c_str(), 1)!=0){
+                //     std::cout<<"\n> Error Setting up the env variables. Please do it Manually! "<<std::endl;
+                // }
+
+                std::cout<<"\n> Run the script \"SetupENVvars.sh\" to set those variables or do manually!!"<<std::endl;
             }
         #endif
 

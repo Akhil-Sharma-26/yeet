@@ -155,11 +155,13 @@ void Commit::CommitMain(){
 
         std::vector<TreeEntry> TreeEntries;
         Database DbObj(fs::path(Commit::path+"/.yeet/objects"));
+        
         Refs RefObj(Commit::path);
 
         std::string message;
         std::cout << "\nCOMMIT::Please enter your Commit Message:\n";
-        std::getline(std::cin >> std::ws, message);
+        std::getline(std::cin, message);
+        std::cout<<std::endl;
         
         std::vector<fs::path> FilePath;
         // std::cout << "DEBUG: About to call YeetStatus" << std::endl;
@@ -171,9 +173,9 @@ void Commit::CommitMain(){
         
         // Debug: Print all files being committed
         // std::cout << "DEBUG: Files to be committed:" << std::endl;
-        for(const auto& file : FilePath) {
-            std::cout << "  - " << file << std::endl;
-        }
+        // for(const auto& file : FilePath) {
+        //     std::cout << "  - " << file << std::endl;
+        // }
 
         for (const auto& entry : FilePath) {
             std::string _stat = "Non-Exe";
@@ -194,10 +196,13 @@ void Commit::CommitMain(){
             TreeEntries.push_back(TreeEntryObj);
         }
 
-        // std::cout << "DEBUG: Store contents:" << std::endl;
-        for(auto it : DbObj.Store) {
-            std::cout << "  " << it.first << " -> " << it.second << std::endl;
-        }
+        // std::cout << "DEBUG: DB Store contents:" << std::endl;
+
+        // ---------------- commiting it for now! -----------------
+        // for(auto it : DbObj.Store) {
+        //     std::cout << "  " << it.first << " -> " << it.second << std::endl;
+        // } ---------------------------------------------
+
         // TODO: I changed this function output and Store datatype to map instead of unordered_map, is this causing the segmentation faults?
         // Save the store in /Store file
         writeStoreinDB(DbObj.Store);
@@ -257,11 +262,13 @@ void Commit::CommitMain(){
             #ifdef __linux__
                 if(!getenv("YEET_AUTHOR_NAME") && !getenv("YEET_AUTHOR_EMAIL")){
                     std::cout<<"\n> Please setup your YEET_AUTHOR_NAME and YEET_AUTHOR_EMAIL env variables"<<std::endl;
+                    std::cout<<"\n> Run the script \"SetupENVvars.sh\" to set those variables or do manually!!"<<std::endl;
                     exit(1);
                 }
                 name = getenv("YEET_AUTHOR_NAME");
                 email = getenv("YEET_AUTHOR_EMAIL");
             #endif
+
             // std::cout<<"Name: "<<name<<"\nmail: "<<email<<"\n"; // working
             time_t currtime = time(nullptr);
             Author NewAuthorObj(name,email,currtime);
@@ -296,7 +303,7 @@ Commit::Commit(std::string TreeOid, std::string AuthorData, std::string CommitMe
     this->TreeOID=TreeOid;
     this->CommitMessage=CommitMessage;
     this->parent=parent;
-    this->Writtenlines = "parent: " + parent +  "\ntree: "+TreeOID+"\nauthor: "+AuthorData+"\nCommitedBy: "+AuthorData+"\n\nCommitMessage: "+CommitMessage;
+    this->Writtenlines = "\nparent: " + parent +  "\ntree: "+TreeOID+"\nauthor: "+AuthorData+"\nCommitedBy: "+AuthorData+"\n\nCommitMessage: "+CommitMessage;
 }
 
 

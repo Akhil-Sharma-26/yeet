@@ -3,6 +3,7 @@
 #include "../../YeetCore/include/commit.hpp"
 #include "../../YeetCore/include/db.hpp"
 #include "../../YeetCore/include/branch.hpp"
+#include "../../YeetCore/include/history.hpp"
 #include "../../YeetUtils/include/file_utils.hpp"
 #include <filesystem>
 

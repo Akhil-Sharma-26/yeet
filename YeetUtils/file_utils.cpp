@@ -135,9 +135,10 @@ bool isExecutableFile(const std::filesystem::path& path) {
  * called in commit.hpp
  */
 void writeStoreinDB(std::map<std::string, std::string> Store){
-    for(auto it:Store){
-        std::cout<<it.first<<" "<<it.second<<std::endl;
-    }
+    // DEBUG:
+    // for(auto it:Store){
+    //     std::cout<<it.first<<" "<<it.second<<std::endl;
+    // }
     std::string _actualPath = fs::current_path().string();
 
     std::ofstream StoreFile(_actualPath+"/.yeet/Store");
@@ -152,4 +153,12 @@ void writeStoreinDB(std::map<std::string, std::string> Store){
     else {
         throw std::runtime_error("ERROR::STORE:: Failed to create .yeet/Store file.\n");
     }
+}
+
+// Checks if the pwd has a .yeet folder or not
+bool is_yeet_repo(fs::path pt){
+    if(fs::exists(pt / ".yeet")){
+        return true;
+    }
+    return false;
 }
