@@ -4,7 +4,7 @@
 namespace history
 {
     std::string getCommitPath(std::string repo, std::string oid){
-        if(oid.empty() || oid == "ref: refs/heads/main"){
+        if(oid.empty() || oid == "master"){
             return "";
         }
 
@@ -22,6 +22,7 @@ namespace history
 
         while(std::getline(strm, line)){
             if(line.rfind("parent:",0)==0){
+                // std::cout<<"found parent"<<std::endl;
                 info.parent = line.substr(8); // after parent:
                 info.parent.erase(0, info.parent.find_first_not_of(" \t\n\r")); // trim the whitespace
                 info.parent.erase(info.parent.find_last_not_of(" \t\n\r") + 1);
@@ -31,7 +32,7 @@ namespace history
 
             // parsing the author
             else if(line.rfind("author:", 0) == 0){
-                info.author = line.substr(8); // skipp author:
+                info.author = line.substr(8); // after author:
                 info.author.erase(0, info.author.find_first_not_of(" \t\n\r"));
             }
 
@@ -107,7 +108,7 @@ namespace history
             Refs ref(repo);
             std::string currOid = ref.Read_HEAD(repo); // curr commit
 
-            if(currOid.empty() || currOid == "ref: refs/heads/main"){
+            if(currOid.empty() || currOid == "master"){
                 std::cout<<"HISTORY:: No commits yet in this repo\n> Use command \"yeet commit\" To commit the version"<<std::endl;
                 return;
             }
@@ -116,7 +117,7 @@ namespace history
             int commit_count = 0;
             const int MAX_COMMITS = 1000; // to stop infinite rec
 
-            while(!currOid.empty() && currOid!="ref: refs/heads/main" && commit_count<MAX_COMMITS){
+            while(!currOid.empty() && currOid!="master" && commit_count<MAX_COMMITS){
                 std::string commitPath = getCommitPath(repo, currOid);
 
                 if(!fs::exists(commitPath)){
@@ -126,6 +127,8 @@ namespace history
 
                 std::string commitContent = Inflate(commitPath);
 
+                // std::cout<<commitContent<<std::endl;
+
                 if(commitContent.empty()){
                     std::cerr<<"HISTORY::ERROR:: Failed to read commit: "<<currOid<<std::endl;
                     break;
@@ -133,6 +136,8 @@ namespace history
 
                 // parsing the new commit
                 CommitStruct info = parse(commitContent);
+
+                // std::cout<<"the parent:" << info.parent<<std::endl;
                 info.oid = currOid;
 
                 // ig showing the base branch will be good! 

@@ -49,6 +49,7 @@ void Database::storeContentInDB(Commit &object){
     write_object(object.oid, content); // Writing/ making directories of the commit object/blob
 }
 
+// make it cross-platform
 void Database::write_object(std::string oid, std::string content){
     try
     {

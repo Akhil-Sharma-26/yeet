@@ -196,9 +196,12 @@ void Commit::CommitMain(){
         }
 
         std::cout << "DEBUG: DB Store contents:" << std::endl;
-        for(auto it : DbObj.Store) {
-            std::cout << "  " << it.first << " -> " << it.second << std::endl;
-        }
+
+        // ---------------- commiting it for now! -----------------
+        // for(auto it : DbObj.Store) {
+        //     std::cout << "  " << it.first << " -> " << it.second << std::endl;
+        // } ---------------------------------------------
+
         // TODO: I changed this function output and Store datatype to map instead of unordered_map, is this causing the segmentation faults?
         // Save the store in /Store file
         writeStoreinDB(DbObj.Store);
@@ -298,7 +301,7 @@ Commit::Commit(std::string TreeOid, std::string AuthorData, std::string CommitMe
     this->TreeOID=TreeOid;
     this->CommitMessage=CommitMessage;
     this->parent=parent;
-    this->Writtenlines = "parent: " + parent +  "\ntree: "+TreeOID+"\nauthor: "+AuthorData+"\nCommitedBy: "+AuthorData+"\n\nCommitMessage: "+CommitMessage;
+    this->Writtenlines = "\nparent: " + parent +  "\ntree: "+TreeOID+"\nauthor: "+AuthorData+"\nCommitedBy: "+AuthorData+"\n\nCommitMessage: "+CommitMessage;
 }
 
 
