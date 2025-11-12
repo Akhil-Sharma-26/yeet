@@ -63,13 +63,13 @@ void Database::write_object(std::string oid, std::string content){
         // std::cout<<"Hello, I am the directory: "<<Dir_name<<std::endl;
         std::filesystem::create_directory(this->path.generic_string() + "/" + Dir_name);
         /** res contains the return value of the `touch` command. */
-        int res = std::system(("touch " + this->path.generic_string() + "/" + Dir_name + "/" + File_name_Helper(obj_path)).c_str());
-        if (res != 0)
-            std::runtime_error("touch is not working \n");
+        // int res = std::system(("touch " + this->path.generic_string() + "/" + Dir_name + "/" + File_name_Helper(obj_path)).c_str());
+        // if (res != 0)
+        //     std::runtime_error("touch is not working \n");
         // std::cout<<"Hello, I am the File: "<<this->path.generic_string()+"/"+Dir_name+"/"+File_name_Helper(obj_path).c_str()<<std::endl;
         // Compressing the content
         std::string compressed_data = Compressing_using_zlib(content);
-        std::ofstream f(this->path.generic_string() + "/" + Dir_name + "/" + File_name_Helper(obj_path), std::ios::out | std::ios::binary);
+        std::ofstream f(fs::path(this->path.generic_string() + "/" + Dir_name + "/" + File_name_Helper(obj_path)), std::ios::out | std::ios::binary);
         if (f.is_open())
         {
             f.write(compressed_data.c_str(), compressed_data.size());

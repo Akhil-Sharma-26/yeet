@@ -135,9 +135,10 @@ bool isExecutableFile(const std::filesystem::path& path) {
  * called in commit.hpp
  */
 void writeStoreinDB(std::map<std::string, std::string> Store){
-    for(auto it:Store){
-        std::cout<<it.first<<" "<<it.second<<std::endl;
-    }
+    // DEBUG:
+    // for(auto it:Store){
+    //     std::cout<<it.first<<" "<<it.second<<std::endl;
+    // }
     std::string _actualPath = fs::current_path().string();
 
     std::ofstream StoreFile(_actualPath+"/.yeet/Store");

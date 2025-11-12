@@ -161,6 +161,7 @@ void Commit::CommitMain(){
         std::string message;
         std::cout << "\nCOMMIT::Please enter your Commit Message:\n";
         std::getline(std::cin, message);
+        std::cout<<std::endl;
         
         std::vector<fs::path> FilePath;
         // std::cout << "DEBUG: About to call YeetStatus" << std::endl;
@@ -172,9 +173,9 @@ void Commit::CommitMain(){
         
         // Debug: Print all files being committed
         // std::cout << "DEBUG: Files to be committed:" << std::endl;
-        for(const auto& file : FilePath) {
-            std::cout << "  - " << file << std::endl;
-        }
+        // for(const auto& file : FilePath) {
+        //     std::cout << "  - " << file << std::endl;
+        // }
 
         for (const auto& entry : FilePath) {
             std::string _stat = "Non-Exe";
@@ -195,7 +196,7 @@ void Commit::CommitMain(){
             TreeEntries.push_back(TreeEntryObj);
         }
 
-        std::cout << "DEBUG: DB Store contents:" << std::endl;
+        // std::cout << "DEBUG: DB Store contents:" << std::endl;
 
         // ---------------- commiting it for now! -----------------
         // for(auto it : DbObj.Store) {

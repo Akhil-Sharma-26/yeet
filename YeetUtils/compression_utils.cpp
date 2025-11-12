@@ -51,10 +51,13 @@ std::string Inflate(std::string path){
     std::string inputFilename = path; 
     std::string response = "";
 
-    std::cout<<inputFilename<<std::endl;
+    // std::cout<<inputFilename<<std::endl;
     // this files should not be inflated. it's already inflated
     // TODO: need to add more such files here
     if(inputFilename == "/home/akhil/dev/yeet/.yeet/objects/Store") return "";
+
+    std::string cross_file =fs::path(inputFilename).filename();
+    if( cross_file == "Store") return "";
 
     // getting the compresses data
     auto compressedData = readFile(inputFilename);
