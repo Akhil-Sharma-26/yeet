@@ -16,6 +16,8 @@ namespace history{
     };
 
     std::string getCommitPath(std::string repo, std::string oid);
+    
+    // parse to get the commitstruct from the commit comppresed file
     CommitStruct parse(std::string);
     void display_graph(std::vector<CommitStruct>& commits);
     // show the commit history from HEAD
