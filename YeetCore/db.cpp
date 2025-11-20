@@ -23,7 +23,7 @@ void Database::storeContentInDB(Blob &object, const std::string &path){
     // std::string content = object.type() + " " + std::to_string(Data.size()) + "\0" + Data; // The null character is included just to use when we itterate over it.
     
     std::string content = Data;
-    object.oid = calculateSHA256Hex(fs::path(path));
+    object.oid = calculateSHA256Hex(fs::path(path).string());
     Store[path] = object.oid;
 
     // std::cout<<object.oid<<std::endl; // Hashes are coming out.

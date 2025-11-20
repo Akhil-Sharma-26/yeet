@@ -1,6 +1,5 @@
 #pragma once
 
-#define MINIZ_NO_STDIO
 #include "vendor/miniz.h"
 #include"libs.hpp"
 #include"file_utils.hpp"

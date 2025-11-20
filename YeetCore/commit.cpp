@@ -219,7 +219,7 @@ void Commit::CommitMain(){
 
                 fs::path parentCommitPath = fs::path(pp);
                 // Inflate (decompress) the parent commit object's content.
-                std::string parentCommitContent = Inflate(parentCommitPath);
+                std::string parentCommitContent = Inflate(parentCommitPath.string());
                 
                 // Use our new helper to get the parent's tree OID.
                 std::string parentTreeOid = CommitHelper::getTreeOidFromCommit(parentCommitContent);

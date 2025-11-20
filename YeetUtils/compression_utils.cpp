@@ -61,7 +61,7 @@ std::string Inflate(std::string path){
     // TODO: need to add more such files here
     if(inputFilename == "/home/akhil/dev/yeet/.yeet/objects/Store") return "";
 
-    std::string cross_file =fs::path(inputFilename).filename();
+    std::string cross_file =fs::path(inputFilename).filename().string();
     if( cross_file == "Store") return "";
 
     // getting the compresses data
