@@ -1,13 +1,7 @@
 #pragma once
 
-// Include the zlib from the FetchContent build
-#ifdef HAVE_ZLIB_H
-  #include HAVE_ZLIB_H
-#else
-  // Use full path if defined in compilation
-  #include <zlib.h> 
-#endif
-#include <sha.h>
+#define MINIZ_NO_STDIO
+#include "vendor/miniz.h"
 #include"libs.hpp"
 #include"file_utils.hpp"
 

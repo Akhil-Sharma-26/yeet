@@ -29,12 +29,12 @@ namespace Branch{
         // putting content of the master into the new branch file.
 
         // creating the new bracnh file:
-        std::string PrevBranch = Helper::readFile(currPath.string()+"/.yeet/Branch");
+        std::string PrevBranch = Helper::readFile(fs::path(currPath.string()+"/.yeet/Branch").string());
 
         // TODO: add option to choose the base branch
         // ! Currently making the prev branch as base branch.
         
-        std::string CommitID_ofPrevBranch = Helper::readFile(currPath.string()+"/.yeet/refs/heads/" + PrevBranch);
+        std::string CommitID_ofPrevBranch = Helper::readFile(fs::path(currPath.string()+"/.yeet/refs/heads/" + PrevBranch).string());
         // making the file for the new Branch and storing the prevBranch ID into it.
         
         // TODO: Test this function

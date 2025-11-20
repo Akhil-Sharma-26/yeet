@@ -184,7 +184,7 @@ void Commit::CommitMain(){
             }
             // std::cout << "DEBUG: Processing file: " << entry << " (status: " << _stat << ")" << std::endl;
             
-            std::string data = readFile(entry);
+            std::string data = readFile(entry.string());
             // std::cout << "DEBUG: Read " << data.length() << " bytes" << std::endl;
             
             Blob newBlobObject(data);
@@ -219,7 +219,7 @@ void Commit::CommitMain(){
 
                 fs::path parentCommitPath = fs::path(pp);
                 // Inflate (decompress) the parent commit object's content.
-                std::string parentCommitContent = Inflate(parentCommitPath);
+                std::string parentCommitContent = Inflate(parentCommitPath.string());
                 
                 // Use our new helper to get the parent's tree OID.
                 std::string parentTreeOid = CommitHelper::getTreeOidFromCommit(parentCommitContent);

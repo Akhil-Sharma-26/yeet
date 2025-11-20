@@ -1,11 +1,12 @@
 #include"include/file_utils.hpp"
 
 
-void ListFiles(std::string path, std::vector<std::filesystem::path>& FilePath) {
+void ListFiles(const std::string& path, std::vector<std::filesystem::path>& FilePath) {
     try{
         // recursive_directory_iterator goes inside the subdirs also
         // As I am using recurssive_iterarotr I don't myself have to do the recurssion.
-        for (const auto & entry : std::filesystem::recursive_directory_iterator(path)) {
+        for (auto it = std::filesystem::recursive_directory_iterator(path); it != std::filesystem::recursive_directory_iterator(); ++it) {
+            const auto & entry = *it;
             
             // TODO: Make a file and get names from there
             // My .yeet-ignore
@@ -23,7 +24,7 @@ void ListFiles(std::string path, std::vector<std::filesystem::path>& FilePath) {
                 // iterator not to even enter it. This is a major performance optimization.
                 if (entry.is_directory()) {
                     // C++17 feature: disable recursion for this path
-                    // entry.disable_recursion_pending(); // This might not be available on all compilers
+                    it.disable_recursion_pending();
                 }
                 continue; // Skip this entry entirely.
             }
@@ -61,13 +62,6 @@ std::vector<unsigned char> readFile(const std::string& filename) {
         return {};
     }
     return std::vector<unsigned char>((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
-}
-
-std::string Directory_name_Helper(std::string Objpath){
-    std::string ans="";
-    ans+=Objpath[Objpath.size()-41];
-    ans+=Objpath[Objpath.size()-40];
-    return ans;
 }
 
 std::string File_name_Helper(std::string Objpath){

@@ -15,12 +15,12 @@ Refs::Refs(std::string path){
 
 // @return the path to the HEAD file
 std::string Refs::HEAD_path(){
-    std::string currBranch = Helper::readFile(fs::path(path+"/.yeet/Branch"));
+    std::string currBranch = Helper::readFile(fs::path(path+"/.yeet/Branch").string());
     return path + "/.yeet/refs/heads/" + currBranch;
 }
 
 std::string Refs::currentBranch(){
-    std::string currBranch = Helper::readFile(fs::path(path+"/.yeet/Branch"));
+    std::string currBranch = Helper::readFile(fs::path(path+"/.yeet/Branch").string());
     return currBranch;
 }
 

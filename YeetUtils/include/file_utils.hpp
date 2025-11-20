@@ -9,7 +9,7 @@
 /**
  * 
  */
-void ListFiles(std::string path, std::vector<fs::path>& FilePath);
+void ListFiles(const std::string& path, std::vector<fs::path>& FilePath);
 // TODO: This ListFiles need to check the diffs also to disnguish betweeen new and old files.
 // TODO: Add a check that you can only list files if a .yeet dir is present/ initialized.
 
@@ -31,11 +31,6 @@ static inline void rtrim(std::string &s) {
  * 
  */
 std::vector<unsigned char> readFile(const std::string& filename);
-
-/**
- * 
- */
-std::string Directory_name_Helper(std::string Objpath);
 
 /**
  * 

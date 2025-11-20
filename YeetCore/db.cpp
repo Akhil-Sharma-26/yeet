@@ -23,7 +23,7 @@ void Database::storeContentInDB(Blob &object, const std::string &path){
     // std::string content = object.type() + " " + std::to_string(Data.size()) + "\0" + Data; // The null character is included just to use when we itterate over it.
     
     std::string content = Data;
-    object.oid = calculateSHA256Hex(content);
+    object.oid = calculateSHA256Hex(fs::path(path).string());
     Store[path] = object.oid;
 
     // std::cout<<object.oid<<std::endl; // Hashes are coming out.
@@ -53,15 +53,16 @@ void Database::storeContentInDB(Commit &object){
 void Database::write_object(std::string oid, std::string content){
     try
     {
-        std::string obj_path = this->path.generic_string() + "/" + oid.substr(0, 2) + "/" + oid.substr(2, oid.size() - 1);
-        // std::cout<<"The obj path"<<obj_path<<std::endl;
-        std::string Dir_name = Directory_name_Helper(obj_path);
+        std::string dirName = oid.substr(0, 2);
+        std::string fileName = oid.substr(2); 
+
+        fs::path objectDir = this->path / dirName;
+        fs::path objectFile = objectDir / fileName;
+
+        if (fs::exists(objectFile)) return;
+
+        fs::create_directory(objectDir);
         /** Actual File Path to the object created. */
-        std::string File_Path = (this->path.generic_string() + "/" + Dir_name + "/" + File_name_Helper(obj_path)).c_str();
-        if (std::filesystem::exists(File_Path))
-            return;
-        // std::cout<<"Hello, I am the directory: "<<Dir_name<<std::endl;
-        std::filesystem::create_directory(this->path.generic_string() + "/" + Dir_name);
         /** res contains the return value of the `touch` command. */
         // int res = std::system(("touch " + this->path.generic_string() + "/" + Dir_name + "/" + File_name_Helper(obj_path)).c_str());
         // if (res != 0)
@@ -69,7 +70,7 @@ void Database::write_object(std::string oid, std::string content){
         // std::cout<<"Hello, I am the File: "<<this->path.generic_string()+"/"+Dir_name+"/"+File_name_Helper(obj_path).c_str()<<std::endl;
         // Compressing the content
         std::string compressed_data = Compressing_using_zlib(content);
-        std::ofstream f(fs::path(this->path.generic_string() + "/" + Dir_name + "/" + File_name_Helper(obj_path)), std::ios::out | std::ios::binary);
+        std::ofstream f(fs::path(objectDir / objectFile).string(), std::ios::out | std::ios::binary);
         if (f.is_open())
         {
             f.write(compressed_data.c_str(), compressed_data.size());
@@ -83,5 +84,6 @@ void Database::write_object(std::string oid, std::string content){
     catch (const std::exception &e)
     {
         std::cerr << e.what() << '\n';
+        throw;
     }
 }

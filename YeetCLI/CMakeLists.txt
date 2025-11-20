@@ -21,7 +21,7 @@ target_link_libraries(yeet
 
 # Compiler options
 if(MSVC)
-    target_compile_options(YeetCore PRIVATE /W4)
+    target_compile_options(YeetCore PRIVATE)
 else()
-    target_compile_options(YeetCore PRIVATE -Wall -Wextra)
+    target_compile_options(YeetCore PRIVATE)
 endif()
