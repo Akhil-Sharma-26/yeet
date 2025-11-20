@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.14)
+cmake_minimum_required(VERSION 3.15)
 project(YEET VERSION 0.1.0 LANGUAGES C CXX)
 
 # Set C++ standard
@@ -17,6 +17,8 @@ endif()
 
 if(MSVC)
     set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+elseif(APPLE)
+    # Falling back to dynamic linking
 else()
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static-libgcc -static-libstdc++")
 endif()
@@ -25,7 +27,6 @@ endif()
 add_subdirectory(YeetCore)
 add_subdirectory(YeetUtils)
 add_subdirectory(YeetCLI)
-
 
 
 # Option for testing - disabled by default for now

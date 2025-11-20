@@ -184,7 +184,7 @@ void Commit::CommitMain(){
             }
             // std::cout << "DEBUG: Processing file: " << entry << " (status: " << _stat << ")" << std::endl;
             
-            std::string data = readFile(entry);
+            std::string data = readFile(entry.string());
             // std::cout << "DEBUG: Read " << data.length() << " bytes" << std::endl;
             
             Blob newBlobObject(data);
