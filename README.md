@@ -118,5 +118,6 @@ zlib-flate -uncompress < .yeet/objects/5d/8d5a1314ec0f6a5b7f8ac27dfbf53ed82bf3fe
 ## Status:
 - [ ] Design a new file structure `.diff` to store the diffs content
 
-
+## Store
+- [ ] Store the File Size and Last Modified Time in your .yeet/Store (Index) file along with the path and OID.
 `Wall -Wextra -pedantic`

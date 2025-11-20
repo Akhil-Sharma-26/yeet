@@ -43,7 +43,6 @@ void storeDiff(const std::vector<Edit>& edits);
 
 
 
-std::string Directory_name_Helper(std::string Objpath);
 std::string File_name_Helper(std::string Objpath);
 
 
