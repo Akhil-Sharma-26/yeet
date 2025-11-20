@@ -1,23 +1,9 @@
 #include"include/hash_utils.hpp"
 
-std::string toHex(const std::vector<unsigned char>& bytes){
-    std::stringstream ss;
-    ss << std::hex << std::setfill('0');
-
-    for( unsigned char byte: bytes){
-        ss << ss::setw(2) << (int)byte;
-    }
-
-    return ss.str();
-}
-
 // Creating Hash
 std::string calculateSHA256Hex(const std::string& content) { // used some copilot
-    std::vector<unsigned char> hash(picosha2::k_digest_size);
-
-    picosha2::hash256(content.begin(), content.end(), hash.begin());
-
-    return toHex(hash);
+    // Use picosha2 helper that returns a hex string directly
+    return picosha2::hash256_hex_string(content);
 }
 
 std::string timeToString(time_t currtime){

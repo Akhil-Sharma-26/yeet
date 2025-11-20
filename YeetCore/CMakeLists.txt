@@ -20,7 +20,7 @@ target_include_directories(YeetCore
 
 # Compiler-specific options
 if(MSVC)
-    target_compile_options(YeetCore PRIVATE /W4)
+    target_compile_options(YeetCore PRIVATE)
 else()
-    target_compile_options(YeetCore PRIVATE -Wall -Wextra -static)
+    target_compile_options(YeetCore PRIVATE)
 endif()
