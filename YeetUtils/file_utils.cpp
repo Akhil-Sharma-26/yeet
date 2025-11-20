@@ -65,8 +65,8 @@ std::vector<unsigned char> readFile(const std::string& filename) {
 
 std::string Directory_name_Helper(std::string Objpath){
     std::string ans="";
-    ans+=Objpath[Objpath.size()-41];
-    ans+=Objpath[Objpath.size()-40];
+    ans+=Objpath[Objpath.size()-65];
+    ans+=Objpath[Objpath.size()-64];
     return ans;
 }
 

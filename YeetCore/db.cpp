@@ -83,5 +83,6 @@ void Database::write_object(std::string oid, std::string content){
     catch (const std::exception &e)
     {
         std::cerr << e.what() << '\n';
+        throw;
     }
 }

@@ -10,7 +10,7 @@ namespace history
 
         std::string dir = oid.substr(0,2);
         std::string file = oid.substr(2);
-        return repo + "/.yeet/objects/" + dir + "/" + file;
+        return fs::path(repo + "/.yeet/objects/" + dir + "/" + file).string();
     }
 
     CommitStruct parse(std::string content){

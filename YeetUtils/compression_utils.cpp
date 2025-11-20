@@ -83,7 +83,7 @@ std::string Inflate(std::string path){
 std::string Compressing_using_zlib(std::string& content) {
     if (content.empty()) return "";
 
-    mz_ulong dest_len = mz_compressBound(dest_len);
+    mz_ulong dest_len = mz_compressBound((mz_ulong)content.size());
     std::vector<unsigned char> compressedData(dest_len);
 
     int status = mz_compress(compressedData.data(), 
