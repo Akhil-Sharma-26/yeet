@@ -1,8 +1,6 @@
 #pragma once
 #include<vector>
 #include<filesystem>
-#include<zlib.h> // for database class
-#include<sha.h> // for database class
 #include<iostream>
 #include<fstream>
 #include<sstream>
@@ -11,9 +9,6 @@
 #include<unordered_set>
 #include <iomanip>
 #include<filesystem>
-#include <sha.h>
-#include <filters.h>
-#include <hex.h>
 #include <iostream>  
 #include <vector>  
 #include <string>  
@@ -28,10 +23,6 @@
 #include <ctime>  
 #include <cstdlib>  
 #include <iterator>  
-#include <zlib.h>  
-#include <sha.h>  
-#include <filters.h>  
-#include <hex.h>
 #include "commit.hpp"
 #include "tree.hpp"
 // Structures:

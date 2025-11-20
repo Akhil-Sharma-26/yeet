@@ -15,21 +15,12 @@ target_include_directories(YeetCore
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}
-        ${ZLIB_INCLUDE_DIRS}
-        ${CRYPTOPP_INCLUDE_DIR}  # This will point to external/cryptopp
 )
 
-# Link dependencies
-target_link_libraries(YeetCore
-    PUBLIC
-        ${ZLIB_LIBRARIES}
-    PRIVATE
-        ${CRYPTOPP_LIBRARY}      # This will be the cryptopp library we built
-)
 
 # Compiler-specific options
 if(MSVC)
     target_compile_options(YeetCore PRIVATE /W4)
 else()
-    target_compile_options(YeetCore PRIVATE -Wall -Wextra)
+    target_compile_options(YeetCore PRIVATE -Wall -Wextra -static)
 endif()

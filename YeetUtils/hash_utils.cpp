@@ -1,13 +1,23 @@
 #include"include/hash_utils.hpp"
 
+std::string toHex(const std::vector<unsigned char>& bytes){
+    std::stringstream ss;
+    ss << std::hex << std::setfill('0');
+
+    for( unsigned char byte: bytes){
+        ss << ss::setw(2) << (int)byte;
+    }
+
+    return ss.str();
+}
+
 // Creating Hash
 std::string calculateSHA256Hex(const std::string& content) { // used some copilot
-    CryptoPP::SHA256 SHA256;
-    std::string hash;
-    // Create a filter that calculates the SHA256 hash and then encodes it as hexadecimal
-    CryptoPP::StringSource(content, true, new CryptoPP::HashFilter(SHA256, new CryptoPP::HexEncoder(new CryptoPP::StringSink(hash),false)));
+    std::vector<unsigned char> hash(picosha2::k_digest_size);
 
-    return hash;
+    picosha2::hash256(content.begin(), content.end(), hash.begin());
+
+    return toHex(hash);
 }
 
 std::string timeToString(time_t currtime){

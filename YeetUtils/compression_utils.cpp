@@ -1,46 +1,51 @@
 #include"include/compression_utils.hpp"
- 
+
+
+void print_mz_error(int err) {
+    std::cerr << "Miniz error: " << err << std::endl;
+}
+
 // Decompresses data using the standard Zlib method
 std::vector<unsigned char> decompressData(const std::vector<unsigned char>& compressedData) {
     // setting up zlib stream
-    z_stream strm = {};
-    strm.total_in = strm.avail_in = compressedData.size(); // total input bytes read so far
-    strm.next_in = (Bytef*)compressedData.data(); // next input byte
+    mz_stream strm = {};
+    strm.total_in = strm.avail_in = (mz_uint32)compressedData.size(); // total input bytes read so far
+    strm.next_in = (unsigned char*)compressedData.data(); // next input byte
 
     // fiveing random size of 2x for now
     std::vector<unsigned char> decompressedData(compressedData.size() * 2); // Start with double the input size
 
     // inititting the init
-    if (inflateInit(&strm) != Z_OK) {
+    if (mz_inflateInit(&strm) != MZ_OK) {
         std::cerr << "inflateInit failed" << std::endl;
         return {};
     }
 
     int ret;
     do {
-        strm.avail_out = decompressedData.size() - strm.total_out; // available output
-        strm.next_out = (Bytef*)(decompressedData.data() + strm.total_out); // next output byte will go here
+        strm.avail_out = (mz_uint32)decompressedData.size() - strm.total_out; // available output
+        strm.next_out = (unsigned char*)(decompressedData.data() + strm.total_out); // next output byte will go here
 
-        ret = inflate(&strm, Z_NO_FLUSH); // the zlib inflate function
+        ret = mz_inflate(&strm, MZ_NO_FLUSH); // the zlib inflate function
 
         switch (ret) {
-            case Z_NEED_DICT:
-            case Z_DATA_ERROR:
-            case Z_MEM_ERROR:
+            case MZ_NEED_DICT:
+            case MZ_DATA_ERROR:
+            case MZ_MEM_ERROR:
                 std::cerr << "inflate memory error: " << ret << std::endl;
-                inflateEnd(&strm);
+                mz_inflateEnd(&strm);
                 return {};
-            case Z_BUF_ERROR:
-            case Z_OK:
+            case MZ_BUF_ERROR:
+            case MZ_OK:
                 if (strm.avail_out == 0) {
                     // Output buffer is full, increase its size
                     decompressedData.resize(decompressedData.size() * 2);
                 }
                 break;
         }
-    } while (ret != Z_STREAM_END);
+    } while (ret != MZ_STREAM_END);
 
-    inflateEnd(&strm); // end the inflate and stream
+    mz_inflateEnd(&strm); // end the inflate and stream
     decompressedData.resize(strm.total_out); // Resize to actual decompressed size
     return decompressedData;
 }
@@ -75,31 +80,19 @@ std::string Inflate(std::string path){
 std::string Compressing_using_zlib(std::string& content) {
     if (content.empty()) return "";
 
-    z_stream stream{};
-    stream.zalloc = nullptr;
-    stream.zfree = nullptr;
-    stream.opaque = nullptr;
-    stream.avail_in = static_cast<uInt>(content.size());
-    stream.next_in = reinterpret_cast<Bytef*>(const_cast<char*>(content.data()));
+    mz_ulong dest_len = mz_compressBound(dest_len);
+    std::vector<unsigned char> compressedData(dest_len);
 
-    if (deflateInit(&stream, Z_DEFAULT_COMPRESSION) != Z_OK) {
-        throw std::runtime_error("ERROR::COMPRESSION:: Failed to initialize zlib deflate.");
+    int status = mz_compress(compressedData.data(), 
+        &dest_len, (const unsigned char*)content.data(),
+        content.size()
+    );
+
+    if(status != MZ_OK){
+        throw std::runtime_error("ERROR::COMPRESSION:: Failed to compress data");
     }
 
-    std::vector<unsigned char> compressedData(compressBound(content.size()));
-    stream.avail_out = compressedData.size();
-    stream.next_out = compressedData.data();
-
-    if (deflate(&stream, Z_FINISH) != Z_STREAM_END) {
-        deflateEnd(&stream);
-        throw std::runtime_error("ERROR::COMPRESSION:: Failed to deflate data.");
-    }
-
-    compressedData.resize(stream.total_out);
-
-    if (deflateEnd(&stream) != Z_OK) {
-        throw std::runtime_error("ERROR::COMPRESSION:: Failed to finalize zlib deflate.");
-    }
+    compressedData.resize(dest_len);
 
     return std::string(compressedData.begin(), compressedData.end());
 }
