@@ -235,7 +235,6 @@ void Commit::CommitMain(){
 
             std::string name, email;
             #ifdef _WIN32
-                #include<windows.h>
                 char buff_name[512], buff_mail[512];
                 DWORD res1, res2;
                 if(!res1 = GetEnvironmentVariableA("YEET_AUTHOR_NAME", buff_name, sizeof(buff_name))==0 || res2 = GetEnvironmentVariableA("YEET_AUTHOR_EMAIL", buff_mail, sizeof(buff_mail))==0 ){ // no env exists
