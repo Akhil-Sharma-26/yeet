@@ -129,11 +129,11 @@ void YeetInit(std::string src){
                 getline(std::cin, email);
 
                 try{
-                    std::string name_arg = "EXPORT YEET_AUTHOR_NAME=";
+                    std::string name_arg = "export YEET_AUTHOR_NAME=";
                     name_arg+=name;
                     system(name_arg.c_str());
 
-                    std::string mail_arg = "EXPORT YEET_AUTHOR_EMAIL=";
+                    std::string mail_arg = "export YEET_AUTHOR_EMAIL=";
                     mail_arg+=name;
                     system(mail_arg.c_str());
                 }
