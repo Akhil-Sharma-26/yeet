@@ -120,20 +120,30 @@ void YeetInit(std::string src){
 
         #ifdef __linux__
             if(!getenv("YEET_AUTHOR_NAME") && !getenv("YEET_AUTHOR_EMAIL")){
-                // std::string name, email;
+                std::string name, email;
                 std::cout<<"\n> You are making your first Yeet repository in this computer."<<std::endl;
                 std::cout<<"> You have to set \"YEET_AUTHOR_NAME\" and \"YEET_AUTHOR_EMAIL\" environment variables."<<std::endl;
-                // std::cout<<"> YEET_AUTHOR_NAME: ";
-                // getline(std::cin, name);
-                // std::cout<<"\n> YEET_AUTHOR_EMAIL: ";
-                // getline(std::cin, email);
+                std::cout<<"> YEET_AUTHOR_NAME: ";
+                getline(std::cin, name);
+                std::cout<<"\n> YEET_AUTHOR_EMAIL: ";
+                getline(std::cin, email);
 
-                // if( setenv("YEET_AUTHOR_NAME", name.c_str(), 1) != 0 ||  setenv("YEET_AUTHOR_EMAIL",
-                //     email. c_str(), 1)!=0){
-                //     std::cout<<"\n> Error Setting up the env variables. Please do it Manually! "<<std::endl;
-                // }
+                try{
+                    std::string name_arg = "EXPORT YEET_AUTHOR_NAME=";
+                    name_arg+=name;
+                    system(name_arg.c_str());
 
-                std::cout<<"\n> Run the script \"SetupENVvars.sh\" to set those variables or do manually!!"<<std::endl;
+                    std::string mail_arg = "EXPORT YEET_AUTHOR_EMAIL=";
+                    mail_arg+=name;
+                    system(mail_arg.c_str());
+                }
+                catch (...){
+                    if( setenv("YEET_AUTHOR_NAME", name.c_str(), 1) != 0 ||  setenv("YEET_AUTHOR_EMAIL",
+                    email. c_str(), 1)!=0){
+                        std::cout<<"\n> Error Setting up the env variables. Please do it Manually! "<<std::endl;
+                    }
+                }
+                // std::cout<<"\n> Run the script \"SetupENVvars.sh\" to set those variables or do manually!!"<<std::endl;
             }
         #endif
 

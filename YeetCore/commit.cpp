@@ -21,7 +21,7 @@ namespace CommitHelper{
         }
         
         std::string StoreData;
-        std::fstream Store(path+"/.yeet/Store"); // store file contains the file paths and oids from the prev commit
+        std::fstream Store(fs::path(path+"/.yeet/Store").string()); // store file contains the file paths and oids from the prev commit
         // std::cout << "DEBUG: Opening Store file at: " << path+"/.yeet/Store" << std::endl;
         
         // another way to get the data:
@@ -39,7 +39,8 @@ namespace CommitHelper{
         }
         else{
             std::cout<<"ERROR::STATUS::Error in opening Store File"<<std::endl;
-            return false;
+            FilesWithChanges = FilePath;
+            return !FilePath.empty();
         }
         rtrim(StoreData);
     
@@ -53,7 +54,7 @@ namespace CommitHelper{
         }
 
         // bool space = false;
-        std::vector<std::string> FilePaths;
+        std::vector<std::string> StorePaths;
         std::vector<std::string> oids;
         std::istringstream storeStream(StoreData);
 
@@ -61,7 +62,7 @@ namespace CommitHelper{
         while (std::getline(storeStream, line)) {
             size_t tabPos = line.find('\t');
             if (tabPos != std::string::npos) {
-                FilePaths.push_back(line.substr(0, tabPos));
+                StorePaths.push_back(line.substr(0, tabPos));
                 oids.push_back(line.substr(tabPos + 1));
             }
         }
@@ -73,48 +74,27 @@ namespace CommitHelper{
         // Main Loop
         for(size_t i=0;i<oids.size();i++){
 
-            const auto& oldPath = FilePath[i];
+            const auto& oldPath = StorePaths[i];
             const std::string oldOid = oids[i];
 
             if(allCurrFiles.count(oldPath)){
-                // checking mods
-                std::string currContent = readFile(oldPath);
-
-                Blob currBlob(currContent); // its constructor will calculate the hashes etc.
-
-                // if the hash from the old store file doen't match the new file hash hten there as some changes
-                if(oldOid != currBlob.oid){
-                    has_changes = true;
-                }
-
                 // even ifthere is change in the file or not, as long as it exists, we have to include it in the list for the new commit's snapshot
                 FilesWithChanges.push_back(oldPath);
-            }
-            else{
-                // The file from the last commit doesn't exist anymore here. but DELETION is also a changes, threfore I must mark it as a change
-                has_changes = true;
             }
         }
 
         // to find new files, comparing the list of files from last commit witht the curr on the disk
         // using set for just its fast lookup
-        std::unordered_set<fs::path> oldFileSet(FilePath.begin(), FilePath.end());
+        std::unordered_set<fs::path> oldFileSet(StorePaths.begin(), StorePaths.end());
 
         for(const auto& it:allCurrFiles){
             // if a file on disk can't be found in the set of old files then its NEW
             if(oldFileSet.find(it)==oldFileSet.end()){
-                has_changes= true;
                 FilesWithChanges.push_back(it); // the new file
             }
         }
 
-
-        if(!has_changes){
-            FilesWithChanges.clear(); // nothing to commit;
-        }
-
-        return has_changes;
-
+        return !FilesWithChanges.empty();
     }
 
     // This function brings the oid of the Tree object from the .yeet/object
@@ -147,8 +127,6 @@ namespace CommitHelper{
 
 }
 
-
-// TODO: Rewrite this to ASK for the COMMIT MESSAGE at the last. before that do the pre-processing
 void Commit::CommitMain(){
     try {
         // std::cout << "DEBUG: Starting CommitMain with path: " << path << std::endl;
@@ -157,15 +135,9 @@ void Commit::CommitMain(){
         Database DbObj(fs::path(Commit::path+"/.yeet/objects"));
         
         Refs RefObj(Commit::path);
-
-        std::string message;
-        std::cout << "\nCOMMIT::Please enter your Commit Message:\n";
-        std::getline(std::cin, message);
-        std::cout<<std::endl;
         
         std::vector<fs::path> FilePath;
         // std::cout << "DEBUG: About to call YeetStatus" << std::endl;
-        
         if(!CommitHelper::YeetStatus(path, FilePath)){
             std::cout << "ERROR::COMMIT:: Nothing to commit" << std::endl;
             return;
@@ -177,8 +149,10 @@ void Commit::CommitMain(){
         //     std::cout << "  - " << file << std::endl;
         // }
 
+        // std::cout<<"above File path loop"<<std::endl;
         for (const auto& entry : FilePath) {
             std::string _stat = "Non-Exe";
+            // std::cout<<"inside File path loop"<<std::endl;
             if (isExecutableFile(entry)) { 
                 _stat = "Exe";
             }
@@ -207,6 +181,7 @@ void Commit::CommitMain(){
         // Save the store in /Store file
         writeStoreinDB(DbObj.Store);
 
+        // std::cout<<"wrote Store in DB"<<std::endl;
         if (!TreeEntries.empty()) {
             Tree TreeObject(TreeEntries);
             DbObj.storeContentInDB(TreeObject);
@@ -273,6 +248,11 @@ void Commit::CommitMain(){
             Author NewAuthorObj(name,email,currtime);
             std::string author = NewAuthorObj.to_stringg();
             // std::cin>>message; // This doesn't takes any spaces " "
+
+            std::string message;
+            std::cout << "\nCOMMIT::Please enter your Commit Message:\n";
+            std::getline(std::cin, message);
+            std::cout<<std::endl;
             
             Commit MainCommitObj(TreeObject.oid,author,message,parent);
             DbObj.storeContentInDB(MainCommitObj);
@@ -284,13 +264,14 @@ void Commit::CommitMain(){
             if(is_RootCommit) std::cout<<"\nThis is a root commit"<<std::endl;
             std::cout<<"COMMIT::Your Commit id is: "<<MainCommitObj.oid<<"\nCommit-Message: "<<MainCommitObj.CommitMessage<<"\n";
         }
+        else{
+            std::cerr<<"ERROR::COMMIT:: Tree Was Empty!"<<std::endl;
+        }
     }
     catch(const std::exception& e)
     {
         std::cerr << "\nERROR::COMMITMAIN:: An error occured while commit your latest changes. \nError by e.what(): "<< e.what();
-    }
-    
-    
+    }   
 }
 
 Commit::Commit(std::string path){

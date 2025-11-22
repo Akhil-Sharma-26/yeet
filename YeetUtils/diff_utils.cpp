@@ -135,7 +135,7 @@ std::vector<Edit> diff(const std::vector<std::string>& a,
 
 // Storing diffs in file
 void storeDiff(const std::vector<Edit>& edits) {
-    std::ofstream diff_file(fs::path(".yeet/Diff"), std::ios::trunc); 
+    std::ofstream diff_file(fs::path(".yeet/Diff").string(), std::ios::trunc); 
     if (diff_file.is_open()) {
         for (const auto& edit : edits) {
             std::string tag = (edit.type == Edit::INS) ? "+" : "-";
