@@ -91,61 +91,23 @@ void YeetInit(std::string src){
                 throw std::runtime_error("ERROR::INIT::Failed to create .yeet/Branch file.\n");
             }
 
-        // Handling author id and email
-        #ifdef _WIN32
-            char buff_name[512], buff_mail[512];
-            if(!GetEnvironmentVariableA("YEET_AUTHOR_NAME", buff_name, sizeof(buff_name))==0 || GetEnvironmentVariableA("YEET_AUTHOR_EMAIL", buff_mail, sizeof(buff_mail))==0 ){ // no env exists
-            std::string name, email;
-            std::cout<<"\n> You are making your first Yeet repository in this computer."<<std::endl;
-            std::cout<<"> You have to set \"YEET_AUTHOR_NAME\" and \"YEET_AUTHOR_EMAIL\" environment variables."<<std::endl;
-            std::cout<<"> YEET_AUTHOR_NAME: ";
-            getline(std::cin, name);
-            std::cout<<"\n> YEET_AUTHOR_EMAIL: ";
-            getline(std::cin, email);
-            if(SetEnvironmentVariableA("YEET_AUTHOR_NAME", name)){
-                std::cout<<"\n> Author Name env set succesffully"<<std::endl;
-            }
-            else{
-                std::cout<<"> There was an error during setting the YEET_AUTHOR_NAME env. Error: "<<GetLastError()<<std::endl;
-            }
+        std::string name, email;
+        std::cout<<"\n> Set the Auth."<<std::endl;
+        std::cout<<"> YEET_AUTHOR_NAME: ";
+        getline(std::cin, name);
+        std::cout<<"\n> YEET_AUTHOR_EMAIL: ";
+        getline(std::cin, email);
+        
+        // Making Auth File
+        std::ofstream authFile(path / "Auth");
+        if(authFile.is_open()){
+            authFile << name << "\n";
+            authFile << email;
+            authFile.close();
+        }else {
+            throw std::runtime_error("ERROR::INIT::Failed to create .yeet/Auth file.\n");
+        }
 
-            if(SetEnvironmentVariableA("YEET_AUTHOR_EMAIL", email)){
-                std::cout<<"\n> Author EMAIL env set succesffully"<<std::endl;
-            }
-            else{
-                std::cout<<"> There was an error during setting the YEET_AUTHOR_EMAIL env. Error: "<<
-                GetLastError()<<std::endl;
-            }
-        #endif
-
-        #ifdef __linux__
-            if(!getenv("YEET_AUTHOR_NAME") && !getenv("YEET_AUTHOR_EMAIL")){
-                std::string name, email;
-                std::cout<<"\n> You are making your first Yeet repository in this computer."<<std::endl;
-                std::cout<<"> You have to set \"YEET_AUTHOR_NAME\" and \"YEET_AUTHOR_EMAIL\" environment variables."<<std::endl;
-                std::cout<<"> YEET_AUTHOR_NAME: ";
-                getline(std::cin, name);
-                std::cout<<"\n> YEET_AUTHOR_EMAIL: ";
-                getline(std::cin, email);
-
-                try{
-                    std::string name_arg = "export YEET_AUTHOR_NAME=";
-                    name_arg+=name;
-                    system(name_arg.c_str());
-
-                    std::string mail_arg = "export YEET_AUTHOR_EMAIL=";
-                    mail_arg+=name;
-                    system(mail_arg.c_str());
-                }
-                catch (...){
-                    if( setenv("YEET_AUTHOR_NAME", name.c_str(), 1) != 0 ||  setenv("YEET_AUTHOR_EMAIL",
-                    email. c_str(), 1)!=0){
-                        std::cout<<"\n> Error Setting up the env variables. Please do it Manually! "<<std::endl;
-                    }
-                }
-                // std::cout<<"\n> Run the script \"SetupENVvars.sh\" to set those variables or do manually!!"<<std::endl;
-            }
-        #endif
 
         std::cout << "Initialized yeet directory at\n"<< path << std::endl;
     }

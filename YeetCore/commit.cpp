@@ -1,27 +1,32 @@
 #include "include/commit.hpp"
 
 namespace CommitHelper{
+    std::string normalize_path(const fs::path& p) {
+        return fs::absolute(p).lexically_normal().generic_string();
+    }
+
     bool YeetStatus(std::string path, std::vector<fs::path>& FilesWithChanges){
         // std::cout << "DEBUG: YeetStatus starting with path: " << path << std::endl;
     
-        std::vector<fs::path> FilePath;
+        std::vector<fs::path> DiskPaths;
         
         // Getting list of all files
         // std::cout << "DEBUG: About to call ListFiles" << std::endl;
 
         // Gets a complete list of files in the directory rn
-        ListFiles(path, FilePath);
+        ListFiles(path, DiskPaths);
 
-        // std::cout << "DEBUG: ListFiles found " << FilePath.size() << " total files" << std::endl;
+        // std::cout << "DEBUG: ListFiles found " << DiskPath.size() << " total files" << std::endl;
 
-        // Using a Hash Set to see if a File existed in the prev commit or not
-        std::unordered_set<fs::path> allCurrFiles;
-        for(const auto &it:FilePath){
-            allCurrFiles.insert(it);
+        // Map for fast lookup of current files on disk (Normalized Path -> Actual Path)
+        std::map<std::string, fs::path> diskFileMap;
+        for(const auto &it : DiskPaths){
+            diskFileMap[normalize_path(it)] = it;
         }
         
         std::string StoreData;
-        std::fstream Store(fs::path(path+"/.yeet/Store").string()); // store file contains the file paths and oids from the prev commit
+        fs::path storePath = fs::path(path) / ".yeet" / "Store";
+        std::fstream Store(storePath); // store file contains the file paths and oids from the prev commit
         // std::cout << "DEBUG: Opening Store file at: " << path+"/.yeet/Store" << std::endl;
         
         // another way to get the data:
@@ -35,62 +40,51 @@ namespace CommitHelper{
                 StoreData += line + "\n";
             }
             Store.close();
-            // std::cout << "DEBUG: Store file contents: " << StoreData << std::endl;
         }
-        else{
-            std::cout<<"ERROR::STATUS::Error in opening Store File"<<std::endl;
-            FilesWithChanges = FilePath;
-            return !FilePath.empty();
+        
+        // If no store, everything is new
+        if (StoreData.empty() || StoreData == "Empty Store") {
+            FilesWithChanges = DiskPaths;
+            return !DiskPaths.empty();
         }
         rtrim(StoreData);
-    
-        if (StoreData == "Empty Store") {
-            // std::cout << "DEBUG: Empty Store detected, adding all files" << std::endl;
-            // Add all current files as changes for the initial commit
-            FilesWithChanges = FilePath;
-            // std::cout << "DEBUG: Added " << FilesWithChanges.size() << " files for initial commit" << std::endl;
-            // returning true if there are files to commit
-            return !FilePath.empty();
-        }
 
         // bool space = false;
         std::vector<std::string> StorePaths;
-        std::vector<std::string> oids;
+        std::vector<std::string> StoreOids;
         std::istringstream storeStream(StoreData);
-
         std::string line;
+
         while (std::getline(storeStream, line)) {
             size_t tabPos = line.find('\t');
             if (tabPos != std::string::npos) {
                 StorePaths.push_back(line.substr(0, tabPos));
-                oids.push_back(line.substr(tabPos + 1));
+                StoreOids.push_back(line.substr(tabPos + 1));
             }
         }
-
-        // flag to see if there are any changes or not
-        bool has_changes = false;
-
     
         // Main Loop
-        for(size_t i=0;i<oids.size();i++){
+        for(size_t i=0; i<StoreOids.size(); i++){
+            // Normalize store path to ensure it matches disk path format
+            std::string normalizedOld = normalize_path(fs::path(StorePaths[i]));
 
-            const auto& oldPath = StorePaths[i];
-            const std::string oldOid = oids[i];
-
-            if(allCurrFiles.count(oldPath)){
-                // even ifthere is change in the file or not, as long as it exists, we have to include it in the list for the new commit's snapshot
-                FilesWithChanges.push_back(oldPath);
+            if(diskFileMap.count(normalizedOld)){
+                // File still exists on disk. Add it to snapshot.
+                // We use the path from DISK to ensure formatting consistency
+                FilesWithChanges.push_back(diskFileMap[normalizedOld]);
             }
+            // Else: File deleted. Don't add to snapshot.
         }
 
-        // to find new files, comparing the list of files from last commit witht the curr on the disk
-        // using set for just its fast lookup
-        std::unordered_set<fs::path> oldFileSet(StorePaths.begin(), StorePaths.end());
+        // Check New Files (From Disk)
+        std::unordered_set<std::string> storePathSet;
+        for(const auto& sp : StorePaths) {
+            storePathSet.insert(normalize_path(fs::path(sp)));
+        }
 
-        for(const auto& it:allCurrFiles){
-            // if a file on disk can't be found in the set of old files then its NEW
-            if(oldFileSet.find(it)==oldFileSet.end()){
-                FilesWithChanges.push_back(it); // the new file
+        for(const auto& it : DiskPaths){
+            if(storePathSet.find(normalize_path(it)) == storePathSet.end()){
+                FilesWithChanges.push_back(it); // New file
             }
         }
 
@@ -139,9 +133,10 @@ void Commit::CommitMain(){
         std::vector<fs::path> FilePath;
         // std::cout << "DEBUG: About to call YeetStatus" << std::endl;
         if(!CommitHelper::YeetStatus(path, FilePath)){
-            std::cout << "ERROR::COMMIT:: Nothing to commit" << std::endl;
+            std::cout << "ERROR::COMMIT:: No files to track." << std::endl;
             return;
         }
+
         
         // Debug: Print all files being committed
         // std::cout << "DEBUG: Files to be committed:" << std::endl;
@@ -190,58 +185,51 @@ void Commit::CommitMain(){
             std::string parent = RefObj.Read_HEAD(path); // The oid of previous commit
 
             if(!parent.empty() && parent != "master"){
-                std::string pp = path + "/.yeet/objects/" + parent.substr(0, 2) + "/" + parent.substr(2);
-
-                fs::path parentCommitPath = fs::path(pp);
-                // Inflate (decompress) the parent commit object's content.
-                std::string parentCommitContent = Inflate(parentCommitPath.string());
+                fs::path parentCommitPath = fs::path(path) / ".yeet" / "objects" / parent.substr(0, 2) / parent.substr(2);
                 
-                // Use our new helper to get the parent's tree OID.
+                std::string parentCommitContent = Inflate(parentCommitPath.string());
                 std::string parentTreeOid = CommitHelper::getTreeOidFromCommit(parentCommitContent);
+                std::string currentTreeOid = TreeObject.oid;
+                std::string prevTreeOid = CommitHelper::trimm(parentTreeOid);
 
-                // std::cout<<TreeObject.oid<<" "<<parentTreeOid<<std::endl;
-                // THE FINAL CHECK: If the new tree's hash is the same as the parent's, abort!
-                if (TreeObject.oid == CommitHelper::trimm(parentTreeOid)) {
+                // DEBUG PRINTS (Remove after fixing)
+                std::cout << "DEBUG: Current Tree: " << currentTreeOid << std::endl;
+                std::cout << "DEBUG: Parent Tree:  " << prevTreeOid << std::endl;
+
+                if (currentTreeOid == prevTreeOid) {
                     std::cout << "Nothing to commit, working tree is clean." << std::endl;
-                    return; // ABORT the commit.
+                    return; 
                 }
-
             }
 
             std::string name, email;
-            #ifdef _WIN32
-                char buff_name[512], buff_mail[512];
-                DWORD res1, res2;
-                if(!res1 = GetEnvironmentVariableA("YEET_AUTHOR_NAME", buff_name, sizeof(buff_name))==0 || res2 = GetEnvironmentVariableA("YEET_AUTHOR_EMAIL", buff_mail, sizeof(buff_mail))==0 ){ // no env exists
-                    std::cout<<"\n> Please setup your YEET_AUTHOR_NAME and YEET_AUTHOR_EMAIL env variables"<<std::endl;
-                    exit(1);
+            std::string authpath = (fs::path(path) / ".yeet" / "Auth").string();
+            // Parsing auth file
+            {
+                std::ifstream auth(authpath);
+                if(auth.is_open()){
+                    auto read_line = [&](std::string &out)->bool{
+                        std::string tmp;
+                        if(!std::getline(auth, tmp)) return false;
+                        if(!tmp.empty() && tmp.back() == '\r') tmp.pop_back(); // handle CRLF
+                        out = CommitHelper::trimm(tmp);
+                        return true;
+                    };
+
+                    if(!read_line(name)){
+                        throw std::runtime_error("Auth file missing name (first line): " + authpath + "\n");
+                    }
+                    if(!read_line(email)){
+                        throw std::runtime_error("Auth file missing email (second line): " + authpath + "\n");
+                    }
                 }
 
-                if ((res1 > 0 && res1 < sizeof(buff_name)) &&  (res2 > 0 && res2 < sizeof(buff_mail))) {
-                    std::cout << "YEET_AUTHOR_NAME: " << buff_name << std::endl;
-                    std::cout << "YEET_AUTHOR_EMAIL: " << buff_mail << std::endl;
-
-                    std::string temp(buff_name, sizeof(buff_name));
-                    std::string temp1(buff_mail, sizeof(buff_mail));
-
-                    name = temp;
-                    email = temp1;
-                } else if (result == 0) {
-                    std::cerr << "YEET_AUTHOR_NAME and YEET_AUTHOR_EMAIL not found." << std::endl;
-                } else {
-                    std::cerr << "Error retrieving YEET_AUTHOR_NAME and YEET_AUTHOR_EMAIL or buffer too small." << std::endl;
+                
+                else {
+                    // Fallback if Auth file missing (or handle error)
+                    name = "Unknown"; email = "unknown@yeet.com";
                 }
-            #endif
-
-            #ifdef __linux__
-                if(!getenv("YEET_AUTHOR_NAME") && !getenv("YEET_AUTHOR_EMAIL")){
-                    std::cout<<"\n> Please setup your YEET_AUTHOR_NAME and YEET_AUTHOR_EMAIL env variables"<<std::endl;
-                    std::cout<<"\n> Run the script \"SetupENVvars.sh\" to set those variables or do manually!!"<<std::endl;
-                    exit(1);
-                }
-                name = getenv("YEET_AUTHOR_NAME");
-                email = getenv("YEET_AUTHOR_EMAIL");
-            #endif
+            }
 
             // std::cout<<"Name: "<<name<<"\nmail: "<<email<<"\n"; // working
             time_t currtime = time(nullptr);
