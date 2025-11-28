@@ -135,7 +135,7 @@ void writeStoreinDB(std::map<std::string, std::string> Store){
     // }
     std::string _actualPath = fs::current_path().string();
 
-    std::ofstream StoreFile(_actualPath+"/.yeet/Store");
+    std::ofstream StoreFile(fs::path(_actualPath+"/.yeet/Store").string());
     if(StoreFile.is_open()){
         for(auto it:Store){
             StoreFile << it.first << "\t" << it.second << "\n";

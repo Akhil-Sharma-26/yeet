@@ -12,6 +12,13 @@
 void YeetInit(std::string src){
     try
     {
+        std::string name, email;
+        std::cout<<"\n> Set the Auth."<<std::endl;
+        std::cout<<"> YEET_AUTHOR_NAME: ";
+        getline(std::cin, name);
+        std::cout<<"\n> YEET_AUTHOR_EMAIL: ";
+        getline(std::cin, email);
+
         std::filesystem::path path = std::filesystem::path(src);
         path = path / ".yeet";
         if(std::filesystem::exists(path))
@@ -91,12 +98,7 @@ void YeetInit(std::string src){
                 throw std::runtime_error("ERROR::INIT::Failed to create .yeet/Branch file.\n");
             }
 
-        std::string name, email;
-        std::cout<<"\n> Set the Auth."<<std::endl;
-        std::cout<<"> YEET_AUTHOR_NAME: ";
-        getline(std::cin, name);
-        std::cout<<"\n> YEET_AUTHOR_EMAIL: ";
-        getline(std::cin, email);
+        
         
         // Making Auth File
         std::ofstream authFile(path / "Auth");
@@ -113,12 +115,25 @@ void YeetInit(std::string src){
     }
     catch(const std::exception& e){
         std::cerr << e.what() << '\n';
+        // std::filesystem::path path = std::filesystem::path(src);
+        // path = path / ".yeet";
+        // if(std::filesystem::exists(path))
+        //     fs::remove_all(path);
     }
     
+
 }
 
 void YeetAdd(){
 
+}
+
+std::string relative_path(const fs::path& full_path, const std::string& root_path) {
+    try {
+        return fs::relative(full_path, root_path).generic_string();
+    } catch(...) {
+        return full_path.generic_string(); // Fallback
+    }
 }
 
 void YeetStatus(std::string path){
@@ -131,9 +146,13 @@ void YeetStatus(std::string path){
     ListFiles(path, FilePath);
 
     // checks for visited files
-    std::unordered_map<std::filesystem::path, bool> visited;
-    for (const auto& it : FilePath) {
-        visited[it] = false;
+    std::unordered_map<std::filesystem::path, int> visited;
+    // 0 -> no_change in content
+    // 1 -> changes in content
+    // 2 -> default
+    for (auto& it : FilePath) {
+        it = relative_path(it, path);
+        visited[it] = 2;
     }
 
     // total additions and delections to show at the end
@@ -156,6 +175,7 @@ void YeetStatus(std::string path){
         return;
     }
     rtrim(StoreData); // remvoing any extra spaces;
+
     if (StoreData == "Empty Store") {
         // Clear existing Diff file beacuse its a new commit
         std::ofstream clearDiff(act / ".yeet" / "Diff", std::ios::trunc);
@@ -188,38 +208,39 @@ void YeetStatus(std::string path){
     // bool space = false;
     std::string PathofFile, oid;
     PathofFile = ""; oid = "";
-    std::vector<std::string> FilePaths;
-    std::vector<std::string> oids;
+    std::vector<std::string> StoreFilePaths;
+    std::vector<std::string> StoreOids;
     std::istringstream storeStream(StoreData);
 
     std::string line;
     // this is parsing of the store file acc to the format I've stored the data in
-    // its like filePaths + "\t" + oids
+    // its like StoreFilePaths + "\t" + StoreOids
     while (std::getline(storeStream, line)) {
         size_t tabPos = line.find('\t');
         if (tabPos != std::string::npos) {
-            FilePaths.push_back(line.substr(0, tabPos));
-            oids.push_back(line.substr(tabPos + 1));
+            StoreFilePaths.push_back(line.substr(0, tabPos));
+            StoreOids.push_back(line.substr(tabPos + 1));
         }
     }
 
     std::vector<Edit> all_edits;
-    for (size_t i = 0;i<oids.size();i++) {
+    for (size_t i = 0;i<StoreOids.size();i++) {
 
         int additions,deletions;
         additions = 0, deletions = 0;
         std::string thePathOfOid = "";
-        std::string fileName = oids[i].substr(2, oids[i].size() - 2); 
-        thePathOfOid = oids[i].substr(0, 2) + "/" + fileName;
+        std::string fileName = StoreOids[i].substr(2, StoreOids[i].size() - 2); 
+        thePathOfOid = StoreOids[i].substr(0, 2) + "/" + fileName;
 
         std::string yas = path + "/.yeet/objects/" + thePathOfOid;
         fs::path FullPath = fs::path(yas);
 
-        std::string InflatedContent = Inflate(FullPath);
+        // TODO: see what's being inflated
+        std::string InflatedContent = Inflate(FullPath.string());
 
-        if (std::filesystem::exists(FilePaths[i])) {
+        if (std::filesystem::exists(StoreFilePaths[i])) {
             std::string NewFileContent="";
-            std::ifstream NowFile(FilePaths[i]);
+            std::ifstream NowFile(StoreFilePaths[i]);
 
             if(NowFile.is_open()){
                 std::string line;
@@ -236,69 +257,69 @@ void YeetStatus(std::string path){
             std::vector<std::vector<int>> trace;
             int ans = Shortest_Edit_Search(NewFileinLines, OldFileinLines, trace); 
 
-            // std::cout<<ans<<std::endl;
             if(ans==0) {
                 // TODO: Don't add in commit
                 // std::cout<<"Files are identical."<<std::endl;
+                visited[StoreFilePaths[i]] = 0;
                 continue;
             }            
+            else{
+                visited[StoreFilePaths[i]] = 1; // yes, there are changes in this file
+            }
             
             std::vector<Edit> diff_result = diff(OldFileinLines, NewFileinLines, trace, ans);
 
             for(auto it:diff_result){
-                
-                // TODO: Add number of lines.
                 if(it.type == Edit::DEL) {
                     deletions++;
                     Totaldeletions++;
                 }
                 else if(it.type == Edit::INS) {
+                    // std::cout<<it.new_line<<std::endl;
                     additions++;
                     Totaladditions++;
                 }
             }
 
             // Don't print exec file diffs.
-            if(access (FilePaths[i].c_str(), X_OK)){ // fixed a bug here. apparanlty, access function returns 0 if the file is executable.
-                continue;
-            }
-
-            // don't show file if nothing changed
-            if(additions == 0 && deletions == 0){
-                continue;
-            }
-
+            #ifdef __linux__
+                if(access (StoreFilePaths[i].c_str(), X_OK) == 0){ // fixed a bug here. apparanlty, access function returns 0 if the file is executable.
+                    continue;
+                }
+            #endif
+        
             // The file we are checking:
-            std::cout<<FilePaths[i]<<std::endl;
+            if(additions == 0 && deletions==0){
+                continue;;
+            }
+            std::cout<<StoreFilePaths[i]<<std::endl;
             all_edits.insert(all_edits.end(), diff_result.begin(), diff_result.end());
             std::cout<<"This file additions: "<<additions<<"\n";
             std::cout<<"This file deletions: "<<deletions<<std::endl;
             // Printing the diffs
-            Printer printer;
-            printer.print(diff_result);
+            // Printer printer;
+            // printer.print(diff_result);
 
             
-        } else { // file is deleted
-            // This is a BUG. I have to add the lines. not the size of the file ie not the chars
-                // deletions+=InflatedContent.size();
+        } else {
             std::vector<std::string> lines = splitIntoLines(InflatedContent);
             int line_count = lines.size();
             deletions +=line_count;
             Totaldeletions += line_count;
             for(auto &line: lines)
-            all_edits.emplace_back(Edit::DEL, line, "");
+                all_edits.emplace_back(Edit::DEL, line, "");
         }
-        visited[FilePaths[i]] = true;
+
+        visited[FilePath[i]] = 1;
     }
 
     // Clear existing Diff file
-
     std::ofstream clearDiff(act / ".yeet" / "Diff", std::ios::trunc);
     clearDiff.close();
     // storeDiff(all_edits); // Write all collected diffs --> this is a BUG. it will be called later. after updating all_edits
 
     for (const auto& it : FilePath) {
-        if (!visited[it]) {
+        if (visited[it]==2) {
 	        std::cout<<it<<" (new file) "<<std::endl;
             std::ifstream newFile(it);
             if (newFile.is_open()) {
@@ -318,12 +339,13 @@ void YeetStatus(std::string path){
     }
 
     // now Storing the diffs for the next commit
-    storeDiff(all_edits);
+    
 
     if(Totaladditions == 0  && Totaldeletions == 0){
-        std::cout<<"No Change, Can't commit"<<std::endl;
+        std::cout<<"No Changes, Can't commit"<<std::endl;
     }
     else{
+        storeDiff(all_edits);
         std::cout<<"Total addtions: "<<Totaladditions<<"\nTotal deletions: "<<Totaldeletions<<std::endl;
     }
 

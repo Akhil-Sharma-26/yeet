@@ -4,7 +4,7 @@ int commands(int num_of_arg, char* argv[]){
     // Flushing the cout and cerr.
     std::cout<<std::unitbuf;  // enbaling the unitbuf flag for automatic flushing for output. has no effect on input
     std::cerr<<std::unitbuf;
-    std::cout<<"You are using cpp version: "<<__cplusplus<<std::endl; // To know my cpp version
+    // std::cout<<"You are using cpp version: "<<__cplusplus<<std::endl; // To know my cpp version
     std::string pwd = fs::current_path();
 
     // TODO: instead of so many if-else, implement a map based approach

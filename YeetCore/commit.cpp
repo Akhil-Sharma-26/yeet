@@ -1,38 +1,31 @@
 #include "include/commit.hpp"
 
 namespace CommitHelper{
-    std::string normalize_path(const fs::path& p) {
-        return fs::absolute(p).lexically_normal().generic_string();
+    std::string relative_path(const fs::path& full_path, const std::string& root_path) {
+        try {
+            return fs::relative(full_path, root_path).generic_string();
+        } catch(...) {
+            return full_path.generic_string(); // Fallback
+        }
     }
 
     bool YeetStatus(std::string path, std::vector<fs::path>& FilesWithChanges){
-        // std::cout << "DEBUG: YeetStatus starting with path: " << path << std::endl;
     
         std::vector<fs::path> DiskPaths;
-        
-        // Getting list of all files
-        // std::cout << "DEBUG: About to call ListFiles" << std::endl;
 
         // Gets a complete list of files in the directory rn
         ListFiles(path, DiskPaths);
 
-        // std::cout << "DEBUG: ListFiles found " << DiskPath.size() << " total files" << std::endl;
-
         // Map for fast lookup of current files on disk (Normalized Path -> Actual Path)
         std::map<std::string, fs::path> diskFileMap;
         for(const auto &it : DiskPaths){
-            diskFileMap[normalize_path(it)] = it;
+            diskFileMap[relative_path(it, path)] = it;
         }
         
         std::string StoreData;
         fs::path storePath = fs::path(path) / ".yeet" / "Store";
         std::fstream Store(storePath); // store file contains the file paths and oids from the prev commit
-        // std::cout << "DEBUG: Opening Store file at: " << path+"/.yeet/Store" << std::endl;
-        
-        // another way to get the data:
-        // storeData.assign(std::istreambuf_iterator<char>(storeFile), std::istreambuf_iterator<char>());
-        // storeFile.close();
-
+    
         // Putting content of the Store file in the string StoreData
         if(Store.is_open()){
             std::string line;
@@ -57,6 +50,9 @@ namespace CommitHelper{
 
         while (std::getline(storeStream, line)) {
             size_t tabPos = line.find('\t');
+            // Fallback for space-separated if tab is missing (handles copy-paste errors)
+            if (tabPos == std::string::npos) tabPos = line.find(' ');
+
             if (tabPos != std::string::npos) {
                 StorePaths.push_back(line.substr(0, tabPos));
                 StoreOids.push_back(line.substr(tabPos + 1));
@@ -65,26 +61,29 @@ namespace CommitHelper{
     
         // Main Loop
         for(size_t i=0; i<StoreOids.size(); i++){
-            // Normalize store path to ensure it matches disk path format
-            std::string normalizedOld = normalize_path(fs::path(StorePaths[i]));
-
-            if(diskFileMap.count(normalizedOld)){
-                // File still exists on disk. Add it to snapshot.
-                // We use the path from DISK to ensure formatting consistency
-                FilesWithChanges.push_back(diskFileMap[normalizedOld]);
+            std::string relStorePath = StorePaths[i];
+            
+            // Handle absolute paths in store by converting them
+            if(relStorePath.find(path) == 0) {
+                relStorePath = relative_path(fs::path(relStorePath), path);
             }
-            // Else: File deleted. Don't add to snapshot.
+
+            if(diskFileMap.count(relStorePath)){
+                // File still exists on disk. Add to snapshot.
+                FilesWithChanges.push_back(diskFileMap[relStorePath]);
+            }
         }
 
-        // Check New Files (From Disk)
+        // 3. Check New Files (Iterate Disk)
         std::unordered_set<std::string> storePathSet;
         for(const auto& sp : StorePaths) {
-            storePathSet.insert(normalize_path(fs::path(sp)));
+            if(sp.find(path) == 0) storePathSet.insert(relative_path(fs::path(sp), path));
+            else storePathSet.insert(sp);
         }
 
         for(const auto& it : DiskPaths){
-            if(storePathSet.find(normalize_path(it)) == storePathSet.end()){
-                FilesWithChanges.push_back(it); // New file
+            if(storePathSet.find(relative_path(it, path)) == storePathSet.end()){
+                FilesWithChanges.push_back(it); // New File
             }
         }
 
@@ -92,7 +91,6 @@ namespace CommitHelper{
     }
 
     // This function brings the oid of the Tree object from the .yeet/object
-    
     std::string getTreeOidFromCommit(const std::string CommitContent){
         std::istringstream st(CommitContent);
         std::string line;
@@ -108,14 +106,14 @@ namespace CommitHelper{
     }
 
     std::string trimm(const std::string& str){
-        const std::string IGNORE = " \n\r\t\f\v";
-        size_t first = str.find_first_not_of(IGNORE);
+        const std::string ignr = " \n\r\t\f\v";
+        size_t first = str.find_first_not_of(ignr);
 
         if(std::string::npos == first){
             return str;
         }
 
-        size_t last = str.find_last_not_of(IGNORE);
+        size_t last = str.find_last_not_of(ignr);
         return str.substr(first, (last-first+1));
     }
 
@@ -123,64 +121,39 @@ namespace CommitHelper{
 
 void Commit::CommitMain(){
     try {
-        // std::cout << "DEBUG: Starting CommitMain with path: " << path << std::endl;
-
         std::vector<TreeEntry> TreeEntries;
-        Database DbObj(fs::path(Commit::path+"/.yeet/objects"));
+        Database DbObj(fs::path(Commit::path+"/.yeet/objects").string());
         
         Refs RefObj(Commit::path);
         
         std::vector<fs::path> FilePath;
-        // std::cout << "DEBUG: About to call YeetStatus" << std::endl;
+        
         if(!CommitHelper::YeetStatus(path, FilePath)){
-            std::cout << "ERROR::COMMIT:: No files to track." << std::endl;
+            std::cout << "ERROR::COMMIT:: No files found to track." << std::endl;
             return;
         }
-
         
-        // Debug: Print all files being committed
-        // std::cout << "DEBUG: Files to be committed:" << std::endl;
-        // for(const auto& file : FilePath) {
-        //     std::cout << "  - " << file << std::endl;
-        // }
-
-        // std::cout<<"above File path loop"<<std::endl;
         for (const auto& entry : FilePath) {
-            std::string _stat = "Non-Exe";
-            // std::cout<<"inside File path loop"<<std::endl;
-            if (isExecutableFile(entry)) { 
-                _stat = "Exe";
-            }
-            // std::cout << "DEBUG: Processing file: " << entry << " (status: " << _stat << ")" << std::endl;
+            std::string _stat = isExecutableFile(entry) ? "Exe" : "Non-Exe";
             
             std::string data = readFile(entry.string());
-            // std::cout << "DEBUG: Read " << data.length() << " bytes" << std::endl;
-            
             Blob newBlobObject(data);
-            // std::cout << "DEBUG: Created blob with oid: " << newBlobObject.oid << std::endl;
             
-            DbObj.storeContentInDB(newBlobObject, entry.generic_string());
-            
-            TreeEntry TreeEntryObj(entry.generic_string(), newBlobObject.oid, _stat);
+            // Convert to relative path (e.g., "src/main.cpp")
+            std::string relPath = CommitHelper::relative_path(entry, path);
+
+            // Store RELATIVE path in the DB Store and Tree
+            DbObj.storeContentInDB(newBlobObject, relPath);
+            TreeEntry TreeEntryObj(relPath, newBlobObject.oid, _stat);
             TreeEntries.push_back(TreeEntryObj);
         }
 
-        // std::cout << "DEBUG: DB Store contents:" << std::endl;
-
-        // ---------------- commiting it for now! -----------------
-        // for(auto it : DbObj.Store) {
-        //     std::cout << "  " << it.first << " -> " << it.second << std::endl;
-        // } ---------------------------------------------
-
-        // TODO: I changed this function output and Store datatype to map instead of unordered_map, is this causing the segmentation faults?
         // Save the store in /Store file
         writeStoreinDB(DbObj.Store);
 
-        // std::cout<<"wrote Store in DB"<<std::endl;
         if (!TreeEntries.empty()) {
             Tree TreeObject(TreeEntries);
             DbObj.storeContentInDB(TreeObject);
-            // std::cout << "My Tree Id is wao: " << TreeObject.oid << std::endl;
 
             std::string parent = RefObj.Read_HEAD(path); // The oid of previous commit
 
@@ -192,11 +165,7 @@ void Commit::CommitMain(){
                 std::string currentTreeOid = TreeObject.oid;
                 std::string prevTreeOid = CommitHelper::trimm(parentTreeOid);
 
-                // DEBUG PRINTS (Remove after fixing)
-                std::cout << "DEBUG: Current Tree: " << currentTreeOid << std::endl;
-                std::cout << "DEBUG: Parent Tree:  " << prevTreeOid << std::endl;
-
-                if (currentTreeOid == prevTreeOid) {
+                if (TreeObject.oid == CommitHelper::trimm(parentTreeOid)) {
                     std::cout << "Nothing to commit, working tree is clean." << std::endl;
                     return; 
                 }
@@ -204,6 +173,7 @@ void Commit::CommitMain(){
 
             std::string name, email;
             std::string authpath = (fs::path(path) / ".yeet" / "Auth").string();
+
             // Parsing auth file
             {
                 std::ifstream auth(authpath);
@@ -226,16 +196,15 @@ void Commit::CommitMain(){
 
                 
                 else {
-                    // Fallback if Auth file missing (or handle error)
+                    // Fallback if Auth file missing
+                    std::cout<<"Please reinitalize your repo or Edit /.yeet/Auth File, because I can't parse your name and email"<<std::endl;
                     name = "Unknown"; email = "unknown@yeet.com";
                 }
             }
 
-            // std::cout<<"Name: "<<name<<"\nmail: "<<email<<"\n"; // working
             time_t currtime = time(nullptr);
             Author NewAuthorObj(name,email,currtime);
             std::string author = NewAuthorObj.to_stringg();
-            // std::cin>>message; // This doesn't takes any spaces " "
 
             std::string message;
             std::cout << "\nCOMMIT::Please enter your Commit Message:\n";
@@ -245,7 +214,6 @@ void Commit::CommitMain(){
             Commit MainCommitObj(TreeObject.oid,author,message,parent);
             DbObj.storeContentInDB(MainCommitObj);
             RefObj.update_HEAD(MainCommitObj.oid); // Updating the HEAD file to new commit
-            // std::cout<<"the parent value: "<<parent<<std::endl;
             bool is_RootCommit = false;
             if(parent=="master") is_RootCommit=true;
             std::cout<<"Commit added in the branch: "<<RefObj.currentBranch()<<std::endl;

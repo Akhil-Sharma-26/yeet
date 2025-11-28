@@ -124,8 +124,8 @@ std::vector<Edit> diff(const std::vector<std::string>& a,
     // for (const auto& edit : result) {
     //     std::cout << "Edit Type: " << (edit.type == Edit::EQL ? "EQL" : 
     //                                 (edit.type == Edit::INS ? "INS" : "DEL"))
-    //             << ", Orig: " << edit.old_line
-    //             << ", Updated: " << edit.new_line
+    //             << ", Orig: \t" << edit.old_line
+    //             << ", Updated: \t" << edit.new_line
     //             << std::endl;
     // }
 

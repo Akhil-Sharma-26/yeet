@@ -59,7 +59,7 @@ public:
         // {
             
         //     // Print out in the terminal
-        //     // print_edit(edit);
+        //     print_edit(edit);
         // }
     }
     
