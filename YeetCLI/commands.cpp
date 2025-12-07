@@ -57,6 +57,13 @@ int commands(int num_of_arg, char* argv[]){
                 }
             }
 
+            else if(command == "revert"){
+                if(is_yeet_repo(pwd)){
+                    std::string abc = "78fcb5bc3db469d5779c8db4944afad63248243f89a7b9426f74cfe98692643d";
+                    revert(abc);
+                }
+            }
+
 
             else if(command == "branch"){
                 // and yes, there is: TODO: Make a map of commands and there functions. yes!

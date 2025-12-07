@@ -1,3 +1,4 @@
+#include "include/revert.hpp"
 // show the history
 
 // ask for which commit you want to go to
@@ -12,15 +13,29 @@
 
 // and yeah that's it
 
-void Revert(char* commit_id){
+void revert(std::string commit_id){
     // check current commit
-        // call the helper function, read the hash
-    // if curr_oid = commit_id -> return
+    Refs ref(fs::current_path());
+    std::string curr_commit_oid = ref.Read_HEAD();
+
+    if(commit_id == curr_commit_oid) {
+        std::cerr<<"REVERT::You are already at the same commit!"<<std::endl;
+    }
 
     // Recurrsivly till commit_id == curr_id{
-        // read the contetn of the commit file. 
-            // inflate it
+    while(commit_id != curr_commit_oid){
+        std::string commit_content = Inflate(fs::path(ref.path) / ".yeet" / "objects" / curr_commit_oid.substr(0, 2) / curr_commit_oid.substr(2));
+        
         // get the parent commit
+        std::string parent_oid = CommitHelper::getParentOidFromCommit(commit_content);
+        curr_commit_oid = parent_oid;
+        std::cout<<commit_content<<std::endl;
+
+        std::string currTree_oid = CommitHelper::getTreeOidFromCommit(commit_content);
+        std::string tree_content = Inflate(fs::path(ref.path) / ".yeet" / "objects" / currTree_oid.substr(0, 2) / currTree_oid.substr(2));
+
+        std::cout<<tree_content<<std::endl;
+    }
         // open the tree oid file
             // inflate it
         // {

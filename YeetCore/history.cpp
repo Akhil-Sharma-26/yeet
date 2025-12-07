@@ -106,7 +106,7 @@ namespace history
         try
         {
             Refs ref(repo);
-            std::string currOid = ref.Read_HEAD(repo); // curr commit
+            std::string currOid = ref.Read_HEAD(); // curr commit
 
             if(currOid.empty() || currOid == "master"){
                 std::cout<<"HISTORY:: No commits yet in this repo\n> Use command \"yeet commit\" To commit the version"<<std::endl;

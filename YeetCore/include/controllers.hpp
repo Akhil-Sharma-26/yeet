@@ -59,13 +59,3 @@ class Diffs{
         std::string diffs;
         
 };
-
-// For Diffs
-
-
-
-
-
-namespace CommitHelper{
-    void YeetStatus(std::string path, std::vector<std::filesystem::path> &FilePath);
-}

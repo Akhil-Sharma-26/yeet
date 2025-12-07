@@ -3,6 +3,7 @@
 #include"../../YeetUtils/include/libs.hpp"
 #include"../../YeetUtils/include/file_utils.hpp"
 #include"../../YeetUtils/include/hash_utils.hpp"
+#include"../../YeetUtils/include/compression_utils.hpp"
 
 class Author{
     public:
@@ -26,6 +27,6 @@ class Refs{
         Refs(std::string path);
         void update_HEAD(std::string commit_oid);
         std::string HEAD_path();
-        std::string Read_HEAD(std::string currPath);
+        std::string Read_HEAD();
         std::string currentBranch();
 };

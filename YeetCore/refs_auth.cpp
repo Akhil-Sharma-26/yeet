@@ -37,8 +37,8 @@ void Refs::update_HEAD(std::string oid){
     }
 }
 
-std::string Refs::Read_HEAD(std::string currPath){
-    std::ifstream headFile(currPath + "/.yeet/refs/heads/" + currentBranch(),std::ios::binary);
+std::string Refs::Read_HEAD(){
+    std::ifstream headFile(std::filesystem::path(this->path + "/.yeet/refs/heads/" + currentBranch()).string(),std::ios::binary);
     std::string FileContent; // Becuase I am using string, It will not pick up anything after a space. I need to use getLine() function.
     if(headFile){
         headFile>>FileContent; // All content of the file into the string
