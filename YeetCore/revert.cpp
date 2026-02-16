@@ -29,18 +29,17 @@ void revert(std::string commit_id){
         // get the parent commit
         std::string parent_oid = CommitHelper::getParentOidFromCommit(commit_content);
         curr_commit_oid = parent_oid;
-        std::cout<<commit_content<<std::endl;
 
         std::string currTree_oid = CommitHelper::getTreeOidFromCommit(commit_content);
         std::string tree_content = Inflate(fs::path(ref.path) / ".yeet" / "objects" / currTree_oid.substr(0, 2) / currTree_oid.substr(2));
 
         std::cout<<tree_content<<std::endl;
     }
-        // open the tree oid file
-            // inflate it
+
+    
         // {
-            // idr if path is in blob or in tree.
-            // in either. delete them
+            // path is in tree.
+            // in either. delete the file
         // }
     // }
 

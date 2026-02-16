@@ -32,7 +32,7 @@ void Database::storeContentInDB(Blob &object, const std::string &path){
 
 void Database::storeContentInDB(Tree &object){
     std::string Data = object.Return_String();
-    std::string content = object.Type() + " " + std::to_string(Data.size()) + "\0" + Data; // The null character is included just to use when we itterate over it.
+    std::string content = object.Type() + " " + std::to_string(Data.size()) + "\n" + Data; // The null character is included just to use when we itterate over it.
     // std::cout<<"the content: "<<content<<std::endl;
     object.oid = calculateSHA256Hex(content);
     // std::cout<<"The hash of the tree object is: "<<object.oid<<std::endl; // Hashes are coming out.

@@ -139,7 +139,7 @@ namespace CommitHelper{
         while(std::getline(st, line)){
             // in the commit obj the tree oid is stored as tree <oid>
             if(line.rfind("tree", 0) == 0){
-                return line.substr(5);
+                return line.substr(6);
             }
         }
 
