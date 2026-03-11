@@ -12,17 +12,17 @@
 void YeetInit(std::string src){
     try
     {
+        std::filesystem::path path = std::filesystem::path(src);
+        path = path / ".yeet";
+        if(std::filesystem::exists(path))
+            throw std::runtime_error("ERROR::INIT::A yeet folder already exists in this directory. \n");
+
         std::string name, email;
         std::cout<<"\n> Set the Auth."<<std::endl;
         std::cout<<"> YEET_AUTHOR_NAME: ";
         getline(std::cin, name);
         std::cout<<"\n> YEET_AUTHOR_EMAIL: ";
         getline(std::cin, email);
-
-        std::filesystem::path path = std::filesystem::path(src);
-        path = path / ".yeet";
-        if(std::filesystem::exists(path))
-            throw std::runtime_error("ERROR::INIT::A yeet folder already exists in this directory. \n");
 
         std::filesystem::create_directory(path);
         std::filesystem::create_directory(path / "objects");

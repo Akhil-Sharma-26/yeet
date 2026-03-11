@@ -156,6 +156,10 @@ void deleteDirectory(const fs::path &dirPath)
   }
 }
 
+void restoreDirectory(std::string commit_id){
+
+}
+
 void revert(std::string commit_id)
 {
   // check current commit
@@ -216,7 +220,22 @@ void revert(std::string commit_id)
 
   
 
-  // now its time to restore the content for the ufcking commit
+  // now its time to restore the content from the ufcking commit
+  std::cout<<"Getting content of the Tree/commit:"<<std::endl;
+
+  std::cout<<"Getting Oid of the File:" <<std::endl;
+
+  std::cout<<"Sending Oid to the inflation funcition"<<std::endl;
+
+  std::cout<<"Inflation function returning the content to be put in that file"<<std::endl;
+
+  std::cout<<"Getting the Path of that File where I have to store this content"<<std::endl;
+
+  std::cout<<"Using Ostream to show Store the content in the file"<<std::endl;
+
+  std::cout<<"Loop continues, till the end of the commit/Tree content"<<std::endl;
+
+  restoreDirectory(commit_id);
 
   // {
   // path is in tree.
